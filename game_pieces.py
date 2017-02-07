@@ -1,12 +1,5 @@
 from enum import Enum
-
-class JewelType(Enum):
-    green_emerald = 1
-    blue_sapphire = 2
-    red_ruby = 3
-    white_diamond = 4
-    black_onyx = 5
-    yellow_gold = 6
+from data import JewelType
 
 class AbstractGamePiece(object):
     pass

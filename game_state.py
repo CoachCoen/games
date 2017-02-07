@@ -1,6 +1,13 @@
 from random import choice, shuffle
+from enum import Enum
 
 from game_pieces import NobelsTile, Card, Chip, JewelType
+
+class Row(Enum):
+    # Make up for Python's zero-based indexes
+    one = 0
+    two = 1
+    three = 2
 
 def all_cards():
     row_1 = """
@@ -128,7 +135,7 @@ def all_cards():
     # TODO: Refactor this
 
     result = []
-    for cards, row in ((row_1, 1), (row_2, 2), (row_3, 3)):
+    for cards, row in ((row_1, Row.one), (row_2, Row.two), (row_3, Row.three)):
         for line in [l.strip() for l in cards.split("\n") if l.strip()]:
             cost_text, reward_text = line.split(':')
             cost = []
@@ -149,6 +156,8 @@ def all_cards():
                 row=row,
                 points=reward_points
             ))
+
+    shuffle(result)
 
     return result
 
@@ -212,10 +221,52 @@ class PlayerState(object):
         self.cards = []
         self.noble_tiles = []
 
+class TableState(object):
+    """
+    On the table, not counting the player areas, we have:
+
+    6 piles of chips
+    3 card decks
+    3 rows of 4 cards each
+    <player count + 1>  noble cards
+    """
+    def __init__(self):
+        self.decks = {
+            Row.one: [],
+            Row.two: [],
+            Row.three: []
+        }
+
+        # 3 rows with 4 empty spaces each
+        self.rows = [[None] * 4] * 3
+
 class GameState(object):
     def __init__(self, players):
         self.players = players
         self.cards = all_cards()
-        self.nobles = draw_nobles(len(self.players) + 1)
-        self.chips = chips_for_player_count(len(self.players))
+        self.nobles = draw_nobles(self.player_count + 1)
+        self.chips = chips_for_player_count(self.player_count)
         self.first_player = choice(self.players)
+        self.table_state = TableState()
+
+    @property
+    def player_count(self):
+        return len(self.players)
+
+    def _prepare_table(self, player_count):
+        # Move cards to the table
+        # TODO Coen: This looks messy - refactor this
+        for (deck, row) in [
+            (Row.one, 1),
+            (Row.two, 2),
+            (Row.three, 3)
+        ]:
+            self.table_state.decks[deck].append(
+                [c for c in self.cards if c.row == row]
+            )
+
+        # Put out the cards from the decks
+        for row in Row:
+            for i in range(4):
+                self.table_state.rows[row][i] = \
+                    self.table_state.decks[row].pop()

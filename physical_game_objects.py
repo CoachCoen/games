@@ -1,23 +1,8 @@
 from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
 from drawing_surface import ColourPalette, easel
+from settings import config
 
-CARD_WIDTH = 100
-CARD_HEIGHT = 140
-
-CARD_SPACING = 20
-
-COLUMN_WIDTH = CARD_WIDTH + CARD_SPACING
-ROW_HEIGHT = CARD_HEIGHT + CARD_SPACING
-
-POINTS_LOCATION_X = 20
-POINTS_LOCATION_Y = 10
-
-COST_LOCATION_X = 20
-COST_LOCATION_Y = 50
-
-CHIP_SIZE = 20
-CHIP_SPACING = 5
 
 class AbstractDrawAction(object):
     pass
@@ -30,29 +15,28 @@ class DrawCardCost(AbstractDrawAction):
                 enumerate([(jewel_type, number)
                            for (jewel_type, number)
                            in self.cost.items() if number]):
-            location = (x, y + (i * (CHIP_SIZE + CHIP_SPACING)))
-            draw_circle(location, CHIP_SIZE, jewel_type.value)
+            location = (x, y + (i * (config.chip_size + config.chip_spacing)))
+            draw_circle(location, config.chip_size, jewel_type.value)
 
-            location = (x + CHIP_SIZE, y + ((i - 0.3) * (CHIP_SIZE + CHIP_SPACING)))
+            location = (x + config.chip_size, y + ((i - 0.3) * (config.chip_size + config.chip_spacing)))
             # TODO Choose a contrasting colour for the number
             draw_text(location, str(number), font_size=18)
 
+
 class DrawCard(AbstractDrawAction):
     def draw(self, x, y):
-        # draw_rectangle((x, y, x + CARD_WIDTH, y + CARD_HEIGHT),
-        #                ColourPalette.card_background)
-        draw_rectangle((x, y, CARD_WIDTH, CARD_HEIGHT),
+        draw_rectangle((x, y, config.card_width, config.card_height),
                        ColourPalette.card_background)
         if self.points:
-            draw_text((x + POINTS_LOCATION_X, y + POINTS_LOCATION_Y),
+            draw_text((x + config.points_location_x, y + config.points_location_y),
                       str(self.points))
 
-        self.cost.draw(x + COST_LOCATION_X, y + COST_LOCATION_Y)
+        self.cost.draw(x + config.cost_location_x, y + config.cost_location_y)
 
         # TODO Better variable name - top row?, top row left, top row right?
-        draw_circle((x + CARD_WIDTH - POINTS_LOCATION_X,
-                     int(y + POINTS_LOCATION_Y + CHIP_SIZE * 0.5)),
-                    int(CHIP_SIZE * 1.5), self.jewel_type.value)
+        draw_circle((x + config.card_width - config.points_location_x,
+                     int(y + config.points_location_y + config.chip_size * 0.5)),
+                    int(config.chip_size * 1.5), self.jewel_type.value)
 
 
 # class DrawCardDeck(AbstractDrawAction):
@@ -62,30 +46,30 @@ class DrawCard(AbstractDrawAction):
 class DrawCardRow(AbstractDrawAction):
     def draw(self, x, y):
         for column, card in enumerate(self.columns):
-            card.draw(x + column * COLUMN_WIDTH, y)
+            card.draw(x + column * config.column_width, y)
 
 
 class DrawCentralTableArea(AbstractDrawAction):
     def draw(self, x, y):
         for (i, card_row) in enumerate(self.card_rows):
-            card_row.draw(x, y + i * ROW_HEIGHT)
+            card_row.draw(x, y + i * config.tabletop_height)
 
 
 class DrawTable(object):
     def _draw_tablecloth(self):
-        draw_rectangle((0, 0, easel.width, easel.height),
+        draw_rectangle((0, 0, config.tabletop_width, config.tabletop_height),
                        ColourPalette.table_cloth)
 
     def _draw_player_corners(self):
         for (x, y) in [
             (0, 0),
-            (0, easel.height),
-            (easel.width, easel.height),
-            (easel.width, 0)
+            (0, config.tabletop_height),
+            (config.tabletop_width, config.tabletop_height),
+            (config.tabletop_width, 0)
         ]:
             draw_pologon([
-                (x, abs(y - easel.height / 2.2)),
-                (abs(x - easel.width / 2.2), y),
+                (x, abs(y - config.tabletop_height / 2.2)),
+                (abs(x - config.tabletop_width / 2.2), y),
                 (x, y)],
                 ColourPalette.corners
             )

@@ -1,14 +1,8 @@
 import pygame
 
-# from drawing import Table, SCALING_FACTOR
-# from drawing import easel
-# from game_state import GameState
-
-from drawing_surface import SCALING_FACTOR, easel
+from drawing_surface import easel
 from logical_game_objects import Table
-
-TABLETOP_WIDTH = 1366
-TABLETOP_HEIGHT = 768
+from settings import config
 
 class App:
     def __init__(self):
@@ -17,8 +11,8 @@ class App:
         self.game_state = None
         self.size = \
             self.weight, self.height = \
-            TABLETOP_WIDTH * SCALING_FACTOR, \
-            TABLETOP_HEIGHT * SCALING_FACTOR
+            config.tabletop_width * config.scaling_factor, \
+            config.tabletop_height * config.scaling_factor
 
     def on_init(self):
         pygame.init()
@@ -26,8 +20,7 @@ class App:
             self.size, pygame.HWSURFACE | pygame.DOUBLEBUF
         )
         self._running = True
-        easel.init_easel(self._display_surf, TABLETOP_WIDTH, TABLETOP_HEIGHT)
-        # self.game_state = GameState(players=['Coen', 'Sue', 'John'])
+        easel.init_easel(self._display_surf)
         table = Table(players=['Coen', 'Sue', 'John'])
         table.draw()
 

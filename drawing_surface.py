@@ -3,10 +3,8 @@ import pygame
 from enum import Enum
 
 from data import JewelType
+from settings import config
 
-SCALING_FACTOR = 2
-CARD_WIDTH = 20
-CARD_HEIGHT = 30
 
 class ColourPalette(Enum):
     table_cloth = 11
@@ -21,7 +19,7 @@ def _scale_vertices(vertices):
     :return:
     """
     if isinstance(vertices, (int, float)):
-        return SCALING_FACTOR * vertices
+        return config.scaling_factor * vertices
     return [_scale_vertices(i) for i in vertices]
 
 
@@ -38,9 +36,9 @@ def draw_rectangle(rectangle, colour):
 
 
 def draw_text(location, text, font_size=24):
-    myfont = pygame.font.SysFont("monospace", font_size * SCALING_FACTOR)
+    myfont = pygame.font.SysFont("monospace",
+                                 font_size * config.scaling_factor)
 
-    # render text
     label = myfont.render(text, 3, (255, 255, 0))
 
     location = _scale_vertices(location)
@@ -50,11 +48,10 @@ def draw_text(location, text, font_size=24):
 def draw_circle(location, radius, colour):
     location = _scale_vertices(location)
     pygame.draw.circle(easel.surface, easel.colour(colour), location, radius)
-    print("Draw circle")
 
 
 class Easel(object):
-    _colour_palette = {
+    colour_palette = {
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),
         ColourPalette.corners: pygame.Color(70, 180, 70, 255),
         ColourPalette.card_background: pygame.Color(20, 20, 50, 255),
@@ -67,16 +64,12 @@ class Easel(object):
     }
 
     def __init__(self):
-        self.width = None
-        self.height = None
         self.surface = None
 
-    def init_easel(self, surface, width, height):
-        self.width = width
-        self.height = height
+    def init_easel(self, surface):
         self.surface = surface
 
     def colour(self, name):
-        return self._colour_palette[name]
+        return self.colour_palette[name]
 
 easel = Easel()

@@ -10,7 +10,7 @@ class ColourPalette(Enum):
     table_cloth = 11
     corners = 12
     card_background = 13
-
+    card_deck_background = 14
 
 def _scale_vertices(vertices):
     """
@@ -35,11 +35,17 @@ def draw_rectangle(rectangle, colour):
                      rectangle)
 
 
-def draw_text(location, text, font_size=24):
+def draw_text(location, text, font_size=24, text_colour=None, reverse_colour=False):
     myfont = pygame.font.SysFont("monospace",
                                  font_size * config.scaling_factor)
 
-    label = myfont.render(text, 3, (255, 255, 0))
+    text_colour = easel.colour(text_colour) if text_colour \
+        else (255, 255, 0, 255)
+
+    if reverse_colour:
+        text_colour = [(i + 127) % 256 for i in text_colour[:3]] + [255]
+
+    label = myfont.render(text, 3, text_colour)
 
     location = _scale_vertices(location)
     easel.surface.blit(label, location)
@@ -55,6 +61,7 @@ class Easel(object):
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),
         ColourPalette.corners: pygame.Color(70, 180, 70, 255),
         ColourPalette.card_background: pygame.Color(20, 20, 50, 255),
+        ColourPalette.card_deck_background: pygame.Color(10, 70, 10, 255),
         JewelType.green_emerald.value: pygame.Color(0, 127, 0, 255),
         JewelType.red_ruby.value: pygame.Color(127, 0, 0, 255),
         JewelType.black_onyx.value: pygame.Color(10, 10, 10, 255),

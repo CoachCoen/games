@@ -1,23 +1,16 @@
-from enum import Enum
 from random import shuffle
 
-from physical_game_objects import DrawCard, DrawCardRow, \
-    DrawCentralTableArea, DrawTable, DrawCardCost
 from data import raw_starter_decks
+from data import JewelType
 
+from settings import config
 
-class JewelType(Enum):
-    green_emerald = 1
-    blue_sapphire = 2
-    red_ruby = 3
-    white_diamond = 4
-    black_onyx = 5
-    yellow_gold = 6
+from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
+    draw_circle
+from drawing_surface import ColourPalette
 
 
 def starter_deck(raw_row):
-
-
     # TODO: Refactor this
 
     deck = []
@@ -56,9 +49,22 @@ class Chip(AbstractGameObject):
         self.jewel_type = jewel_type
 
 
-class CardCost(AbstractGameObject, DrawCardCost):
+class CardCost(AbstractGameObject):
     def __init__(self, raw_cost=""):
         self.cost = self.parse_raw_cost(raw_cost)
+
+    def draw(self, x, y):
+        # TODO Tidy layout
+        for (i, (jewel_type, number)) in \
+                enumerate([(jewel_type, number)
+                           for (jewel_type, number)
+                           in self.cost.items() if number]):
+            location = (x, y + (i * (config.chip_size + config.chip_spacing)))
+            draw_circle(location, config.chip_size, jewel_type.value)
+
+            location = (x + config.chip_size, y + ((i - 0.3) * (config.chip_size + config.chip_spacing)))
+            # TODO Choose a contrasting colour for the number
+            draw_text(location, str(number), font_size=18)
 
     def parse_raw_cost(self, raw_cost):
         # e.g. "5 black, 3 red, 3 black, 3 white"
@@ -81,34 +87,72 @@ class CardCost(AbstractGameObject, DrawCardCost):
             # cost.append([Chip(jewel_type=jewel_type)] * int(n))
         return cost
 
-class Card(AbstractGameObject, DrawCard):
+class Card(AbstractGameObject):
     def __init__(self, jewel_type, points=0, cost=""):
         self.cost = CardCost(cost)
         self.jewel_type = jewel_type
         self.points = points
+
+    def draw(self, x, y):
+        draw_rectangle((x, y, config.card_width, config.card_height),
+                       ColourPalette.card_background)
+        if self.points:
+            draw_text((x + config.points_location_x, y + config.points_location_y),
+                      str(self.points))
+
+        self.cost.draw(x + config.cost_location_x, y + config.cost_location_y)
+
+        # TODO Better variable name - top row?, top row left, top row right?
+        draw_circle((x + config.card_width - config.points_location_x,
+                     int(y + config.points_location_y + config.chip_size * 0.5)),
+                    int(config.chip_size * 1.5), self.jewel_type.value)
 
 
 class CardDeck(AbstractGameObject):
     def __init__(self, cards=None):
         self.cards = cards if cards else []
 
+    def draw(self, x, y):
+        draw_rectangle((x, y, config.card_width, config.card_height),
+                       ColourPalette.card_deck_background)
+        if len(self.cards):
+            draw_text((x + config.points_location_x, y + config.points_location_y),
+                      str(len(self.cards)))
 
-# class ChipStack(AbstractGameObject):
-#     def __init__(self):
-#         self.chips = []
+
+class ChipStack(AbstractGameObject):
+    def __init__(self, jewel_type, chip_count):
+        self.jewel_type = jewel_type
+        self.chip_count = chip_count
+
+    def draw(self, x, y):
+        if self.chip_count:
+            draw_circle((x, y), config.chip_stack_size, self.jewel_type.value)
+            # TODO Tidy up these parameters, calculate/into-config for (8, 12) offset
+            draw_text((x - 8, y - 12), str(self.chip_count),
+                      text_colour=self.jewel_type.value, reverse_colour=True)
 
 
-class CardRow(AbstractGameObject, DrawCardRow):
+class CardRow(AbstractGameObject):
     def __init__(self, row_number):
         self.card_deck = CardDeck(starter_deck(raw_starter_decks[row_number]))
         self.columns = [Card(jewel_type=JewelType.green_emerald,
                              points=2, cost="5 black, 3 red, 3 blue, 3 white")] * 4
-        # self.columns = [] * 4
+
+    def draw(self, x, y):
+        self.card_deck.draw(x, y)
+        for column, card in enumerate(self.columns):
+            card.draw(x + (column + 1) * config.column_width, y)
 
 
-# class ChipStacksRow(AbstractGameObject):
-#     def __init__(self):
-#         self.stacks = {i: ChipStack() for i in JewelType}
+class ChipStacksColumn(AbstractGameObject):
+    def __init__(self, chip_count):
+        self.stacks = [ChipStack(i, chip_count) for i in JewelType]
+
+    def draw(self, x, y):
+        for i, chip_stack in enumerate(self.stacks):
+            chip_stack.draw(x, y + i * (config.chip_stack_size + config.chip_stack_spacing))
+
 #
 #
 # class NobleTilesRow(AbstractGameObject):
@@ -121,15 +165,21 @@ class Player(AbstractGameObject):
         self.name = name
 
 
-class CentralTableArea(AbstractGameObject, DrawCentralTableArea):
+class CentralTableArea(AbstractGameObject):
     def __init__(self, player_count):
         # def __init__(self, player_count):
         # self.noble_tiles_row = NobleTilesRow(player_count)
-        # self.chip_stacks_row = ChipStacksRow()
+        # TODO: Initialise with correct number of chips
+        self.chip_stacks_column = ChipStacksColumn(player_count)
         self.card_rows = [CardRow(i) for i in range(3)]
 
+    def draw(self, x, y):
+        self.chip_stacks_column.draw(x + config.chip_stack_x, y + config.chip_stack_y)
+        for (i, card_row) in enumerate(self.card_rows):
+            card_row.draw(x + config.chip_stack_size, y + i * config.row_height)
 
-class Table(AbstractGameObject, DrawTable):
+
+class Table(AbstractGameObject):
     def __init__(self, players):
         self.players = [Player(name=p) for p in players]
         self.central_table_area = \
@@ -138,3 +188,28 @@ class Table(AbstractGameObject, DrawTable):
     @property
     def player_count(self):
         return len(self.players)
+
+    def _draw_tablecloth(self):
+        draw_rectangle((0, 0, config.tabletop_width, config.tabletop_height),
+                       ColourPalette.table_cloth)
+
+    def _draw_player_corners(self):
+        for (x, y) in [
+            (0, 0),
+            (0, config.tabletop_height),
+            (config.tabletop_width, config.tabletop_height),
+            (config.tabletop_width, 0)
+        ]:
+            draw_pologon([
+                (x, abs(y - config.tabletop_height / 2.2)),
+                (abs(x - config.tabletop_width / 2.2), y),
+                (x, y)],
+                ColourPalette.corners
+            )
+
+    def draw(self):
+        self._draw_tablecloth()
+        self._draw_player_corners()
+        self.central_table_area.draw(config.central_area_x,
+                                     config.central_area_y)
+

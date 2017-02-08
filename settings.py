@@ -20,5 +20,13 @@ class Config(object):
     chip_size = 20
     chip_spacing = 5
 
+    central_area_x = 340
+    central_area_y = 150
+
+    chip_stack_x = 0
+    chip_stack_y = 100
+
+    chip_stack_size = 50
+    chip_stack_spacing = 5
 
 config = Config()

@@ -1,8 +1,9 @@
 import pygame
 
 from drawing_surface import easel
-from logical_game_objects import Table
+from game_objects import GameFactory
 from settings import config
+
 
 class App:
     def __init__(self):
@@ -21,9 +22,13 @@ class App:
         )
         self._running = True
         easel.init_easel(self._display_surf)
-        table = Table(players=['Coen', 'Sue', 'John'])
-        table.draw()
-
+        # table = Table(players=['Coen', 'Sue', 'John'])
+        # table.draw()
+        game_factory = GameFactory()
+        the_game = game_factory(
+            player_names=['Caroline', 'Nigel', 'Issie', 'Coen']
+        )
+        the_game.draw()
         pygame.display.flip()
 
     def on_event(self, event):
@@ -36,7 +41,8 @@ class App:
     def on_render(self):
         pass
 
-    def on_cleanup(self):
+    @staticmethod
+    def on_cleanup():
         pygame.quit()
 
     def on_execute(self):

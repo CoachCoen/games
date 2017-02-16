@@ -2,7 +2,7 @@ import pygame
 
 from enum import Enum
 
-from data import JewelType
+# from data import JewelType
 from settings import config
 
 
@@ -11,6 +11,12 @@ class ColourPalette(Enum):
     corners = 12
     card_background = 13
     card_deck_background = 14
+    green_chip = 15
+    red_chip = 16
+    black_chip = 17
+    white_chip = 18
+    yellow_chip = 19
+    blue_chip = 20
 
 def _scale_vertices(vertices):
     """
@@ -53,7 +59,8 @@ def draw_text(location, text, font_size=24, text_colour=None, reverse_colour=Fal
 
 def draw_circle(location, radius, colour):
     location = _scale_vertices(location)
-    pygame.draw.circle(easel.surface, easel.colour(colour), location, radius)
+    pygame.draw.circle(easel.surface, easel.colour(colour), location,
+                       radius * config.scaling_factor)
 
 
 class Easel(object):
@@ -62,12 +69,12 @@ class Easel(object):
         ColourPalette.corners: pygame.Color(70, 180, 70, 255),
         ColourPalette.card_background: pygame.Color(20, 20, 50, 255),
         ColourPalette.card_deck_background: pygame.Color(10, 70, 10, 255),
-        JewelType.green_emerald.value: pygame.Color(0, 127, 0, 255),
-        JewelType.red_ruby.value: pygame.Color(127, 0, 0, 255),
-        JewelType.black_onyx.value: pygame.Color(10, 10, 10, 255),
-        JewelType.white_diamond.value: pygame.Color(255, 255, 255, 255),
-        JewelType.yellow_gold.value: pygame.Color(244, 238, 66, 255),
-        JewelType.blue_sapphire.value: pygame.Color(0, 0, 127, 255),
+        ColourPalette.green_chip: pygame.Color(0, 127, 0, 255),
+        ColourPalette.red_chip: pygame.Color(127, 0, 0, 255),
+        ColourPalette.black_chip: pygame.Color(10, 10, 10, 255),
+        ColourPalette.white_chip: pygame.Color(255, 255, 255, 255),
+        ColourPalette.yellow_chip: pygame.Color(244, 238, 66, 255),
+        ColourPalette.blue_chip: pygame.Color(0, 0, 127, 255),
     }
 
     def __init__(self):

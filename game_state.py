@@ -1,3 +1,55 @@
+def nobles_deck():
+    """
+    Create the starter set of noble tiles
+    :return: list of NoblesTile
+    """
+    nobles = []
+
+    for raw_cost in [
+        '4 blue, 4 green',
+        '4 white, 4 red',
+        '4 black, 4 red',
+        '4 green, 4 red',
+        '4 black, 4 green',
+        '4 white, 4 black',
+        '4 blue, 4 white',
+    ]:
+        nobles.append(NoblesTile(
+            raw_cost=raw_cost,
+            points=3
+        ))
+
+    for raw_cost in [
+        '3 green, 3 blue, 3 red',
+        '3 blue, 3 green, 3 white',
+        '3 black, 3 red, 3 white',
+        '3 black, 3 red, 3 green',
+        '3 blue, 3 white, 3 red',
+        '3 black, 3 red, 3 blue',
+        '3 black, 3 white, 3 blue'
+    ]:
+        nobles.append(NoblesTile(
+            raw_cost=raw_cost,
+            points=3
+        ))
+
+    return nobles
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 from random import choice, shuffle
 from enum import Enum
 
@@ -10,39 +62,6 @@ class Row(Enum):
     two = 1
     three = 2
 
-
-def all_nobles():
-    nobles = []
-
-    for (cost_1, cost_2) in [
-        (JewelType.blue_sapphire, JewelType.green_emerald),
-        (JewelType.white_diamond, JewelType.red_ruby),
-        (JewelType.black_onyx, JewelType.red_ruby),
-        (JewelType.green_emerald, JewelType.red_ruby),
-        (JewelType.black_onyx, JewelType.green_emerald),
-        (JewelType.white_diamond, JewelType.black_onyx),
-        (JewelType.blue_sapphire, JewelType.white_diamond)
-    ]:
-        nobles.append(NobelsTile(
-            cost=[cost_1, cost_2] * 4,
-            points=3
-        ))
-
-    for (cost_1, cost_2, cost_3) in [
-        (JewelType.green_emerald, JewelType.blue_sapphire, JewelType.red_ruby),
-        (JewelType.blue_sapphire, JewelType.green_emerald, JewelType.white_diamond),
-        (JewelType.black_onyx, JewelType.red_ruby, JewelType.white_diamond),
-        (JewelType.black_onyx, JewelType.red_ruby, JewelType.green_emerald),
-        (JewelType.blue_sapphire, JewelType.white_diamond, JewelType.red_ruby),
-        (JewelType.black_onyx, JewelType.red_ruby, JewelType.blue_sapphire),
-        (JewelType.black_onyx, JewelType.white_diamond, JewelType.blue_sapphire)
-    ]:
-        nobles.append(NobelsTile(
-            cost=[cost_1, cost_2, cost_3] * 3,
-            points=3
-        ))
-
-    return nobles
 
 def draw_nobles(number_to_draw):
     a = all_nobles()

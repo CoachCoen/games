@@ -1,7 +1,7 @@
 from enum import Enum
 
 # TODO Find a better home for this
-class JewelType(Enum):
+class ChipType(Enum):
     green_emerald = 1
     blue_sapphire = 2
     red_ruby = 3

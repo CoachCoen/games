@@ -23,7 +23,6 @@ class App:
         self._running = True
         easel.init_easel(self._display_surf)
         # table = Table(players=['Coen', 'Sue', 'John'])
-        # table.draw()
         game_factory = GameFactory()
         the_game = game_factory(
             player_names=['Caroline', 'Nigel', 'Issie', 'Coen']

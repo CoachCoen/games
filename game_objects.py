@@ -1,6 +1,5 @@
 from random import shuffle
 
-from data import raw_starter_decks
 from data import ChipType
 from data import row_1, row_2, row_3
 
@@ -26,9 +25,9 @@ class AbstractGameComponent(object):
 
 
 class Card(AbstractGameComponent):
-    def __init__(self, cost, output_chip, points):
-        self.cost = cost
-        self.output_chip = output_chip
+    def __init__(self, chip_cost, reward_chip, points):
+        self.chip_cost = chip_cost
+        self.reward_chip = reward_chip
         self.points = points
 
     def draw(self, x, y):
@@ -40,14 +39,16 @@ class Card(AbstractGameComponent):
                 str(self.points)
             )
 
-        self.cost.draw(x + config.cost_location_x, y + config.cost_location_y)
+        self.chip_cost.draw(
+            x + config.cost_location_x,
+            y + config.cost_location_y,
+            scaling_factor=config.chip_cost_scaling
+        )
 
-        draw_circle(
-            (
-                x + config.card_width - config.points_location_x,
-                int(y + config.points_location_y + config.chip_size)
-            ),
-            int(config.chip_size * 1.5), self.jewel_type.value
+        self.reward_chip.draw(
+            x + config.reward_chip_x,
+            y + config.reward_chip_y,
+            scaling_factor=config.reward_chip_scaling
         )
 
 
@@ -56,21 +57,33 @@ class Chip(AbstractGameComponent):
         self.chip_type = chip_type
         self.colour = colour
 
-    def draw(self, x, y):
-        draw_circle((x, y), config.chip_size, self.colour)
+    def draw(self, x, y, scaling_factor=1):
+        draw_circle(
+            (x, y),
+            int(config.chip_size * scaling_factor),
+            self.colour
+        )
 
 
-class NoblesTile(AbstractGameComponent):
-    def __init__(self, cost, points):
-        self.cost = cost
+class Tile(AbstractGameComponent):
+    def __init__(self, chip_cost, points):
+        self.chip_cost = chip_cost
         self.points = points
 
     def draw(self, x, y):
         draw_rectangle(
-            (x, y, config.nobles_tile_size, config.nobles_tile_size),
+            (x, y, config.tile_size, config.tile_size),
             ColourPalette.card_background
         )
-        self.cost.draw(x, y)
+        self.chip_cost.draw(
+            x + config.cost_location_x,
+            y + config.cost_location_y,
+            scaling_factor=config.chip_cost_scaling
+        )
+        draw_text(
+            (x + config.points_location_x, y + config.points_location_y),
+            str(self.points)
+        )
 
 
 class AbstractGameComponentCollection(object):
@@ -82,29 +95,39 @@ class ChipStack(AbstractGameComponentCollection):
         self.chip = chip
         self.chip_count = chip_count
 
-    def draw(self, x, y):
+    def draw(self, x, y, scaling_factor=1):
         if self.chip_count:
-            self.chip.draw(x, y)
-            draw_text((x - 8, y - 12), str(self.chip_count),
-                      text_colour=self.chip.colour, reverse_colour=True)
+            self.chip.draw(x, y, scaling_factor)
+            draw_text(
+                (x - 8, y - 12),
+                str(self.chip_count),
+                text_colour=self.chip.colour,
+                reverse_colour=True,
+                font_size=config.chip_font_size * scaling_factor
+            )
 
 
 class ChipStackCollection(AbstractGameComponentCollection):
     def __init__(self, chip_stacks):
         self.chip_stacks = chip_stacks
 
-    def draw(self, x, y):
+    def draw(self, x, y, scaling_factor=1):
         for i, chip_stack in enumerate(self.chip_stacks):
             chip_stack.draw(
-                x + config.chip_stack_x,
-                y + config.chip_stack_y + i *
-                (config.chip_size * 2 + config.chip_spacing)
+                x,
+                int(y + i * (config.chip_size * 2 + config.chip_spacing)
+                    * scaling_factor),
+                scaling_factor
             )
 
 
 class CardDeck(AbstractGameComponentCollection):
     def __init__(self, cards):
         self.cards = cards
+        shuffle(self.cards)
+
+    def pop(self):
+        return self.cards.pop()
 
     def draw(self, x, y):
         draw_rectangle((x, y, config.card_width, config.card_height),
@@ -116,85 +139,20 @@ class CardDeck(AbstractGameComponentCollection):
             )
 
 
-class CardDeckFactory():
-    def __call__(self, raw_row):
-        card_factory = CardFactory()
-        cards = []
-        for card_details in raw_row.split('\n'):
-            if card_details:
-                cards.append(card_factory(card_details))
-        return CardDeck(cards)
+class TileCollection(AbstractGameComponentCollection):
+    def __init__(self, tiles):
+        self.tiles = tiles
 
-# class CardRow(AbstractGameObject):
-#     def __init__(self, row_number):
-#         self.card_deck = CardDeck(starter_deck(raw_starter_decks[row_number]))
-#         self.columns = \
-#             [Card(jewel_type=JewelType.green_emerald,
-#                   points=2, raw_cost="5 black, 3 red, 3 blue, 3 white")] * 4
-#
-#     def draw(self, x, y):
-#         self.card_deck.draw(x, y)
-#         for column, card in enumerate(self.columns):
-#             card.draw(x + (column + 1) * config.column_width, y)
-#
-#
-# class ChipStacksColumn(AbstractGameObject):
-#     def __init__(self, chip_count):
-#         self.stacks = [ChipStack(i, chip_count) for i in JewelType]
-#
-#     def draw(self, x, y):
-#         for i, chip_stack in enumerate(self.stacks):
-#             chip_stack.draw(
-#                 x,
-#                 y + i * (config.chip_stack_size * 2 +
-#                          config.chip_stack_spacing)
-#             )
+    def shuffle_and_limit(self, count):
+        shuffle(self.tiles)
+        self.tiles = self.tiles[:count]
 
-
-
-
-# class NobleTilesRow(AbstractGameObject):
-#     def __init__(self, player_count):
-#         noble_tiles = nobles_deck()
-#         shuffle(noble_tiles)
-#         self.tiles = noble_tiles[:(player_count + 1)]
-#
-#     def draw(self, x, y):
-#         for i, tile in enumerate(self.tiles):
-#             tile.draw(
-#                 x + i * (config.nobles_tile_size + config.nobles_tile_spacing),
-#                 y
-#             )
-
-
-
-
-# class CentralTableArea(AbstractGameObject):
-#     def __init__(self):
-#         pass
-#
-    # def __init__(self, player_count):
-        # def __init__(self, player_count):
-        # TODO: Initialise with correct number of chips
-        # self.chip_stacks_column = ChipStacksColumn(player_count)
-        # self.card_rows = [CardRow(i) for i in range(3)]
-        # self.noble_tiles_row = NobleTilesRow(player_count)
-
-    # def draw(self, x, y):
-    #     self.chip_stacks_column.draw(
-    #         x + config.chip_stack_x,
-    #         y + config.chip_stack_y
-    #     )
-    #     self.noble_tiles_row.draw(
-    #         x + config.noble_tiles_row_x,
-    #         y + config.noble_tiles_row_y
-    #     )
-    #     for (i, card_row) in enumerate(self.card_rows):
-    #         card_row.draw(
-    #             x + config.chip_stack_size * 2,
-    #             y + i * config.row_height +
-    #             config.nobles_tile_size + config.nobles_tile_spacing
-    #         )
+    def draw(self, x, y):
+        for i, tile in enumerate(self.tiles):
+            tile.draw(
+                x + i * (config.tile_size + config.tile_spacing),
+                y
+            )
 
 
 class Table(object):
@@ -202,13 +160,12 @@ class Table(object):
     Central playing area - shared space for all players
     Contains all game components, apart from what's in the players' hands
     """
-    def __init__(self, chip_stack_set, card_decks):
-        self.chip_stack_set = chip_stack_set
-        # TODO Make consistent: stack_set and decks (deck_sets?)
+    def __init__(self, chip_stacks, card_decks, card_grid, tiles):
+        self.chip_stacks = chip_stacks
         self.card_decks = card_decks
+        self.card_grid = card_grid
+        self.tiles = tiles
         # self.players = []
-        # self.central_table_area = \
-        #     CentralTableArea(player_count=self.player_count)
 
     # @property
     # def player_count(self):
@@ -237,93 +194,30 @@ class Table(object):
     def draw(self):
         self._draw_tablecloth()
         self._draw_player_corners()
-        self.chip_stack_set.draw(config.central_area_x, config.central_area_y)
+        self.chip_stacks.draw(
+            config.central_area_x + config.chip_stack_x,
+            config.central_area_y + config.chip_stack_y
+        )
         for i, card_deck in enumerate(self.card_decks):
             card_deck.draw(
                 config.central_area_x + config.card_decks_location_x,
                 config.central_area_y + config.card_decks_location_y +
-                    i * (config.card_height + config.card_spacing)
+                i * (config.card_height + config.card_spacing)
             )
-        # self.central_table_area.draw(config.central_area_x,
-        #                              config.central_area_y)
 
-    # def starter_deck(raw_row):
-    #     """
-    #     parses the raw_row data into a list of Card instances
-    #
-    #     :param raw_row: string with e.g.
-    #         7 white: 1 blue, 4 points
-    #         7 black: 1 white, 4 points
-    #         7 blue: 1 green, 4 points
-    #
-    #     :return: [Card objects]
-    #     """
-    #
-    #     # TODO: costs consist of count & type, reward consist of type
-    #     # type is specified by a Chip(..) instance
-    #
-    #     deck = []
-    #     for line in [l.strip() for l in raw_row.split("\n") if l.strip()]:
-    #         deck.append(card_factory(raw_row))
-    #
-    #         # e.g. 7 white: 1 blue, 4 points
-    #     shuffle(deck)
-    #
-    #     return deck
-    #
+        for i, card_row in enumerate(self.card_grid):
+            for j, card in enumerate(card_row):
+                card.draw(
+                    config.central_area_x + config.card_decks_location_x +
+                    (j + 1) * (config.card_width + config.card_spacing),
+                    config.central_area_y + config.card_decks_location_y +
+                    i * (config.card_height + config.card_spacing)
+                )
 
-
-
-class ChipFactory():
-    def __call__(self, colour_name=None, chip_type=None):
-        if colour_name:
-            chip_type, colour = {
-                'red': (ChipType.red_ruby, ColourPalette.red_chip),
-                'blue': (ChipType.blue_sapphire, ColourPalette.blue_chip),
-                'white': (ChipType.white_diamond, ColourPalette.white_chip),
-                'green': (ChipType.green_emerald, ColourPalette.green_chip),
-                'black': (ChipType.black_onyx, ColourPalette.black_chip),
-                'yellow': (ChipType.yellow_gold, ColourPalette.yellow_chip)
-            }[colour_name]
-
-        colour = {
-                ChipType.red_ruby: ColourPalette.red_chip,
-                ChipType.blue_sapphire: ColourPalette.blue_chip,
-                ChipType.white_diamond: ColourPalette.white_chip,
-                ChipType.green_emerald: ColourPalette.green_chip,
-                ChipType.black_onyx: ColourPalette.black_chip,
-                ChipType.yellow_gold: ColourPalette.yellow_chip
-            }[chip_type]
-        return Chip(chip_type, colour)
-
-
-class CardFactory():
-    def __call__(self, card_details):
-        return Card()
-        # raw_cost, reward_text = card_details.split(':')
-        #
-        # # Not all cards give points
-        # if "," in reward_text:
-        #     # e.g. 5 black, 3 red, 3 black, 3 white: 1 blue, 3 points
-        #     reward_chip, reward_points = reward_text.split(",")
-        #     reward_chip = ChipStack()
-        #     chip_factory(colour_name=reward_chip.split(" ")[1])
-        #     reward_points = int(reward_points.strip().split(" ")[0])
-        #
-        # else:
-        # # e.g. 7 white: 1 blue, 4 points
-        #     reward_chip = chip_factory(colour_name=reward_text.split(" ")[1])
-        #     reward_points = 0
-        #
-        # deck.append(
-        #     card_factory()
-        # Card(
-        #     raw_cost=raw_cost,
-        #     jewel_type=reward_chip,
-        #     points=reward_points
-        # ))
-
-
+        self.tiles.draw(
+            config.central_area_x + config.tiles_row_x,
+            config.central_area_y + config.tiles_row_y
+        )
 
 
 class ComponentFactory(AbstractFactory):
@@ -346,35 +240,36 @@ class ComponentFactory(AbstractFactory):
             'yellow': (ChipType.yellow_gold, ColourPalette.yellow_chip)
         }[details])
 
-    def card_factory(self, details):
-        pass
+    @staticmethod
+    def card_factory(details):
+        raw_cost, reward_text = details.split(':')
 
-    def tile_factory(self, details):
-        pass
+        if "," in reward_text:
+            # e.g. 5 black, 3 red, 3 black, 3 white: 1 blue, 3 points
+            raw_reward_chip, raw_reward_points = reward_text.split(",")
+            reward_points = int(raw_reward_points)
+        else:
+            raw_reward_chip = reward_text
+            reward_points = 0
 
+        component_factory = ComponentFactory()
+        reward_chip = component_factory('chip', raw_reward_chip)
 
-class ChipStackSetFactory(AbstractFactory):
-    def __call__(self, raw_stack_data):
-        # e.g. "5 black, 3 red, 3 black, 3 white"
-        # name_to_type = {
-        #     'white': ChipType.white_diamond,
-        #     'red': ChipType.red_ruby,
-        #     'blue': ChipType.blue_sapphire,
-        #     'black': ChipType.black_onyx,
-        #     'green': ChipType.green_emerald,
-        #     'yellow': ChipType.yellow_gold
-        # }
-        chip_stacks = []
+        component_collection_factory = ComponentCollectionFactory()
+        chip_cost = component_collection_factory('chip', raw_cost)
 
-        chip_factory = ChipFactory()
-        for stack_data in raw_stack_data.split(","):
-            chip_count, name = stack_data.strip().split(" ")
-            # chip_type = name_to_type[name.strip()]
-            chip_stacks.append(
-                ChipStack(chip=chip_factory(name), chip_count=chip_count)
-            )
-        return ChipStackSet(chip_stacks)
+        return Card(
+            chip_cost=chip_cost,
+            reward_chip=reward_chip,
+            points=reward_points
+        )
 
+    @staticmethod
+    def tile_factory(details):
+        raw_cost, raw_points = details.split(':')
+        component_collection_factory = ComponentCollectionFactory()
+        chip_cost = component_collection_factory('chip', raw_cost.strip())
+        return Tile(chip_cost=chip_cost, points=int(raw_points))
 
 
 class ComponentCollectionFactory(AbstractFactory):
@@ -392,61 +287,83 @@ class ComponentCollectionFactory(AbstractFactory):
     def chip_collection_factory(self, details):
         chip_stacks = []
 
-        chip_factory = ChipFactory()
-        for stack_data in raw_stack_data.split(","):
-            chip_count, name = stack_data.strip().split(" ")
-            # chip_type = name_to_type[name.strip()]
+        for stack_data in details.split(","):
+            chip_count, colour_name = stack_data.strip().split(" ")
             chip_stacks.append(
-                ChipStack(chip=chip_factory(name), chip_count=chip_count)
+                ChipStack(
+                    chip=self.component_factory('chip', colour_name),
+                    chip_count=chip_count
+                )
             )
         return ChipStackCollection(chip_stacks)
 
-
     def card_collection_factory(self, details):
-        pass
+        return CardDeck(
+            [self.component_factory('card', card_details)
+             for card_details in details.split('\n') if card_details]
+        )
 
     def tile_collection_factory(self, details):
-        pass
+        return TileCollection([
+                   self.component_factory('tile', details='%s:3' % raw_cost)
+                   for raw_cost in details
+                   ])
 
 
-class TableFactory():
-    def __init__(self):
-        # Create all the elements that come in the box
-        # self.card_decks = ..
-        self.chip_stacks = []
-
-    # def deal(self, players):
-    #     # Create the players, give them their hands
-
+class TableFactory(object):
     def __call__(self, player_count):
-        # table.players = [Player(name=p) for p in players]
-        # self.deal(players=players)
-
-        # Chips: 7 for 4 player, 5 for 3 player, 4 for 2 player
-        # plus 5 gold
         component_collection_factory = ComponentCollectionFactory()
 
-        raw_chips = {
-            4: '7 white, 7 blue, 7 red, 7 green, 7 black, 5 yellow',
-            3: '5 white, 5 blue, 5 red, 5 green, 5 black, 5 yellow',
-            2: '4 white, 4 blue, 4 red, 4 green, 4 black, 5 yellow',
-        }[player_count]
+        # 7 for 4 player, 5 for 3 player, 4 for 2 player plus 5 gold
+        chip_stacks = component_collection_factory(
+            'chip',
+            {
+                4: '7 white, 7 blue, 7 red, 7 green, 7 black, 5 yellow',
+                3: '5 white, 5 blue, 5 red, 5 green, 5 black, 5 yellow',
+                2: '4 white, 4 blue, 4 red, 4 green, 4 black, 5 yellow',
+            }[player_count]
+        )
 
-        # chip_stack_set_factory = ChipStackSetFactory()
-        # chip_stack_set = chip_stack_set_factory(raw_chip_set)
+        card_decks = [
+            component_collection_factory('card', raw_cards)
+            for raw_cards in (row_1, row_2, row_3)
+            ]
 
-        chip_stacks = component_collection_factory('chip', raw_chips)
+        card_grid = []
+        for card_deck in card_decks:
+            card_grid.append([card_deck.pop() for _ in range(4)])
 
-        # card_deck_factory = CardDeckFactory()
-        card_decks = []
-        for raw_cards in (row_1, row_2, row_3):
-            card_decks.append(component_collection_factory('card', raw_cards))
+        tiles = component_collection_factory(
+            'tile',
+            [
+                '4 blue, 4 green',
+                '4 white, 4 red',
+                '4 black, 4 red',
+                '4 green, 4 red',
+                '4 black, 4 green',
+                '4 white, 4 black',
+                '4 blue, 4 white',
+                '3 green, 3 blue, 3 red',
+                '3 blue, 3 green, 3 white',
+                '3 black, 3 red, 3 white',
+                '3 black, 3 red, 3 green',
+                '3 blue, 3 white, 3 red',
+                '3 black, 3 red, 3 blue',
+                '3 black, 3 white, 3 blue'
+            ]
+        )
+        tiles.shuffle_and_limit(player_count + 1)
 
-        table = Table(chip_stacks=chip_stacks, card_decks=card_decks)
+        table = Table(
+            chip_stacks=chip_stacks,
+            card_decks=card_decks,
+            card_grid=card_grid,
+            tiles=tiles
+        )
         return table
 
 
-class Player(AbstractGameObject):
+class Player(object):
     def __init__(self, name):
         self.name = name
 

@@ -18,6 +18,7 @@ class ColourPalette(Enum):
     yellow_chip = 19
     blue_chip = 20
 
+
 def _scale_vertices(vertices):
     """
     Recursive scaling
@@ -41,9 +42,10 @@ def draw_rectangle(rectangle, colour):
                      rectangle)
 
 
-def draw_text(location, text, font_size=24, text_colour=None, reverse_colour=False):
+def draw_text(location, text, font_size=24, text_colour=None,
+              reverse_colour=False):
     myfont = pygame.font.SysFont("monospace",
-                                 font_size * config.scaling_factor)
+                                 int(font_size * config.scaling_factor))
 
     text_colour = easel.colour(text_colour) if text_colour \
         else (255, 255, 0, 255)
@@ -67,7 +69,7 @@ class Easel(object):
     colour_palette = {
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),
         ColourPalette.corners: pygame.Color(70, 180, 70, 255),
-        ColourPalette.card_background: pygame.Color(20, 20, 50, 255),
+        ColourPalette.card_background: pygame.Color(60, 60, 100, 255),
         ColourPalette.card_deck_background: pygame.Color(10, 70, 10, 255),
         ColourPalette.green_chip: pygame.Color(0, 127, 0, 255),
         ColourPalette.red_chip: pygame.Color(127, 0, 0, 255),

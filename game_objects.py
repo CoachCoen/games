@@ -4,10 +4,15 @@ from data import ChipType
 from data import row_1, row_2, row_3
 
 from settings import config
+from settings import Vector
 
 from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
 from drawing_surface import ColourPalette
+from buttons import buttons
+
+# TODO: Remove this once no longer needed
+from game_actions import PrintAction
 
 
 class AbstractFactory(object):
@@ -29,25 +34,30 @@ class Card(AbstractGameComponent):
         self.chip_cost = chip_cost
         self.reward_chip = reward_chip
         self.points = points
+        self.location = None
 
-    def draw(self, x, y):
-        draw_rectangle((x, y, config.card_width, config.card_height),
+    def embody(self, location):
+        self.location = location
+        buttons.add(
+            self.location.to_rectangle(config.card_size),
+            PrintAction('Card clicked, %s' % self)
+        )
+
+        self._draw()
+
+    def _draw(self):
+        draw_rectangle(self.location.to_rectangle(config.card_size),
                        ColourPalette.card_background)
         if self.points:
-            draw_text(
-                (x + config.points_location_x, y + config.points_location_y),
-                str(self.points)
-            )
+            draw_text(self.location + config.points_location, str(self.points))
 
-        self.chip_cost.draw(
-            x + config.cost_location_x,
-            y + config.cost_location_y,
+        self.chip_cost.embody(
+            self.location + config.cost_location,
             scaling_factor=config.chip_cost_scaling
         )
 
-        self.reward_chip.draw(
-            x + config.reward_chip_x,
-            y + config.reward_chip_y,
+        self.reward_chip.embody(
+            self.location + config.reward_chip_location,
             scaling_factor=config.reward_chip_scaling
         )
 
@@ -56,10 +66,16 @@ class Chip(AbstractGameComponent):
     def __init__(self, chip_type, colour):
         self.chip_type = chip_type
         self.colour = colour
+        self.location = None
 
-    def draw(self, x, y, scaling_factor=1, player_order=None):
+    # TODO Better way to handle scaling factor and player_order (context handler?)
+    def embody(self, location, scaling_factor=1, player_order=None):
+        self.location = location
+        self._draw(scaling_factor, player_order)
+
+    def _draw(self, scaling_factor=1, player_order=None):
         draw_circle(
-            (x, y),
+            self.location,
             int(config.chip_size * scaling_factor),
             self.colour,
             player_order=player_order
@@ -70,37 +86,64 @@ class Tile(AbstractGameComponent):
     def __init__(self, chip_cost, points):
         self.chip_cost = chip_cost
         self.points = points
+        self.location = None
 
-    def draw(self, x, y):
+    def embody(self, location):
+        self.location = location
+        self._draw()
+        self.chip_cost.embody(self.location + config.cost_location,
+                              scaling_factor=config.chip_cost_scaling
+                              )
+
+    def _draw(self):
         draw_rectangle(
-            (x, y, config.tile_size, config.tile_size),
+            self.location.to_rectangle(config.tile_size),
             ColourPalette.card_background
         )
-        self.chip_cost.draw(
-            x + config.cost_location_x,
-            y + config.cost_location_y,
-            scaling_factor=config.chip_cost_scaling
-        )
-        draw_text(
-            (x + config.points_location_x, y + config.points_location_y),
-            str(self.points)
-        )
+        draw_text(self.location + config.points_location,
+                  str(self.points)
+                  )
 
 
 class AbstractGameComponentCollection(object):
     pass
 
 
+# TODO Move this somewhere more sensible
+def circle_location_to_rectangle(location, size):
+    return (location.x - size, location.y - size,
+            2 * size, 2 * size)
+
+
 class ChipStack(AbstractGameComponentCollection):
     def __init__(self, chip, chip_count):
         self.chip = chip
         self.chip_count = chip_count
+        self.location = None
 
-    def draw(self, x, y, scaling_factor=1, player_order=None):
+    def embody(self, location, scaling_factor=1,
+               player_order=None, can_click=False):
+        self.location = location
         if self.chip_count:
-            self.chip.draw(x, y, scaling_factor, player_order=player_order)
+            self.chip.embody(
+                self.location,
+                scaling_factor,
+                player_order=player_order
+            )
+            if can_click:
+                buttons.add(
+                    circle_location_to_rectangle(
+                        self.location, config.chip_size * scaling_factor
+                    ),
+                    PrintAction('ChipStack clicked, %s' % self)
+                )
+
+        self._draw(scaling_factor, player_order)
+
+    def _draw(self, scaling_factor=1, player_order=None):
+        if self.chip_count:
             draw_text(
-                (x - 8, y - 12),
+                self.location - Vector(8, 12),
                 str(self.chip_count),
                 text_colour=self.chip.colour,
                 reverse_colour=True,
@@ -112,6 +155,7 @@ class ChipStack(AbstractGameComponentCollection):
 class ChipStackCollection(AbstractGameComponentCollection):
     def __init__(self, chip_stacks):
         self.chip_stacks = chip_stacks
+        self.location = None
 
     def get_stack_for_chip_type(self, chip_type):
         for chip_stack in self.chip_stacks:
@@ -119,30 +163,37 @@ class ChipStackCollection(AbstractGameComponentCollection):
                 return chip_stack
         return None
 
-    def draw(self, x, y, scaling_factor=1):
+    def embody(self, location, scaling_factor=1, can_click=False):
+        self.location = location
         for i, chip_stack in enumerate(self.chip_stacks):
-            chip_stack.draw(
-                x,
-                int(y + i * (config.chip_size * 2 + config.chip_spacing)
-                    * scaling_factor),
-                scaling_factor
+            chip_stack.embody(
+                self.location +
+                Vector(0, i * (config.chip_size * 2 + config.chip_spacing)
+                       * scaling_factor),
+                scaling_factor=scaling_factor,
+                can_click=can_click
             )
 
 
 class CardDeck(AbstractGameComponentCollection):
     def __init__(self, cards):
+        self.location = None
         self.cards = cards
         shuffle(self.cards)
 
     def pop(self):
         return self.cards.pop()
 
-    def draw(self, x, y):
-        draw_rectangle((x, y, config.card_width, config.card_height),
+    def embody(self, location):
+        self.location = location
+        self._draw()
+
+    def _draw(self):
+        draw_rectangle(self.location.to_rectangle(config.card_size),
                        ColourPalette.card_deck_background)
         if len(self.cards):
             draw_text(
-                (x + config.points_location_x, y + config.points_location_y),
+                self.location + config.points_location,
                 str(len(self.cards))
             )
 
@@ -158,6 +209,7 @@ class CardDeck(AbstractGameComponentCollection):
 class TileCollection(AbstractGameComponentCollection):
     def __init__(self, tiles):
         self.tiles = tiles
+        self.location = None
 
     def shuffle_and_limit(self, count):
         shuffle(self.tiles)
@@ -167,11 +219,12 @@ class TileCollection(AbstractGameComponentCollection):
     def points(self):
         return sum(t.points for t in self.tiles)
 
-    def draw(self, x, y):
+    def embody(self, location):
+        self.location = location
         for i, tile in enumerate(self.tiles):
-            tile.draw(
-                x + i * (config.tile_size + config.tile_spacing),
-                y
+            tile.embody(
+                self.location +
+                Vector(i * (config.tile_size.x + config.tile_spacing), 0)
             )
 
 
@@ -193,51 +246,56 @@ class Table(object):
     #
     @staticmethod
     def _draw_tablecloth():
-        draw_rectangle((0, 0, config.tabletop_width, config.tabletop_height),
+        draw_rectangle((0, 0) + tuple(config.tabletop_size),
                        ColourPalette.table_cloth)
 
     @staticmethod
     def _draw_player_corners():
         for (x, y) in [
             (0, 0),
-            (0, config.tabletop_height),
-            (config.tabletop_width, config.tabletop_height),
-            (config.tabletop_width, 0)
+            (0, config.tabletop_size.y),
+            (config.tabletop_size.x, config.tabletop_size.y),
+            (config.tabletop_size.x, 0)
         ]:
             draw_pologon([
-                (x, abs(y - config.tabletop_height / 2.2)),
-                (abs(x - config.tabletop_width / 2.2), y),
+                (x, abs(y - config.tabletop_size.x/ 2.2)),
+                (abs(x - config.tabletop_size.y/ 2.2), y),
                 (x, y)],
                 ColourPalette.corners
             )
 
-    def draw(self):
-        self._draw_tablecloth()
-        self._draw_player_corners()
-        self.chip_stacks.draw(
-            config.central_area_x + config.chip_stack_x,
-            config.central_area_y + config.chip_stack_y
+    def embody(self):
+        self._draw()
+        self.chip_stacks.embody(
+            config.central_area_location +
+            config.chip_stack_location,
+            can_click=True
         )
         for i, card_deck in enumerate(self.card_decks):
-            card_deck.draw(
-                config.central_area_x + config.card_decks_location_x,
-                config.central_area_y + config.card_decks_location_y +
-                i * (config.card_height + config.card_spacing)
-            )
+            card_deck.embody(config.central_area_location +
+                             config.card_decks_location +
+                             Vector(0, i * (config.card_size.y +
+                                            config.card_spacing)))
 
         for i, card_row in enumerate(self.card_grid):
             for j, card in enumerate(card_row):
-                card.draw(
-                    config.central_area_x + config.card_decks_location_x +
-                    (j + 1) * (config.card_width + config.card_spacing),
-                    config.central_area_y + config.card_decks_location_y +
-                    i * (config.card_height + config.card_spacing)
+                card.embody(
+                    config.central_area_location +
+                    config.card_decks_location +
+                    Vector(
+                        (j + 1) * (config.card_size.x + config.card_spacing),
+                        i * (config.card_size.y + config.card_spacing))
                 )
 
-        self.tiles.draw(
-            config.central_area_x + config.tiles_row_x,
-            config.central_area_y + config.tiles_row_y
+        self.tiles.embody(
+            config.central_area_location +
+            config.tiles_row_location
         )
+
+
+    def _draw(self):
+        self._draw_tablecloth()
+        self._draw_player_corners()
 
 
 class ComponentFactory(AbstractFactory):
@@ -401,21 +459,24 @@ class Player(object):
     def points(self):
         return self.cards.points + self.tiles.points
 
+    def embody(self):
+        self._draw()
+
     # TODO: Refactor this - messy?
-    def draw(self):
+    def _draw(self):
         draw_rectangle(
-            (0, 0, config.player_area_width, config.player_area_height),
+            (0, 0, config.player_area_size.x, config.player_area_size.y),
             player_order=self.player_order,
             colour=ColourPalette.player_area
         )
         draw_text(
-            (config.player_name_x, config.player_name_y),
+            (config.player_name_location.x, config.player_name_location.y),
             self.name,
             player_order=self.player_order
         )
         if self.points:
             draw_text(
-                (config.player_points_x, config.player_points_y),
+                (config.player_points_location.x, config.player_points_location.y),
                 str(self.points),
                 player_order=self.player_order
             )
@@ -426,10 +487,10 @@ class Player(object):
 
             if total:
                 location = (
-                    config.player_chip_stack_x +
+                    config.player_chip_stack_location.x +
                     i * (config.chip_size + config.chip_spacing) -
                     0.5 * config.chip_size,
-                    config.player_chip_stack_y + config.chip_size,
+                    config.player_chip_stack_location.y + config.chip_size,
                     config.chip_size, config.chip_size
                 )
                 draw_rectangle(
@@ -445,21 +506,21 @@ class Player(object):
                     reverse_colour=True
                 )
 
+            # TODO: Move chip_stack.embody into self.embody()
             if chip_stack.chip_count:
-                chip_stack.draw(
-                    config.player_chip_stack_x +
-                    i * (config.chip_size + config.chip_spacing),
-                    config.player_chip_stack_y,
+                chip_stack.embody(
+                    config.player_chip_stack_location +
+                    Vector(i * (config.chip_size + config.chip_spacing), 0),
                     scaling_factor=config.chip_cost_scaling,
                     player_order=self.player_order
                 )
                 total += chip_stack.chip_count
 
             if total:
-                location = (config.player_chip_stack_x +
+                location = (config.player_chip_stack_location.x +
                             i * (config.chip_size + config.chip_spacing) -
                             0.5 * config.chip_size,
-                            config.player_chip_stack_y +
+                            config.player_chip_stack_location.y +
                             2.5 * config.chip_size,
                             config.chip_size, config.chip_size)
 
@@ -480,11 +541,10 @@ class Game(object):
     def player_count(self):
         return len(self.players)
 
-    def draw(self):
-        self.table.draw()
+    def embody(self):
+        self.table.embody()
         for player in self.players:
-            player.draw()
-
+            player.embody()
 
 class GameFactory(object):
     def __init__(self):

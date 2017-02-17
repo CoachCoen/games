@@ -3,6 +3,7 @@ import pygame
 from drawing_surface import easel
 from game_objects import GameFactory
 from settings import config
+from buttons import buttons
 
 
 class App:
@@ -12,8 +13,8 @@ class App:
         self.game_state = None
         self.size = \
             self.weight, self.height = \
-            config.tabletop_width * config.scaling_factor, \
-            config.tabletop_height * config.scaling_factor
+            config.tabletop_size.x * config.scaling_factor, \
+            config.tabletop_size.y * config.scaling_factor
 
     def on_init(self):
         pygame.init()
@@ -22,17 +23,18 @@ class App:
         )
         self._running = True
         easel.init_easel(self._display_surf)
-        # table = Table(players=['Coen', 'Sue', 'John'])
         game_factory = GameFactory()
         the_game = game_factory(
             player_names=['Caroline', 'Nigel', 'Issie', 'Coen']
         )
-        the_game.draw()
+        the_game.embody()
         pygame.display.flip()
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
             self._running = False
+        if event.type == pygame.MOUSEBUTTONUP:
+            buttons.process_mouse_click()
 
     def on_loop(self):
         pass

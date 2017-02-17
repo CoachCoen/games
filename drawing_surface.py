@@ -2,8 +2,7 @@ import pygame
 
 from enum import Enum
 
-# from data import JewelType
-from settings import config
+from settings import config, Vector
 
 
 class ColourPalette(Enum):
@@ -19,14 +18,21 @@ class ColourPalette(Enum):
     blue_chip = 20
     player_area = 21
 
+
 def _translate_to_player(player_order, location):
     left = 0 if player_order in [0, 2] \
-        else config.tabletop_width - config.player_area_width
+        else config.tabletop_size.x - config.player_area_size.x
     top = 0 if player_order in [0, 1] \
-        else config.tabletop_height - config.player_area_height
+        else config.tabletop_size.y - config.player_area_size.y
+
+    # TODO Tidy this up?
+    if isinstance(location, Vector):
+        return location + Vector(left, top)
+
     return (location[0] + left, location[1] + top) + location[2:]
 
-def _scale_vertices(vertices):
+
+def scale_vertices(vertices):
     """
     Recursive scaling
     :param vertices:
@@ -34,11 +40,11 @@ def _scale_vertices(vertices):
     """
     if isinstance(vertices, (int, float)):
         return config.scaling_factor * vertices
-    return [_scale_vertices(i) for i in vertices]
+    return [scale_vertices(i) for i in vertices]
 
 
 def draw_pologon(vertices, colour):
-    vertices = _scale_vertices(vertices)
+    vertices = scale_vertices(vertices)
     pygame.draw.polygon(easel.surface, easel.colour(colour),
                         vertices, 0)
 
@@ -49,7 +55,7 @@ def draw_rectangle(rectangle, colour, player_order = None):
             player_order=player_order, location=rectangle
         )
 
-    rectangle = _scale_vertices(rectangle)
+    rectangle = scale_vertices(rectangle)
     pygame.draw.rect(easel.surface, easel.colour(colour),
                      rectangle)
 
@@ -72,7 +78,7 @@ def draw_text(location, text, font_size=24, text_colour=None,
             player_order=player_order, location=location
         )
 
-    location = _scale_vertices(location)
+    location = scale_vertices(location)
     easel.surface.blit(label, location)
 
 
@@ -81,9 +87,9 @@ def draw_circle(location, radius, colour, player_order=None):
         location = _translate_to_player(
             player_order=player_order, location=location
         )
-    location = _scale_vertices(location)
+    location = scale_vertices(location)
     pygame.draw.circle(easel.surface, easel.colour(colour), location,
-                       radius * config.scaling_factor)
+                       int(radius * config.scaling_factor))
 
 
 class Easel(object):

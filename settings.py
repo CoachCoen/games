@@ -47,4 +47,16 @@ class Config(object):
     reward_chip_y = 20
     reward_chip_scaling = 0.7
 
+    player_area_width = 300
+    player_area_height = 180
+
+    player_name_x = 5
+    player_name_y = 5
+
+    player_chip_stack_x = 40
+    player_chip_stack_y = 55
+
+    player_points_x = player_area_width - 40
+    player_points_y = 20
+
 config = Config()

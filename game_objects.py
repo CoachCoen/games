@@ -57,11 +57,12 @@ class Chip(AbstractGameComponent):
         self.chip_type = chip_type
         self.colour = colour
 
-    def draw(self, x, y, scaling_factor=1):
+    def draw(self, x, y, scaling_factor=1, player_order=None):
         draw_circle(
             (x, y),
             int(config.chip_size * scaling_factor),
-            self.colour
+            self.colour,
+            player_order=player_order
         )
 
 
@@ -95,21 +96,28 @@ class ChipStack(AbstractGameComponentCollection):
         self.chip = chip
         self.chip_count = chip_count
 
-    def draw(self, x, y, scaling_factor=1):
+    def draw(self, x, y, scaling_factor=1, player_order=None):
         if self.chip_count:
-            self.chip.draw(x, y, scaling_factor)
+            self.chip.draw(x, y, scaling_factor, player_order=player_order)
             draw_text(
                 (x - 8, y - 12),
                 str(self.chip_count),
                 text_colour=self.chip.colour,
                 reverse_colour=True,
-                font_size=config.chip_font_size * scaling_factor
+                font_size=config.chip_font_size * scaling_factor,
+                player_order=player_order
             )
 
 
 class ChipStackCollection(AbstractGameComponentCollection):
     def __init__(self, chip_stacks):
         self.chip_stacks = chip_stacks
+
+    def get_stack_for_chip_type(self, chip_type):
+        for chip_stack in self.chip_stacks:
+            if chip_stack.chip.chip_type == chip_type:
+                return chip_stack
+        return None
 
     def draw(self, x, y, scaling_factor=1):
         for i, chip_stack in enumerate(self.chip_stacks):
@@ -138,6 +146,14 @@ class CardDeck(AbstractGameComponentCollection):
                 str(len(self.cards))
             )
 
+    def count_for_reward_type(self, chip_type):
+        return sum([1 for c in self.cards
+                    if c.reward_chip.chip_type == chip_type])
+
+    @property
+    def points(self):
+        return sum(c.points for c in self.cards)
+
 
 class TileCollection(AbstractGameComponentCollection):
     def __init__(self, tiles):
@@ -146,6 +162,10 @@ class TileCollection(AbstractGameComponentCollection):
     def shuffle_and_limit(self, count):
         shuffle(self.tiles)
         self.tiles = self.tiles[:count]
+
+    @property
+    def points(self):
+        return sum(t.points for t in self.tiles)
 
     def draw(self, x, y):
         for i, tile in enumerate(self.tiles):
@@ -292,7 +312,7 @@ class ComponentCollectionFactory(AbstractFactory):
             chip_stacks.append(
                 ChipStack(
                     chip=self.component_factory('chip', colour_name),
-                    chip_count=chip_count
+                    chip_count=int(chip_count)
                 )
             )
         return ChipStackCollection(chip_stacks)
@@ -364,8 +384,91 @@ class TableFactory(object):
 
 
 class Player(object):
-    def __init__(self, name):
+    def __init__(self, name, player_order):
         self.name = name
+        self.player_order = player_order
+
+        component_collection_factory = ComponentCollectionFactory()
+        self.cards = component_collection_factory('card', row_1)
+        # self.cards = component_collection_factory('card', '')
+        # TODO: Remove this when done testing showing the players' hands
+        self.chip_stacks = component_collection_factory(
+            'chip', '1 blue,1 white,1 black,1 green,1 red,1 yellow'
+        )
+        self.tiles = component_collection_factory('tile', '')
+
+    @property
+    def points(self):
+        return self.cards.points + self.tiles.points
+
+    # TODO: Refactor this - messy?
+    def draw(self):
+        draw_rectangle(
+            (0, 0, config.player_area_width, config.player_area_height),
+            player_order=self.player_order,
+            colour=ColourPalette.player_area
+        )
+        draw_text(
+            (config.player_name_x, config.player_name_y),
+            self.name,
+            player_order=self.player_order
+        )
+        if self.points:
+            draw_text(
+                (config.player_points_x, config.player_points_y),
+                str(self.points),
+                player_order=self.player_order
+            )
+
+        for i, chip_type in enumerate(ChipType):
+            total = self.cards.count_for_reward_type(chip_type)
+            chip_stack = self.chip_stacks.get_stack_for_chip_type(chip_type)
+
+            if total:
+                location = (
+                    config.player_chip_stack_x +
+                    i * (config.chip_size + config.chip_spacing) -
+                    0.5 * config.chip_size,
+                    config.player_chip_stack_y + config.chip_size,
+                    config.chip_size, config.chip_size
+                )
+                draw_rectangle(
+                    location,
+                    colour=chip_stack.chip.colour,
+                    player_order=self.player_order)
+                draw_text(
+                    location,
+                    str(total),
+                    player_order=self.player_order,
+                    text_colour=chip_stack.chip.colour,
+                    font_size=config.chip_cost_scaling * config.chip_font_size,
+                    reverse_colour=True
+                )
+
+            if chip_stack.chip_count:
+                chip_stack.draw(
+                    config.player_chip_stack_x +
+                    i * (config.chip_size + config.chip_spacing),
+                    config.player_chip_stack_y,
+                    scaling_factor=config.chip_cost_scaling,
+                    player_order=self.player_order
+                )
+                total += chip_stack.chip_count
+
+            if total:
+                location = (config.player_chip_stack_x +
+                            i * (config.chip_size + config.chip_spacing) -
+                            0.5 * config.chip_size,
+                            config.player_chip_stack_y +
+                            2.5 * config.chip_size,
+                            config.chip_size, config.chip_size)
+
+                draw_text(
+                    location,
+                    str(total),
+                    player_order=self.player_order,
+                    text_colour=chip_stack.chip.colour
+                )
 
 
 class Game(object):
@@ -379,6 +482,8 @@ class Game(object):
 
     def draw(self):
         self.table.draw()
+        for player in self.players:
+            player.draw()
 
 
 class GameFactory(object):
@@ -388,7 +493,8 @@ class GameFactory(object):
     def __call__(self, player_names):
         game = Game()
 
-        game.players = [Player(name) for name in player_names]
+        game.players = [Player(name, i)
+                        for (i, name) in enumerate(player_names)]
         table_factory = TableFactory()
         game.table = table_factory(game.player_count)
 

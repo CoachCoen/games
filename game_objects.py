@@ -14,19 +14,15 @@ from buttons import buttons
 # TODO: Remove this once no longer needed
 from game_actions import PrintAction
 
+from game_actions import TakeChip
+
 
 class AbstractFactory(object):
     pass
 
 
 class AbstractGameComponent(object):
-    def draw(self, x, y):
-        """
-        Draw this object at (x, y)
-        :param x: x-location
-        :param y: y-location
-        """
-        return NotImplemented
+    pass
 
 
 class Card(AbstractGameComponent):
@@ -121,6 +117,9 @@ class ChipStack(AbstractGameComponentCollection):
         self.chip_count = chip_count
         self.location = None
 
+    def take_one(self):
+        self.chip_count -= 1
+
     def embody(self, location, scaling_factor=1,
                player_order=None, can_click=False):
         self.location = location
@@ -135,7 +134,7 @@ class ChipStack(AbstractGameComponentCollection):
                     circle_location_to_rectangle(
                         self.location, config.chip_size * scaling_factor
                     ),
-                    PrintAction('ChipStack clicked, %s' % self)
+                    TakeChip(self)
                 )
 
         self._draw(scaling_factor, player_order)
@@ -258,8 +257,8 @@ class Table(object):
             (config.tabletop_size.x, 0)
         ]:
             draw_pologon([
-                (x, abs(y - config.tabletop_size.x/ 2.2)),
-                (abs(x - config.tabletop_size.y/ 2.2), y),
+                (x, abs(y - config.tabletop_size.x / 2.2)),
+                (abs(x - config.tabletop_size.y / 2.2), y),
                 (x, y)],
                 ColourPalette.corners
             )
@@ -291,7 +290,6 @@ class Table(object):
             config.central_area_location +
             config.tiles_row_location
         )
-
 
     def _draw(self):
         self._draw_tablecloth()
@@ -366,13 +364,14 @@ class ComponentCollectionFactory(AbstractFactory):
         chip_stacks = []
 
         for stack_data in details.split(","):
-            chip_count, colour_name = stack_data.strip().split(" ")
-            chip_stacks.append(
-                ChipStack(
-                    chip=self.component_factory('chip', colour_name),
-                    chip_count=int(chip_count)
+            if stack_data:
+                chip_count, colour_name = stack_data.strip().split(" ")
+                chip_stacks.append(
+                    ChipStack(
+                        chip=self.component_factory('chip', colour_name),
+                        chip_count=int(chip_count)
+                    )
                 )
-            )
         return ChipStackCollection(chip_stacks)
 
     def card_collection_factory(self, details):
@@ -439,123 +438,3 @@ class TableFactory(object):
             tiles=tiles
         )
         return table
-
-
-class Player(object):
-    def __init__(self, name, player_order):
-        self.name = name
-        self.player_order = player_order
-
-        component_collection_factory = ComponentCollectionFactory()
-        self.cards = component_collection_factory('card', row_1)
-        # self.cards = component_collection_factory('card', '')
-        # TODO: Remove this when done testing showing the players' hands
-        self.chip_stacks = component_collection_factory(
-            'chip', '1 blue,1 white,1 black,1 green,1 red,1 yellow'
-        )
-        self.tiles = component_collection_factory('tile', '')
-
-    @property
-    def points(self):
-        return self.cards.points + self.tiles.points
-
-    def embody(self):
-        self._draw()
-
-    # TODO: Refactor this - messy?
-    def _draw(self):
-        draw_rectangle(
-            (0, 0, config.player_area_size.x, config.player_area_size.y),
-            player_order=self.player_order,
-            colour=ColourPalette.player_area
-        )
-        draw_text(
-            (config.player_name_location.x, config.player_name_location.y),
-            self.name,
-            player_order=self.player_order
-        )
-        if self.points:
-            draw_text(
-                (config.player_points_location.x, config.player_points_location.y),
-                str(self.points),
-                player_order=self.player_order
-            )
-
-        for i, chip_type in enumerate(ChipType):
-            total = self.cards.count_for_reward_type(chip_type)
-            chip_stack = self.chip_stacks.get_stack_for_chip_type(chip_type)
-
-            if total:
-                location = (
-                    config.player_chip_stack_location.x +
-                    i * (config.chip_size + config.chip_spacing) -
-                    0.5 * config.chip_size,
-                    config.player_chip_stack_location.y + config.chip_size,
-                    config.chip_size, config.chip_size
-                )
-                draw_rectangle(
-                    location,
-                    colour=chip_stack.chip.colour,
-                    player_order=self.player_order)
-                draw_text(
-                    location,
-                    str(total),
-                    player_order=self.player_order,
-                    text_colour=chip_stack.chip.colour,
-                    font_size=config.chip_cost_scaling * config.chip_font_size,
-                    reverse_colour=True
-                )
-
-            # TODO: Move chip_stack.embody into self.embody()
-            if chip_stack.chip_count:
-                chip_stack.embody(
-                    config.player_chip_stack_location +
-                    Vector(i * (config.chip_size + config.chip_spacing), 0),
-                    scaling_factor=config.chip_cost_scaling,
-                    player_order=self.player_order
-                )
-                total += chip_stack.chip_count
-
-            if total:
-                location = (config.player_chip_stack_location.x +
-                            i * (config.chip_size + config.chip_spacing) -
-                            0.5 * config.chip_size,
-                            config.player_chip_stack_location.y +
-                            2.5 * config.chip_size,
-                            config.chip_size, config.chip_size)
-
-                draw_text(
-                    location,
-                    str(total),
-                    player_order=self.player_order,
-                    text_colour=chip_stack.chip.colour
-                )
-
-
-class Game(object):
-    def __init__(self):
-        self.table = None
-        self.players = None
-
-    @property
-    def player_count(self):
-        return len(self.players)
-
-    def embody(self):
-        self.table.embody()
-        for player in self.players:
-            player.embody()
-
-class GameFactory(object):
-    def __init__(self):
-        pass
-
-    def __call__(self, player_names):
-        game = Game()
-
-        game.players = [Player(name, i)
-                        for (i, name) in enumerate(player_names)]
-        table_factory = TableFactory()
-        game.table = table_factory(game.player_count)
-
-        return game

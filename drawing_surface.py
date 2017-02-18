@@ -17,6 +17,7 @@ class ColourPalette(Enum):
     yellow_chip = 19
     blue_chip = 20
     player_area = 21
+    holding_area = 22
 
 
 def _translate_to_player(player_order, location):
@@ -99,6 +100,7 @@ class Easel(object):
         ColourPalette.card_background: pygame.Color(60, 60, 100, 255),
         ColourPalette.card_deck_background: pygame.Color(10, 70, 10, 255),
         ColourPalette.player_area: pygame.Color(70, 70, 70, 70),
+        ColourPalette.holding_area: pygame.Color(120, 120, 120, 120),
         ColourPalette.green_chip: pygame.Color(0, 127, 0, 255),
         ColourPalette.red_chip: pygame.Color(127, 0, 0, 255),
         ColourPalette.black_chip: pygame.Color(10, 10, 10, 255),

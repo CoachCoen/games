@@ -10,11 +10,13 @@ class ButtonCollection(object):
     def add(self, rectangle, action):
         self.buttons.append(Button(rectangle, action))
 
-    def process_mouse_click(self):
+    def process_mouse_click(self, current_player):
         mouse_position = pygame.mouse.get_pos()
-        for button in self.buttons:
-            if button.clicked(mouse_position):
-                button.action.activate()
+        return any(
+                button.action.activate(current_player)
+                for button in self.buttons
+                if button.clicked(mouse_position)
+            )
 
 class Button(object):
     def __init__(self, rectangle, action):

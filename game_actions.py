@@ -1,15 +1,5 @@
-from holding_area import holding_area
-
 class AbstractAction(object):
     pass
-
-
-class PrintAction(AbstractAction):
-    def __init__(self, text):
-        self.text = text
-
-    def activate(self):
-        print(self.text)
 
 
 class MoveComponent(AbstractAction):
@@ -39,23 +29,44 @@ class PayCost(AbstractAction):
         pass
 
 
-class BuyCard(AbstractAction):
+class TakeCard(AbstractAction):
     # Pay cost
     # Move card
-    def __init__(self, card, player):
+    def __init__(self, card, holding_area):
         self.card = card
-        self.player = player
+        self.holding_area = holding_area
 
-    def activate(self):
-        pass
+    def activate(self, current_player):
+        self.card.source.card = None
+        self.holding_area.card = self.card
+        current_player.take_component()
+        return ['refresh_display']
+
+
+def return_card(holding_area, card):
+    card.source.card = card
+    holding_area.card = None
+
+
+class ReturnCard(AbstractAction):
+    def __init__(self, card, holding_area):
+        self.card = card
+        self.holding_area = holding_area
+
+    def activate(self, current_player):
+        return_card(self.holding_area, self.card)
+        current_player.return_component()
+        return ['refresh_display']
+
 
 class TakeChip(AbstractAction):
     """
     The current player takes a chip:
     move a chip from this chip stack to the holding area
     """
-    def __init__(self, chip_stack):
+    def __init__(self, chip_stack, holding_area):
         self.chip_stack = chip_stack
+        self.holding_area = holding_area
 
     def activate(self, current_player):
         """
@@ -65,6 +76,57 @@ class TakeChip(AbstractAction):
 
         # Move chip from supply to holding area
         self.chip_stack.take_one()
-        holding_area.add_chip(self.chip_stack.chip)
+        self.holding_area.add_chip(self.chip_stack.chip)
         current_player.take_component()
-        return True
+        return ['refresh_display']
+
+
+def return_chip(holding_area, chip):
+    holding_area.remove_chip(chip)
+    chip.source.add_one()
+
+
+class ReturnChip(AbstractAction):
+    """
+
+    """
+    def __init__(self, chip, holding_area):
+        self.chip = chip
+        self.holding_area = holding_area
+
+    def activate(self, current_player):
+        return_chip(self.holding_area, self.chip)
+        current_player.return_component()
+        return ['refresh_display']
+
+
+class Confirm(AbstractAction):
+    def __init__(self, holding_area):
+        self.holding_area = holding_area
+
+    def activate(self, current_player):
+        for chip in self.holding_area.chips:
+            self.holding_area.remove_chip(chip)
+            current_player.add_chip(chip)
+
+        if self.holding_area.card:
+            current_player.add_card(self.holding_area.card)
+            self.holding_area.card = None
+
+        return ['next_player', 'refresh_display']
+
+
+class Cancel(AbstractAction):
+    def __init__(self, holding_area):
+        self.holding_area = holding_area
+
+    def activate(self, current_player):
+        for chip in self.holding_area.chips:
+            return_chip(self.holding_area, chip)
+
+        if self.holding_area.card:
+            return_card(self.holding_area, self.holding_area.card)
+
+        current_player.cancel()
+        return ['refresh_display']
+

@@ -10,12 +10,10 @@ from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
 from drawing_surface import ColourPalette
 from buttons import buttons
+from holding_area import holding_area
 
-# TODO: Remove this once no longer needed
-from game_actions import PrintAction
-
-from game_actions import TakeChip
-
+from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard
+from game_state import game_state
 
 class AbstractFactory(object):
     pass
@@ -31,13 +29,16 @@ class Card(AbstractGameComponent):
         self.reward_chip = reward_chip
         self.points = points
         self.location = None
+        self.source = None
 
-    def embody(self, location):
+    def embody(self, location, can_return=False):
         self.location = location
+        action = ReturnCard(self, holding_area) if can_return \
+            else TakeCard(self, holding_area)
         buttons.add(
             self.location.to_rectangle(config.card_size),
-            PrintAction('Card clicked, %s' % self)
-        )
+            action
+        ).embody()
 
         self._draw()
 
@@ -58,16 +59,37 @@ class Card(AbstractGameComponent):
         )
 
 
+class CardSlot(object):
+    def __init__(self, card):
+        self.card = card
+        self.card.source = self
+        self.location = None
+
+    def embody(self, location):
+        self.location = location
+        if self.card:
+            self.card.embody(self.location)
+
+
 class Chip(AbstractGameComponent):
-    def __init__(self, chip_type, colour):
+    def __init__(self, chip_type, colour, source=None):
         self.chip_type = chip_type
         self.colour = colour
         self.location = None
+        self.source = source
 
     # TODO Better way to handle scaling factor and player_order (context handler?)
-    def embody(self, location, scaling_factor=1, player_order=None):
+    def embody(self, location, scaling_factor=1, player_order=None,
+               can_click=False):
         self.location = location
         self._draw(scaling_factor, player_order)
+        if can_click:
+            buttons.add(
+                circle_location_to_rectangle(
+                    self.location, config.chip_size * scaling_factor
+                ),
+                ReturnChip(self, holding_area)
+            )
 
     def _draw(self, scaling_factor=1, player_order=None):
         draw_circle(
@@ -114,28 +136,35 @@ def circle_location_to_rectangle(location, size):
 class ChipStack(AbstractGameComponentCollection):
     def __init__(self, chip, chip_count):
         self.chip = chip
+
+        # Remember where this came from,
+        # so we can return it half way through a turn
+        self.chip.source = self
         self.chip_count = chip_count
         self.location = None
 
     def take_one(self):
         self.chip_count -= 1
 
+    def add_one(self):
+        self.chip_count += 1
+
     def embody(self, location, scaling_factor=1,
                player_order=None, can_click=False):
         self.location = location
         if self.chip_count:
+            if can_click and self in game_state.valid_actions:
+                buttons.add(
+                    circle_location_to_rectangle(
+                        self.location, config.chip_size * scaling_factor
+                    ),
+                    TakeChip(self, holding_area)
+                ).embody()
             self.chip.embody(
                 self.location,
                 scaling_factor,
                 player_order=player_order
             )
-            if can_click:
-                buttons.add(
-                    circle_location_to_rectangle(
-                        self.location, config.chip_size * scaling_factor
-                    ),
-                    TakeChip(self)
-                )
 
         self._draw(scaling_factor, player_order)
 
@@ -155,6 +184,9 @@ class ChipStackCollection(AbstractGameComponentCollection):
     def __init__(self, chip_stacks):
         self.chip_stacks = chip_stacks
         self.location = None
+
+    def empty(self):
+        return all(c.chip_count == 0 for c in self.chip_stacks)
 
     def get_stack_for_chip_type(self, chip_type):
         for chip_stack in self.chip_stacks:
@@ -182,6 +214,9 @@ class CardDeck(AbstractGameComponentCollection):
 
     def pop(self):
         return self.cards.pop()
+
+    def add(self, card):
+        self.cards.append(card)
 
     def embody(self, location):
         self.location = location
@@ -268,7 +303,7 @@ class Table(object):
         self.chip_stacks.embody(
             config.central_area_location +
             config.chip_stack_location,
-            can_click=True
+            can_click=True,
         )
         for i, card_deck in enumerate(self.card_decks):
             card_deck.embody(config.central_area_location +
@@ -277,8 +312,8 @@ class Table(object):
                                             config.card_spacing)))
 
         for i, card_row in enumerate(self.card_grid):
-            for j, card in enumerate(card_row):
-                card.embody(
+            for j, card_slot in enumerate(card_row):
+                card_slot.embody(
                     config.central_area_location +
                     config.card_decks_location +
                     Vector(
@@ -408,7 +443,7 @@ class TableFactory(object):
 
         card_grid = []
         for card_deck in card_decks:
-            card_grid.append([card_deck.pop() for _ in range(4)])
+            card_grid.append([CardSlot(card_deck.pop()) for _ in range(4)])
 
         tiles = component_collection_factory(
             'tile',

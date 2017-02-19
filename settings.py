@@ -67,4 +67,12 @@ class Config(object):
     holding_area_size = Vector(350, 200)
     holding_area_location = Vector(1000, 300)
 
+    holding_area_card_location = Vector(30, 30)
+
+    button_text_location = Vector(5, 5)
+    # TODO: Dynamically determine button size
+    button_size = Vector(80, 30)
+    cancel_button_location = Vector(10, 160)
+    confirm_button_location = Vector(100, 160)
+
 config = Config()

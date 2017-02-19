@@ -5,7 +5,7 @@ from drawing_surface import draw_rectangle, draw_text
 from drawing_surface import ColourPalette
 from settings import config, Vector
 from data import ChipType
-
+from holding_area import holding_area
 
 WAITING = 'waiting for turn'
 STARTED = 'turn started'
@@ -53,13 +53,16 @@ class Player(object):
              unless='empty_selection'),
 
         # Valid (set of components) selected - confirm/reject?
-        dict(trigger='confirm', source=VALID, dest=TILES_OFFERED,
-             conditions='earned_multiple_tiles'),
-        dict(trigger='confirm', source=VALID, dest=TILE_SELECTED,
-             conditions='earned_single_tile'),
-        dict(trigger='confirm', source=VALID, dest=WAITING,
-             unless=['earned_multiple_tiles', 'earned_single_tile']),
-        dict(trigger='cancel', source=VALID, dest=STARTED),
+        # TODO: Re-instate once tiles, etc, in place
+        # dict(trigger='confirm', source=VALID, dest=TILES_OFFERED,
+        #      conditions='earned_multiple_tiles'),
+        # dict(trigger='confirm', source=VALID, dest=TILE_SELECTED,
+        #      conditions='earned_single_tile'),
+        # dict(trigger='confirm', source=VALID, dest=WAITING,
+        #      unless=['earned_multiple_tiles', 'earned_single_tile']),
+        dict(trigger='confirm', source=[IN_PROGRESS], dest=WAITING),
+
+        dict(trigger='cancel', source=[IN_PROGRESS, VALID], dest=STARTED),
 
         # Multiple nobles tiles offered, take one
         dict(trigger='select_tile', source=[TILES_OFFERED, TILE_SELECTED],
@@ -91,6 +94,15 @@ class Player(object):
             initial=WAITING
         )
 
+    def add_chip(self, chip):
+        # TODO: Refactor - maybe method for ChipStack?
+        for chip_stack in self.chip_stacks.chip_stacks:
+            if chip_stack.chip.chip_type == chip.chip_type:
+                chip_stack.chip_count += 1
+
+    def add_card(self, card):
+        self.cards.add(card)
+
     def complete_turn_taken(self):
         """
         Has this player taken a complete set of items?
@@ -99,14 +111,14 @@ class Player(object):
         - 1 card
         :return:
         """
-        pass
+        return False
 
     def empty_selection(self):
         """
         Has this player no items yet?
         :return:
         """
-        pass
+        return holding_area.is_empty
 
     def earned_multiple_tiles(self):
         """
@@ -141,7 +153,9 @@ class Player(object):
         draw_rectangle(
             (0, 0, config.player_area_size.x, config.player_area_size.y),
             player_order=self.player_order,
-            colour=ColourPalette.player_area
+            colour=ColourPalette.active_player_area
+            if self.state != 'waiting for turn'
+            else ColourPalette.player_area
         )
         draw_text(
             (config.player_name_location.x, config.player_name_location.y),

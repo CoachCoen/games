@@ -6,11 +6,13 @@ from player import Player
 from settings import config
 from buttons import buttons
 from holding_area import holding_area
+from game_state import game_state
 
 class Game(object):
     def __init__(self):
         self.table = None
         self.players = None
+        self.holding_area = None
 
     @property
     def player_count(self):
@@ -18,15 +20,26 @@ class Game(object):
 
     @property
     def current_player(self):
-        return [p for p in self.players if p.state == 'turn started'][0]
+        return [p for p in self.players if p.state != 'waiting for turn'][0]
+
+    def next_player(self):
+        current = self.current_player
+        current.confirm()
+        i = self.players.index(current)
+        try:
+            next_p = self.players[i + 1]
+        except IndexError:
+            next_p = self.players[0]
+
+        next_p.start()
 
     def embody(self):
+        v_a = game_state.valid_actions
+        buttons.reset()
         self.table.embody()
         for player in self.players:
             player.embody()
-
-        # TODO: Better place for this?
-        holding_area.embody(config.holding_area_location)
+        self.holding_area.embody(config.holding_area_location)
 
 
 class GameFactory(object):
@@ -44,19 +57,25 @@ class GameFactory(object):
         # TODO Refactor this?
         game.players[0].start()
 
+        game.holding_area = holding_area
+
         return game
 
 
 def refresh_display():
+    game_state.update(theApp.the_game)
     theApp.the_game.embody()
     pygame.display.flip()
+
+
+def next_player():
+    theApp.the_game.next_player()
 
 
 class App:
     def __init__(self):
         self._running = True
         self._display_surf = None
-        self.game_state = None
         self.the_game = None
         self.size = \
             self.weight, self.height = \
@@ -80,8 +99,14 @@ class App:
         if event.type == pygame.QUIT:
             self._running = False
         if event.type == pygame.MOUSEBUTTONUP:
-            if buttons.process_mouse_click(self.the_game.current_player):
-                refresh_display()
+            events = buttons.process_mouse_click(self.the_game.current_player)
+
+            # TODO: Better way to pass this back
+            for event in events:
+                {
+                    'refresh_display': refresh_display,
+                    'next_player': next_player
+                }[event]()
 
     def on_loop(self):
         pass

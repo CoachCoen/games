@@ -18,6 +18,8 @@ class ColourPalette(Enum):
     blue_chip = 20
     player_area = 21
     holding_area = 22
+    button = 23
+    active_player_area = 24
 
 
 def _translate_to_player(player_order, location):
@@ -43,6 +45,14 @@ def scale_vertices(vertices):
         return config.scaling_factor * vertices
     return [scale_vertices(i) for i in vertices]
 
+
+def grow_rectangle(rectangle, increase):
+    return (
+        rectangle[0] - increase,
+        rectangle[1] - increase,
+        rectangle[2] + 2 * increase,
+        rectangle[3] + 2 * increase
+    )
 
 def draw_pologon(vertices, colour):
     vertices = scale_vertices(vertices)
@@ -100,6 +110,7 @@ class Easel(object):
         ColourPalette.card_background: pygame.Color(60, 60, 100, 255),
         ColourPalette.card_deck_background: pygame.Color(10, 70, 10, 255),
         ColourPalette.player_area: pygame.Color(70, 70, 70, 70),
+        ColourPalette.active_player_area: pygame.Color(100, 30, 30, 70),
         ColourPalette.holding_area: pygame.Color(120, 120, 120, 120),
         ColourPalette.green_chip: pygame.Color(0, 127, 0, 255),
         ColourPalette.red_chip: pygame.Color(127, 0, 0, 255),
@@ -107,6 +118,7 @@ class Easel(object):
         ColourPalette.white_chip: pygame.Color(255, 255, 255, 255),
         ColourPalette.yellow_chip: pygame.Color(244, 238, 66, 255),
         ColourPalette.blue_chip: pygame.Color(0, 0, 127, 255),
+        ColourPalette.button: pygame.Color(120, 170, 170, 120)
     }
 
     def __init__(self):

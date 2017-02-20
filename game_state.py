@@ -17,8 +17,12 @@ def get_is_turn_complete():
 
     # No chips left to take
     # TODO: Fix/Test this
-    # if holding_area.chips and game_state.game.table.chip_stacks.empty:
-    #     return True
+    if holding_area.chips \
+        and not any(
+            chip_stack.chip_count
+            for chip_stack in game_state.game.table.chip_stacks.chip_stacks
+            if chip_stack.chip.chip_type is not ChipType.yellow_gold):
+        return True
 
     return False
 
@@ -49,13 +53,33 @@ def get_valid_actions():
             continue
 
         # If already selected 1 chip, can't select that colour again if
-        # this are 3 or less chips of that colour
+        # this are 2 or less chips of that colour (not counting the one
+        # already selected)
         if len(selected_chips) == 1 \
                 and chip_stack.chip.chip_type == selected_chips[0].chip_type \
-                and chip_stack.chip_count <= 3:
+                and chip_stack.chip_count <= 2:
             continue
 
         valid_actions.append(chip_stack)
+
+    # Which cards can be selected?
+    # TODO: More Pythonic way to loop through this?
+    for row in game_state.game.table.card_grid:
+        for card_slot in row:
+            card = card_slot.card
+            if not card:
+                continue
+
+            if selected_chips:
+                # If yellow chip picked, can select all
+                if selected_chips[0].chip_type == ChipType.yellow_gold:
+                    valid_actions.append(card)
+                # If non-yellow chip picked, can't select any
+                continue
+
+            # If no chip picked, can select any which the player can afford
+            if game_state.game.current_player.can_afford(card.chip_cost):
+                valid_actions.append(card)
 
     return valid_actions
 

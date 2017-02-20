@@ -76,7 +76,7 @@ class TakeChip(AbstractAction):
 
         # Move chip from supply to holding area
         self.chip_stack.take_one()
-        self.holding_area.add_chip(self.chip_stack.chip)
+        self.holding_area.add_chip(self.chip_stack.chip.copy())
         current_player.take_component()
         return ['refresh_display']
 
@@ -110,7 +110,14 @@ class Confirm(AbstractAction):
             current_player.add_chip(chip)
 
         if self.holding_area.card:
-            current_player.add_card(self.holding_area.card)
+            card = self.holding_area.card
+            current_player.pay_cost(card.chip_cost)
+
+            # Draw a new card and assign it to the original card's slot
+            current_player.add_card(card)
+            card.source.card = card.card_deck.pop()
+            card.source.card.source = card.source
+
             self.holding_area.card = None
 
         return ['next_player', 'refresh_display']
@@ -129,4 +136,3 @@ class Cancel(AbstractAction):
 
         current_player.cancel()
         return ['refresh_display']
-

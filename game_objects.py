@@ -30,15 +30,17 @@ class Card(AbstractGameComponent):
         self.points = points
         self.location = None
         self.source = None
+        self.card_deck = None
 
     def embody(self, location, can_return=False):
         self.location = location
         action = ReturnCard(self, holding_area) if can_return \
             else TakeCard(self, holding_area)
-        buttons.add(
-            self.location.to_rectangle(config.card_size),
-            action
-        ).embody()
+        if self in game_state.valid_actions:
+            buttons.add(
+                self.location.to_rectangle(config.card_size),
+                action
+            ).embody()
 
         self._draw()
 
@@ -77,6 +79,9 @@ class Chip(AbstractGameComponent):
         self.colour = colour
         self.location = None
         self.source = source
+
+    def copy(self):
+        return Chip(self.chip_type, self.colour, self.source)
 
     # TODO Better way to handle scaling factor and player_order (context handler?)
     def embody(self, location, scaling_factor=1, player_order=None,
@@ -139,7 +144,7 @@ class ChipStack(AbstractGameComponentCollection):
 
         # Remember where this came from,
         # so we can return it half way through a turn
-        self.chip.source = self
+        # self.chip.source = self
         self.chip_count = chip_count
         self.location = None
 
@@ -171,7 +176,7 @@ class ChipStack(AbstractGameComponentCollection):
     def _draw(self, scaling_factor=1, player_order=None):
         if self.chip_count:
             draw_text(
-                self.location - Vector(8, 12),
+                self.location - Vector(4, 8),
                 str(self.chip_count),
                 text_colour=self.chip.colour,
                 reverse_colour=True,
@@ -210,10 +215,14 @@ class CardDeck(AbstractGameComponentCollection):
     def __init__(self, cards):
         self.location = None
         self.cards = cards
+
+        # Back reference, to make it easier to draw the next card
+        for card in cards:
+            card.card_deck = self
         shuffle(self.cards)
 
     def pop(self):
-        return self.cards.pop()
+        return self.cards.pop() if self.cards else None
 
     def add(self, card):
         self.cards.append(card)
@@ -401,12 +410,13 @@ class ComponentCollectionFactory(AbstractFactory):
         for stack_data in details.split(","):
             if stack_data:
                 chip_count, colour_name = stack_data.strip().split(" ")
-                chip_stacks.append(
-                    ChipStack(
-                        chip=self.component_factory('chip', colour_name),
-                        chip_count=int(chip_count)
-                    )
+                chip = self.component_factory('chip', colour_name)
+                chip_stack = ChipStack(
+                    chip=chip,
+                    chip_count=int(chip_count)
                 )
+                chip.source = chip_stack
+                chip_stacks.append(chip_stack)
         return ChipStackCollection(chip_stacks)
 
     def card_collection_factory(self, details):
@@ -430,6 +440,8 @@ class TableFactory(object):
         chip_stacks = component_collection_factory(
             'chip',
             {
+                # TODO: Remove this, for testing only
+                # 4: '1 white, 1 blue, 0 red, 0 green, 0 black, 5 yellow',
                 4: '7 white, 7 blue, 7 red, 7 green, 7 black, 5 yellow',
                 3: '5 white, 5 blue, 5 red, 5 green, 5 black, 5 yellow',
                 2: '4 white, 4 blue, 4 red, 4 green, 4 black, 5 yellow',

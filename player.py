@@ -81,7 +81,7 @@ class Player(object):
         self.cards = component_collection_factory('card', '')
         # TODO: Remove this when done testing showing the players' hands
         # self.chip_stacks = component_collection_factory(
-        #     'chip', '1 blue,1 white,1 black,1 green,1 red,1 yellow'
+        #     'chip', '2 blue,2 white,2 black,2 green,2 red,1 yellow'
         # )
         self.chip_stacks = component_collection_factory(
             'chip', '0 blue,0 white,0 black,0 green,0 red,0 yellow'
@@ -93,6 +93,63 @@ class Player(object):
             transitions=Player.transitions,
             initial=WAITING
         )
+
+    def has_chips_of_type(self, chip_type):
+        # TODO: Refactor: better way to find the right chip stack
+        for chip_stack in self.chip_stacks.chip_stacks:
+            if chip_stack.chip.chip_type == chip_type:
+                return chip_stack.chip_count
+        return 0
+
+    def pay_cost_for_single_chip_type(self, chip_type, cost):
+        # TODO: Refactor, create index?
+        for chip_stack in self.chip_stacks.chip_stacks:
+            if chip_stack.chip.chip_type == chip_type:
+                available = chip_stack.chip_count
+
+                # Return the chips
+                # TODO: Better way of doing this?
+                for _ in range(min(available, cost)):
+                    chip_stack.chip.source.add_one()
+
+                if available >= cost:
+                    chip_stack.chip_count -= cost
+                    return 0
+                else:
+                    chip_stack.chip_count = 0
+                    return cost - available
+        # Should never get here
+
+    def pay_cost(self, chip_cost):
+        # Assumption: Can afford it
+        chips_shortage = 0
+        for chip_stack in chip_cost.chip_stacks:
+            count = chip_stack.chip_count
+            if not count:
+                continue
+
+            chips_shortage += self.pay_cost_for_single_chip_type(
+                chip_stack.chip.chip_type, count
+            )
+
+        if chips_shortage:
+            self.pay_cost_for_single_chip_type(
+                ChipType.yellow_gold, chips_shortage
+            )
+
+    def can_afford(self, chip_cost):
+        chips_shortage = 0
+        for chip_stack in chip_cost.chip_stacks:
+            count = chip_stack.chip_count
+            if not count:
+                continue
+
+            if self.has_chips_of_type(chip_stack.chip.chip_type) < count:
+                chips_shortage += \
+                    count - self.has_chips_of_type(chip_stack.chip.chip_type)
+
+        # Missing chips can be replaced by yellow chips
+        return chips_shortage <= self.has_chips_of_type(ChipType.yellow_gold)
 
     def add_chip(self, chip):
         # TODO: Refactor - maybe method for ChipStack?
@@ -164,7 +221,8 @@ class Player(object):
         )
         if self.points:
             draw_text(
-                (config.player_points_location.x, config.player_points_location.y),
+                (config.player_points_location.x,
+                 config.player_points_location.y),
                 str(self.points),
                 player_order=self.player_order
             )

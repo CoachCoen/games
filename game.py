@@ -1,11 +1,11 @@
 import pygame
 
 from drawing_surface import easel
-from game_objects import TableFactory
+from game_objects import TableFactory, holding_area
 from player import Player
 from settings import config
 from buttons import buttons
-from holding_area import holding_area
+# from holding_area import holding_area
 from game_state import game_state
 
 class Game(object):
@@ -91,7 +91,8 @@ class App:
         easel.init_easel(self._display_surf)
         game_factory = GameFactory()
         self.the_game = game_factory(
-            player_names=['Caroline', 'Nigel', 'Issie', 'Coen']
+            # player_names=['Caroline', 'Nigel', 'Issie', 'Coen']
+            player_names = ['Caroline', 'Nigel']
         )
         refresh_display()
 

@@ -64,8 +64,8 @@ class TakeChip(AbstractAction):
     The current player takes a chip:
     move a chip from this chip stack to the holding area
     """
-    def __init__(self, chip_stack, holding_area):
-        self.chip_stack = chip_stack
+    def __init__(self, chip, holding_area):
+        self.chip = chip
         self.holding_area = holding_area
 
     def activate(self, current_player):
@@ -75,15 +75,16 @@ class TakeChip(AbstractAction):
         """
 
         # Move chip from supply to holding area
-        self.chip_stack.take_one()
-        self.holding_area.add_chip(self.chip_stack.chip.copy())
+        # self.chip_stack.take_one()
+        self.chip.source.take_chip(self.chip)
+        self.holding_area.add_chip(self.chip)
         current_player.take_component()
         return ['refresh_display']
 
 
-def return_chip(holding_area, chip):
-    holding_area.remove_chip(chip)
-    chip.source.add_one()
+# def return_chip(holding_area, chip):
+#     holding_area.remove_chip(chip)
+#     chip.source.add_one()
 
 
 class ReturnChip(AbstractAction):
@@ -105,9 +106,10 @@ class Confirm(AbstractAction):
         self.holding_area = holding_area
 
     def activate(self, current_player):
-        for chip in self.holding_area.chips:
-            self.holding_area.remove_chip(chip)
-            current_player.add_chip(chip)
+        self.holding_area.chips.transfer_chips(current_player.chips)
+        # for chip in self.holding_area.chips:
+        #     self.holding_area.remove_chip(chip)
+        #     current_player.add_chip(chip)
 
         if self.holding_area.card:
             card = self.holding_area.card
@@ -128,8 +130,9 @@ class Cancel(AbstractAction):
         self.holding_area = holding_area
 
     def activate(self, current_player):
-        for chip in self.holding_area.chips:
-            return_chip(self.holding_area, chip)
+        self.holding_area.chips.return_chips()
+        # for chip in self.holding_area.chips:
+        #     return_chip(self.holding_area, chip)
 
         if self.holding_area.card:
             return_card(self.holding_area, self.holding_area.card)

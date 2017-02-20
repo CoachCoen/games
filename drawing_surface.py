@@ -3,6 +3,7 @@ import pygame
 from enum import Enum
 
 from settings import config, Vector
+from data import ChipType
 
 
 class ColourPalette(Enum):
@@ -21,6 +22,14 @@ class ColourPalette(Enum):
     button = 23
     active_player_area = 24
 
+chip_type_to_colour = {
+    ChipType.red_ruby: ColourPalette.red_chip,
+    ChipType.blue_sapphire: ColourPalette.blue_chip,
+    ChipType.white_diamond: ColourPalette.white_chip,
+    ChipType.green_emerald: ColourPalette.green_chip,
+    ChipType.black_onyx: ColourPalette.black_chip,
+    ChipType.yellow_gold: ColourPalette.yellow_chip
+}
 
 def _translate_to_player(player_order, location):
     left = 0 if player_order in [0, 2] \

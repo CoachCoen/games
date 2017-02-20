@@ -1,11 +1,12 @@
 from transitions import Machine
 
-from game_objects import ComponentCollectionFactory
+from game_objects import ComponentCollectionFactory, holding_area, \
+    ChipCollection
 from drawing_surface import draw_rectangle, draw_text
 from drawing_surface import ColourPalette
 from settings import config, Vector
 from data import ChipType
-from holding_area import holding_area
+# from holding_area import holding_area
 
 WAITING = 'waiting for turn'
 STARTED = 'turn started'
@@ -80,12 +81,10 @@ class Player(object):
         # self.cards = component_collection_factory('card', row_1)
         self.cards = component_collection_factory('card', '')
         # TODO: Remove this when done testing showing the players' hands
-        # self.chip_stacks = component_collection_factory(
+        # self.chips = component_collection_factory(
         #     'chip', '2 blue,2 white,2 black,2 green,2 red,1 yellow'
         # )
-        self.chip_stacks = component_collection_factory(
-            'chip', '0 blue,0 white,0 black,0 green,0 red,0 yellow'
-        )
+        self.chips = ChipCollection()
         self.tiles = component_collection_factory('tile', '')
         self.machine = Machine(
             model=self,
@@ -123,33 +122,39 @@ class Player(object):
     def pay_cost(self, chip_cost):
         # Assumption: Can afford it
         chips_shortage = 0
-        for chip_stack in chip_cost.chip_stacks:
-            count = chip_stack.chip_count
-            if not count:
-                continue
+        for chip in chip_cost.chips:
+            if not self.chips.pay_chip_of_type(chip.chip_type):
+                chips_shortage += 1
 
-            chips_shortage += self.pay_cost_for_single_chip_type(
-                chip_stack.chip.chip_type, count
-            )
+        for _ in range(chips_shortage):
+            self.chips.pay_chip_of_type(ChipType.yellow_gold)
 
-        if chips_shortage:
-            self.pay_cost_for_single_chip_type(
-                ChipType.yellow_gold, chips_shortage
-            )
+        # for chip_stack in chip_cost.chip_stacks:
+        #     count = chip_stack.chip_count
+        #     if not count:
+        #         continue
+        #
+        #     chips_shortage += self.pay_cost_for_single_chip_type(
+        #         chip_stack.chip.chip_type, count
+        #     )
+        #
+        # if chips_shortage:
+        #     self.pay_cost_for_single_chip_type(
+        #         ChipType.yellow_gold, chips_shortage
+        #     )
 
     def can_afford(self, chip_cost):
         chips_shortage = 0
-        for chip_stack in chip_cost.chip_stacks:
-            count = chip_stack.chip_count
-            if not count:
-                continue
+        for chip_type in [chip_type for chip_type in ChipType if chip_type is not ChipType.yellow_gold]:
+            count = chip_cost.count(chip_type)
 
-            if self.has_chips_of_type(chip_stack.chip.chip_type) < count:
+            available = self.chips.count(chip_type)
+            if available < count:
                 chips_shortage += \
-                    count - self.has_chips_of_type(chip_stack.chip.chip_type)
+                    count - available
 
         # Missing chips can be replaced by yellow chips
-        return chips_shortage <= self.has_chips_of_type(ChipType.yellow_gold)
+        return chips_shortage <= self.chips.count(ChipType.yellow_gold)
 
     def add_chip(self, chip):
         # TODO: Refactor - maybe method for ChipStack?
@@ -204,6 +209,19 @@ class Player(object):
 
     def embody(self):
         self._draw()
+        self.chips.embody(
+            config.player_chip_stack_location,
+            player_order=self.player_order,
+            direction='horizontal',
+            show_empty=True,
+            scaling_factor=0.7
+        )
+        self.cards.embody(
+            location=config.player_card_deck_location,
+            group_by_type=True,
+            player_order = self.player_order,
+            scaling_factor=0.7
+        )
 
     # TODO: Refactor this - messy?
     def _draw(self):
@@ -227,52 +245,52 @@ class Player(object):
                 player_order=self.player_order
             )
 
-        for i, chip_type in enumerate(ChipType):
-            total = self.cards.count_for_reward_type(chip_type)
-            chip_stack = self.chip_stacks.get_stack_for_chip_type(chip_type)
-
-            if total:
-                location = (
-                    config.player_chip_stack_location.x +
-                    i * (config.chip_size + config.chip_spacing) -
-                    0.5 * config.chip_size,
-                    config.player_chip_stack_location.y + config.chip_size,
-                    config.chip_size, config.chip_size
-                )
-                draw_rectangle(
-                    location,
-                    colour=chip_stack.chip.colour,
-                    player_order=self.player_order)
-                draw_text(
-                    location,
-                    str(total),
-                    player_order=self.player_order,
-                    text_colour=chip_stack.chip.colour,
-                    font_size=config.chip_cost_scaling * config.chip_font_size,
-                    reverse_colour=True
-                )
-
-            # TODO: Move chip_stack.embody into self.embody()
-            if chip_stack.chip_count:
-                chip_stack.embody(
-                    config.player_chip_stack_location +
-                    Vector(i * (config.chip_size + config.chip_spacing), 0),
-                    scaling_factor=config.chip_cost_scaling,
-                    player_order=self.player_order
-                )
-                total += chip_stack.chip_count
-
-            if total:
-                location = (config.player_chip_stack_location.x +
-                            i * (config.chip_size + config.chip_spacing) -
-                            0.5 * config.chip_size,
-                            config.player_chip_stack_location.y +
-                            2.5 * config.chip_size,
-                            config.chip_size, config.chip_size)
-
-                draw_text(
-                    location,
-                    str(total),
-                    player_order=self.player_order,
-                    text_colour=chip_stack.chip.colour
-                )
+        # for i, chip_type in enumerate(ChipType):
+        #     total = self.cards.count_for_reward_type(chip_type)
+        #     chip_stack = self.chip_stacks.get_stack_for_chip_type(chip_type)
+        #
+        #     if total:
+        #         location = (
+        #             config.player_chip_stack_location.x +
+        #             i * (config.chip_size + config.chip_spacing) -
+        #             0.5 * config.chip_size,
+        #             config.player_chip_stack_location.y + config.chip_size,
+        #             config.chip_size, config.chip_size
+        #         )
+        #         draw_rectangle(
+        #             location,
+        #             colour=chip_stack.chip.colour,
+        #             player_order=self.player_order)
+        #         draw_text(
+        #             location,
+        #             str(total),
+        #             player_order=self.player_order,
+        #             text_colour=chip_stack.chip.colour,
+        #             font_size=config.chip_cost_scaling * config.chip_font_size,
+        #             reverse_colour=True
+        #         )
+        #
+        #     # TODO: Move chip_stack.embody into self.embody()
+        #     if chip_stack.chip_count:
+        #         chip_stack.embody(
+        #             config.player_chip_stack_location +
+        #             Vector(i * (config.chip_size + config.chip_spacing), 0),
+        #             scaling_factor=config.chip_cost_scaling,
+        #             player_order=self.player_order
+        #         )
+        #         total += chip_stack.chip_count
+        #
+        #     if total:
+        #         location = (config.player_chip_stack_location.x +
+        #                     i * (config.chip_size + config.chip_spacing) -
+        #                     0.5 * config.chip_size,
+        #                     config.player_chip_stack_location.y +
+        #                     2.5 * config.chip_size,
+        #                     config.chip_size, config.chip_size)
+        #
+        #         draw_text(
+        #             location,
+        #             str(total),
+        #             player_order=self.player_order,
+        #             text_colour=chip_stack.chip.colour
+        #         )

@@ -1,9 +1,3 @@
-from random import choice
-
-# from game_state import game_state
-from game_objects import Chip, Card
-from game_actions import TakeChip, TakeCard, Confirm
-from game_game import game
 """
 What's the protocol:
 Attach to a player
@@ -25,18 +19,21 @@ Flow
             * I then confirm the move, so I can see what happened
             * Or I could manually change the move
 """
+from random import choice
+
+from game_objects import Chip, Card
+from game_actions import TakeChip, TakeCard
+from game_state import game
 
 
 class AbstractAI(object):
     def __init__(self):
         self.player = None
 
-    # def init_ai(self, game, player):
-    #     self.player = player
-
 
 class RandomAI(AbstractAI):
-    def _choose_move(self):
+    @staticmethod
+    def _choose_move():
         valid_action_sets = game.valid_action_sets
 
         for action_type in ['card', '3 chips', '2 chips', 'reserve card']:
@@ -45,13 +42,14 @@ class RandomAI(AbstractAI):
 
         return None
 
-    def _action_for_item(self, item):
+    @staticmethod
+    def _action_for_item(item):
         for object_type, action in [
             (Chip, TakeChip),
             (Card, TakeCard)
         ]:
             if isinstance(item, object_type):
-                return action(item, game.holding_area)
+                return action(item)
         return None
 
     def take_turn(self):
@@ -63,7 +61,7 @@ class RandomAI(AbstractAI):
                    if self._action_for_item(item)]  # + [Confirm(holding_area)]
 
         for action in actions:
-            action.activate(self.player)
+            action.activate()
 
 
 class SimpleAI(AbstractAI):

@@ -31,6 +31,7 @@ chip_type_to_colour = {
     ChipType.yellow_gold: ColourPalette.yellow_chip
 }
 
+
 def _translate_to_player(player_order, location):
     left = 0 if player_order in [0, 3] \
         else config.tabletop_size.x - config.player_area_size.x
@@ -70,7 +71,7 @@ def draw_pologon(vertices, colour):
                         vertices, 0)
 
 
-def draw_rectangle(rectangle, colour, player_order = None):
+def draw_rectangle(rectangle, colour, player_order=None):
     if player_order:
         rectangle = _translate_to_player(
             player_order=player_order, location=rectangle
@@ -82,7 +83,7 @@ def draw_rectangle(rectangle, colour, player_order = None):
 
 
 def draw_text(location, text, font_size=24, text_colour=None,
-              reverse_colour=False, player_order = None):
+              reverse_colour=False, player_order=None):
     myfont = pygame.font.SysFont("monospace bold",
                                  int(font_size * config.scaling_factor))
 

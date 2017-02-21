@@ -5,7 +5,7 @@ from drawing_surface import draw_rectangle, draw_text
 from drawing_surface import ColourPalette
 from settings import config, Vector
 from data import ChipType
-from game_game import game
+from game_state import game
 
 WAITING = 'waiting_for_turn'
 STARTED = 'turn_started'

@@ -4,7 +4,8 @@ from drawing_surface import scale_vertices, draw_rectangle, draw_text, \
     grow_rectangle
 from drawing_surface import ColourPalette
 from settings import Vector, config
-from game_game import game
+from game_state import game
+
 
 class ButtonCollection(object):
     def __init__(self):
@@ -16,20 +17,15 @@ class ButtonCollection(object):
         self.buttons.append(button)
         return button
 
-    def process_mouse_click(self, current_player):
+    def process_mouse_click(self):
         mouse_position = pygame.mouse.get_pos()
 
         if any(
-                button.action.activate(current_player)
+                button.action.activate()
                 for button in self.buttons
                 if button.clicked(mouse_position)
         ):
             game.refresh_display()
-        # for button in self.buttons:
-        #     # Assume only button for each location
-        #     if button.clicked(mouse_position):
-        #         return button.action.activate(current_player)
-        # return []
 
     def reset(self):
         self.__init__()
@@ -59,7 +55,6 @@ class Button(object):
         draw_rectangle(
             grow_rectangle(self.rectangle, 2),
             ColourPalette.button,
-            # line_width=2
         )
 
 

@@ -9,9 +9,8 @@ from game_objects import Table, HoldingArea
 from player import Player
 from settings import config
 from buttons import buttons
-# from game_state import GameState
 from ai_simple import RandomAI
-from game_game import game
+from game_state import game
 
 
 def init_game(player_details):
@@ -27,13 +26,10 @@ def init_game(player_details):
         )
         for (i, (name, AI)) in enumerate(player_details)]
 
-    # table = TableFactory()(len(players))
-
     game.init_game(
         players=players,
         table=Table(len(players)),
         holding_area=HoldingArea(),
-        # game_state=GameState(),
         buttons=buttons
     )
 
@@ -78,7 +74,7 @@ class App:
         if event.type == pygame.QUIT:
             self._running = False
         if event.type == pygame.MOUSEBUTTONUP:
-            game.buttons.process_mouse_click(game.current_player)
+            game.buttons.process_mouse_click()
 
     @staticmethod
     def on_cleanup():

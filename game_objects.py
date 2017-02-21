@@ -9,16 +9,14 @@ from settings import Vector
 from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
 from drawing_surface import ColourPalette
+from drawing_surface import chip_type_to_colour
+
 from buttons import buttons
-# from holding_area import holding_area
 
 from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard
-# from game_state import game_state
-
 from game_actions import Cancel, Confirm
-# from game_objects import ChipCollection
-from drawing_surface import chip_type_to_colour
-from game_game import game
+
+from game_state import game
 
 
 class AbstractFactory(object):
@@ -40,8 +38,8 @@ class Card(AbstractGameComponent):
 
     def embody(self, location, can_return=False):
         self.location = location
-        action = ReturnCard(self, game.holding_area) if can_return \
-            else TakeCard(self, game.holding_area)
+        action = ReturnCard(self) if can_return \
+            else TakeCard(self)
         if self in game.valid_actions:
             buttons.add(
                 self.location.to_rectangle(config.card_size),
@@ -89,9 +87,6 @@ class Chip(AbstractGameComponent):
     def return_to_supply(self):
         self.source.add_one(self)
 
-    # def copy(self):
-    #     return Chip(self.chip_type, self.colour, self.source)
-
     # TODO Better way to handle scaling factor and player_order (context handler?)
     def embody(self, location, scaling_factor=1, player_order=None,
                can_click=False):
@@ -102,7 +97,7 @@ class Chip(AbstractGameComponent):
                 circle_location_to_rectangle(
                     self.location, config.chip_size * scaling_factor
                 ),
-                ReturnChip(self, game.holding_area)
+                ReturnChip(self)
             )
 
     def _draw(self, scaling_factor=1, player_order=None):
@@ -197,7 +192,7 @@ class ChipCollection(AbstractGameComponentCollection):
 
     def _position_of_first_chip_of_type(self, chip_type):
         indices = [i for i, chip in enumerate(self.chips)
-                 if chip.chip_type == chip_type]
+                   if chip.chip_type == chip_type]
 
         # No chip of this type found
         if not indices:
@@ -282,7 +277,7 @@ class ChipCollection(AbstractGameComponentCollection):
         if not show_empty:
             chip_idx = [
                 (chip_type, count) for (chip_type, count) in raw_chip_idx
-                    if count > 0]
+                if count > 0]
         else:
             chip_idx = raw_chip_idx
 
@@ -295,18 +290,20 @@ class ChipCollection(AbstractGameComponentCollection):
 
             # TODO: Use constant/enum instead?
             if direction == 'vertical':
-                stack_location = self.location + \
-                             Vector(0, i * 2.5 * scaling_factor * config.chip_size)
+                stack_location = \
+                    self.location + \
+                    Vector(0, i * 2.5 * scaling_factor * config.chip_size)
             else:
-                stack_location = self.location + \
-                             Vector(i * 2.5 * scaling_factor * config.chip_size, 0)
+                stack_location = \
+                    self.location + \
+                    Vector(i * 2.5 * scaling_factor * config.chip_size, 0)
 
             if can_click and top_chip in game.valid_actions:
                 buttons.add(
                     circle_location_to_rectangle(
                         stack_location, config.chip_size * scaling_factor
                     ),
-                    TakeChip(top_chip, game.holding_area)
+                    TakeChip(top_chip)
                 ).embody()
             top_chip.embody(
                 stack_location,
@@ -325,45 +322,6 @@ class ChipCollection(AbstractGameComponentCollection):
                 font_size=config.chip_font_size * scaling_factor,
                 player_order=player_order
             )
-
-    #     self._draw(scaling_factor, player_order)
-    #
-    # def _draw(self, scaling_factor=1, player_order=None):
-    #     if self.chip_count:
-    #         draw_text(
-    #             self.location - Vector(4, 8),
-    #             str(self.chip_count),
-    #             text_colour=self.chip.colour,
-    #             reverse_colour=True,
-    #             font_size=config.chip_font_size * scaling_factor,
-    #             player_order=player_order
-    #         )
-
-
-# class ChipStackCollection(AbstractGameComponentCollection):
-#     def __init__(self, chip_stacks):
-#         self.chip_stacks = chip_stacks
-#         self.location = None
-#
-#     def empty(self):
-#         return all(c.chip_count == 0 for c in self.chip_stacks)
-#
-#     def get_stack_for_chip_type(self, chip_type):
-#         for chip_stack in self.chip_stacks:
-#             if chip_stack.chip.chip_type == chip_type:
-#                 return chip_stack
-#         return None
-#
-#     def embody(self, location, scaling_factor=1, can_click=False):
-#         self.location = location
-#         for i, chip_stack in enumerate(self.chip_stacks):
-#             chip_stack.embody(
-#                 self.location +
-#                 Vector(0, i * (config.chip_size * 2 + config.chip_spacing)
-#                        * scaling_factor),
-#                 scaling_factor=scaling_factor,
-#                 can_click=can_click
-#             )
 
 
 class CardDeck(AbstractGameComponentCollection):
@@ -402,12 +360,9 @@ class CardDeck(AbstractGameComponentCollection):
             count = self.count_for_reward_type(chip_type)
 
             if count:
-                # stack_location = self.location + \
-                #                  Vector
-                #                         i * 2.5 * scaling_factor * config.chip_size)
-
-                location = self.location + \
-                           Vector(2.5 * self.scaling_factor * config.chip_size * i, 0)
+                location = \
+                    self.location + \
+                    Vector(2.5 * self.scaling_factor * config.chip_size * i, 0)
                 colour = chip_type_to_colour[chip_type]
 
                 draw_rectangle(
@@ -515,23 +470,11 @@ class Table(object):
         )
         tiles.shuffle_and_limit(player_count + 1)
 
-        # table = Table(
-        #     chips=chips,
-        #     card_decks=card_decks,
-        #     card_grid=card_grid,
-        #     tiles=tiles
-        # )
-
         self.chips = chips
         self.card_decks = card_decks
         self.card_grid = card_grid
         self.tiles = tiles
-        # self.players = []
 
-    # @property
-    # def player_count(self):
-    #     return len(self.players)
-    #
     @staticmethod
     def _draw_tablecloth():
         draw_rectangle((0, 0) + tuple(config.tabletop_size),
@@ -712,27 +655,34 @@ class HoldingArea(object):
             )
 
         buttons.add(
-            (location + config.cancel_button_location).
-                to_rectangle(config.button_size),
-            Cancel(game.holding_area),
+            (
+                location + config.cancel_button_location
+             ).to_rectangle(config.button_size),
+            Cancel(),
             text='Cancel'
         ).embody()
 
         if game.is_turn_complete:
             buttons.add(
-                (location + config.confirm_button_location)
-                    .to_rectangle(config.button_size),
-                Confirm(game.holding_area),
+                (
+                    location + config.confirm_button_location
+                ).to_rectangle(config.button_size),
+                Confirm(),
                 text='Confirm'
             ).embody()
 
     @staticmethod
     def _draw():
-        draw_rectangle(config.holding_area_location.to_rectangle(config.holding_area_size),
-                       ColourPalette.holding_area)
+        draw_rectangle(
+            config.holding_area_location.to_rectangle(
+                config.holding_area_size
+            ),
+            ColourPalette.holding_area
+        )
 
         draw_text(
-            config.holding_area_location + config.holding_area_name_location,
+            config.holding_area_location +
+            config.holding_area_name_location,
             text=game.current_player.name
         )
 

@@ -1,3 +1,5 @@
+from game_game import game
+
 class AbstractAction(object):
     pass
 
@@ -40,7 +42,7 @@ class TakeCard(AbstractAction):
         self.card.source.card = None
         self.holding_area.card = self.card
         current_player.take_component()
-        return ['refresh_display']
+        return True
 
 
 def return_card(holding_area, card):
@@ -56,7 +58,7 @@ class ReturnCard(AbstractAction):
     def activate(self, current_player):
         return_card(self.holding_area, self.card)
         current_player.return_component()
-        return ['refresh_display']
+        return True
 
 
 class TakeChip(AbstractAction):
@@ -79,12 +81,12 @@ class TakeChip(AbstractAction):
         self.chip.source.take_chip(self.chip)
         self.holding_area.add_chip(self.chip)
         current_player.take_component()
-        return ['refresh_display']
+        return True
 
 
-# def return_chip(holding_area, chip):
-#     holding_area.remove_chip(chip)
-#     chip.source.add_one()
+def return_chip(holding_area, chip):
+    holding_area.remove_chip(chip)
+    chip.source.add_one()
 
 
 class ReturnChip(AbstractAction):
@@ -98,7 +100,7 @@ class ReturnChip(AbstractAction):
     def activate(self, current_player):
         return_chip(self.holding_area, self.chip)
         current_player.return_component()
-        return ['refresh_display']
+        return True
 
 
 class Confirm(AbstractAction):
@@ -122,7 +124,9 @@ class Confirm(AbstractAction):
 
             self.holding_area.card = None
 
-        return ['next_player', 'refresh_display']
+        game.next_player()
+
+        return True
 
 
 class Cancel(AbstractAction):
@@ -138,4 +142,4 @@ class Cancel(AbstractAction):
             return_card(self.holding_area, self.holding_area.card)
 
         current_player.cancel()
-        return ['refresh_display']
+        return True

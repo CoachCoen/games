@@ -13,11 +13,12 @@ from buttons import buttons
 # from holding_area import holding_area
 
 from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard
-from game_state import game_state
+# from game_state import game_state
 
 from game_actions import Cancel, Confirm
 # from game_objects import ChipCollection
 from drawing_surface import chip_type_to_colour
+from game_game import game
 
 
 class AbstractFactory(object):
@@ -39,9 +40,9 @@ class Card(AbstractGameComponent):
 
     def embody(self, location, can_return=False):
         self.location = location
-        action = ReturnCard(self, holding_area) if can_return \
-            else TakeCard(self, holding_area)
-        if self in game_state.valid_actions:
+        action = ReturnCard(self, game.holding_area) if can_return \
+            else TakeCard(self, game.holding_area)
+        if self in game.game_state.valid_actions:
             buttons.add(
                 self.location.to_rectangle(config.card_size),
                 action
@@ -101,7 +102,7 @@ class Chip(AbstractGameComponent):
                 circle_location_to_rectangle(
                     self.location, config.chip_size * scaling_factor
                 ),
-                ReturnChip(self, holding_area)
+                ReturnChip(self, game.holding_area)
             )
 
     def _draw(self, scaling_factor=1, player_order=None):
@@ -264,10 +265,10 @@ class ChipCollection(AbstractGameComponentCollection):
         """
         self.chips.append(chip)
 
-    def embody(self, location, scaling_factor=1,
+    def embody(self, location, scaling_factor=1.0,
                player_order=None, can_click=False,
                direction='vertical',
-                show_empty=False):
+               show_empty=False):
         self.location = location
 
         raw_chip_idx = [
@@ -300,12 +301,12 @@ class ChipCollection(AbstractGameComponentCollection):
                 stack_location = self.location + \
                              Vector(i * 2.5 * scaling_factor * config.chip_size, 0)
 
-            if can_click and top_chip in game_state.valid_actions:
+            if can_click and top_chip in game.game_state.valid_actions:
                 buttons.add(
                     circle_location_to_rectangle(
                         stack_location, config.chip_size * scaling_factor
                     ),
-                    TakeChip(top_chip, holding_area)
+                    TakeChip(top_chip, game.holding_area)
                 ).embody()
             top_chip.embody(
                 stack_location,
@@ -471,7 +472,56 @@ class Table(object):
     Central playing area - shared space for all players
     Contains all game components, apart from what's in the players' hands
     """
-    def __init__(self, chips, card_decks, card_grid, tiles):
+    def __init__(self, player_count):
+        component_collection_factory = ComponentCollectionFactory()
+
+        # 7 for 4 player, 5 for 3 player, 4 for 2 player plus 5 gold
+        chips = component_collection_factory(
+            'chip',
+            {
+                4: '7 white, 7 blue, 7 red, 7 green, 7 black, 5 yellow',
+                3: '5 white, 5 blue, 5 red, 5 green, 5 black, 5 yellow',
+                2: '4 white, 4 blue, 4 red, 4 green, 4 black, 5 yellow',
+            }[player_count]
+        )
+
+        card_decks = [
+            component_collection_factory('card', raw_cards)
+            for raw_cards in (row_1, row_2, row_3)
+            ]
+
+        card_grid = []
+        for card_deck in card_decks:
+            card_grid.append([CardSlot(card_deck.pop()) for _ in range(4)])
+
+        tiles = component_collection_factory(
+            'tile',
+            [
+                '4 blue, 4 green',
+                '4 white, 4 red',
+                '4 black, 4 red',
+                '4 green, 4 red',
+                '4 black, 4 green',
+                '4 white, 4 black',
+                '4 blue, 4 white',
+                '3 green, 3 blue, 3 red',
+                '3 blue, 3 green, 3 white',
+                '3 black, 3 red, 3 white',
+                '3 black, 3 red, 3 green',
+                '3 blue, 3 white, 3 red',
+                '3 black, 3 red, 3 blue',
+                '3 black, 3 white, 3 blue'
+            ]
+        )
+        tiles.shuffle_and_limit(player_count + 1)
+
+        # table = Table(
+        #     chips=chips,
+        #     card_decks=card_decks,
+        #     card_grid=card_grid,
+        #     tiles=tiles
+        # )
+
         self.chips = chips
         self.card_decks = card_decks
         self.card_grid = card_grid
@@ -610,13 +660,6 @@ class ComponentCollectionFactory(AbstractFactory):
                     chip = self.component_factory('chip', colour_name)
                     chip.source = chips
                     chips.add_one(chip)
-                # chip_stack = ChipStack(
-                #     chip=chip,
-                #     chip_count=int(chip_count)
-                # )
-                # chip.source = chip_stack
-                # chip_stacks.append(chip_stack)
-        # return ChipStackCollection(chip_stacks)
         return chips
 
     def card_collection_factory(self, details):
@@ -632,60 +675,6 @@ class ComponentCollectionFactory(AbstractFactory):
                    ])
 
 
-class TableFactory(object):
-    def __call__(self, player_count):
-        component_collection_factory = ComponentCollectionFactory()
-
-        # 7 for 4 player, 5 for 3 player, 4 for 2 player plus 5 gold
-        chips = component_collection_factory(
-            'chip',
-            {
-                # TODO: Remove this, for testing only
-                # 4: '1 white, 1 blue, 0 red, 0 green, 0 black, 5 yellow',
-                4: '7 white, 7 blue, 7 red, 7 green, 7 black, 5 yellow',
-                3: '5 white, 5 blue, 5 red, 5 green, 5 black, 5 yellow',
-                2: '4 white, 4 blue, 4 red, 4 green, 4 black, 5 yellow',
-            }[player_count]
-        )
-
-        card_decks = [
-            component_collection_factory('card', raw_cards)
-            for raw_cards in (row_1, row_2, row_3)
-            ]
-
-        card_grid = []
-        for card_deck in card_decks:
-            card_grid.append([CardSlot(card_deck.pop()) for _ in range(4)])
-
-        tiles = component_collection_factory(
-            'tile',
-            [
-                '4 blue, 4 green',
-                '4 white, 4 red',
-                '4 black, 4 red',
-                '4 green, 4 red',
-                '4 black, 4 green',
-                '4 white, 4 black',
-                '4 blue, 4 white',
-                '3 green, 3 blue, 3 red',
-                '3 blue, 3 green, 3 white',
-                '3 black, 3 red, 3 white',
-                '3 black, 3 red, 3 green',
-                '3 blue, 3 white, 3 red',
-                '3 black, 3 red, 3 blue',
-                '3 black, 3 white, 3 blue'
-            ]
-        )
-        tiles.shuffle_and_limit(player_count + 1)
-
-        table = Table(
-            chips=chips,
-            card_decks=card_decks,
-            card_grid=card_grid,
-            tiles=tiles
-        )
-        return table
-
 class HoldingArea(object):
     """
     During a player's turn, holds the items which
@@ -695,55 +684,57 @@ class HoldingArea(object):
         self.chips = ChipCollection()
         self.card = None
         self.location = None
+        self.game = None
 
     def clear(self):
         self.__init__()
 
     def add_chip(self, chip):
         self.chips.add_one(chip)
-    #
-    # def remove_chip(self, chip):
-    #     self.chips = [c for c in self.chips if c is not chip]
 
-    def embody(self, location):
+    def embody(self):
         if not self.chips and not self.card:
             return
-        self.location = location
         self._draw()
-        self.location = location
-        self.chips.embody(self.location)
-        # for i, chip in enumerate(self.chips):
-        #     chip.embody(
-        #         self.location +
-        #         Vector((i * 2.5 + 2) * config.chip_size, 2 * config.chip_size),
-        #         can_click=True
-        #     )
+
+        location = config.holding_area_location
+
+        self.chips.embody(
+            location=location + config.holding_area_chips_location,
+            direction='horizontal',
+            scaling_factor=0.7
+        )
+
         if self.card:
             self.card.embody(
-                self.location + config.holding_area_card_location,
+                location + config.holding_area_card_location,
                 can_return=True
             )
 
         buttons.add(
-            (self.location + config.cancel_button_location).
+            (location + config.cancel_button_location).
                 to_rectangle(config.button_size),
-            Cancel(holding_area),
+            Cancel(game.holding_area),
             text='Cancel'
         ).embody()
 
-        if game_state.is_turn_complete:
+        if game.game_state.is_turn_complete:
             buttons.add(
-                (self.location + config.confirm_button_location)
+                (location + config.confirm_button_location)
                     .to_rectangle(config.button_size),
-                Confirm(holding_area),
+                Confirm(game.holding_area),
                 text='Confirm'
             ).embody()
 
-    def _draw(self):
-        draw_rectangle(self.location.to_rectangle(config.holding_area_size),
+    @staticmethod
+    def _draw():
+        draw_rectangle(config.holding_area_location.to_rectangle(config.holding_area_size),
                        ColourPalette.holding_area)
+
+        draw_text(
+            config.holding_area_location + config.holding_area_name_location,
+            text=game.current_player.name
+        )
 
     def is_empty(self):
         return not self.card and self.chips.empty
-
-holding_area = HoldingArea()

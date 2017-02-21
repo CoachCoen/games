@@ -1,9 +1,9 @@
 from random import choice
 
-from game_state import game_state
-from game_objects import Chip, Card, holding_area
+# from game_state import game_state
+from game_objects import Chip, Card
 from game_actions import TakeChip, TakeCard, Confirm
-
+from game_game import game
 """
 What's the protocol:
 Attach to a player
@@ -29,17 +29,15 @@ Flow
 
 class AbstractAI(object):
     def __init__(self):
-        self.the_game = None
         self.player = None
 
-    def init_ai(self, game, player):
-        self.the_game = game
-        self.player = player
+    # def init_ai(self, game, player):
+    #     self.player = player
 
 
 class RandomAI(AbstractAI):
     def _choose_move(self):
-        valid_action_sets = game_state.valid_action_sets
+        valid_action_sets = game.game_state.valid_action_sets
 
         for action_type in ['card', '3 chips', '2 chips', 'reserve card']:
             if len(valid_action_sets[action_type]):
@@ -53,13 +51,10 @@ class RandomAI(AbstractAI):
             (Card, TakeCard)
         ]:
             if isinstance(item, object_type):
-                return action(item, holding_area)
+                return action(item, game.holding_area)
         return None
 
     def take_turn(self):
-        # TODO: Move this into abstract class's set up code?
-        game_state.update(self.the_game)
-
         my_move = self._choose_move()
         if not my_move:
             return

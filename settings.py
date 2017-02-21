@@ -17,6 +17,9 @@ class Vector(object):
     def __sub__(self, other):
         return Vector(self.x - other.x, self.y - other.y)
 
+    def __mul__(self, other):
+        return Vector(self.x * other, self.y * other)
+
 
 class Config(object):
     tabletop_size = Vector(1366, 768)
@@ -69,6 +72,8 @@ class Config(object):
     holding_area_location = Vector(1000, 300)
 
     holding_area_card_location = Vector(30, 30)
+    holding_area_chips_location = Vector(150, 30)
+    holding_area_name_location = Vector(5, 5)
 
     button_text_location = Vector(5, 5)
     # TODO: Dynamically determine button size

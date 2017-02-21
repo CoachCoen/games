@@ -63,6 +63,7 @@ def grow_rectangle(rectangle, increase):
         rectangle[3] + 2 * increase
     )
 
+
 def draw_pologon(vertices, colour):
     vertices = scale_vertices(vertices)
     pygame.draw.polygon(easel.surface, easel.colour(colour),

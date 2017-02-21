@@ -1,12 +1,11 @@
 from transitions import Machine, State
 
-from game_objects import ComponentCollectionFactory, holding_area, \
-    ChipCollection
+from game_objects import ComponentCollectionFactory, ChipCollection
 from drawing_surface import draw_rectangle, draw_text
 from drawing_surface import ColourPalette
 from settings import config, Vector
 from data import ChipType
-# from holding_area import holding_area
+from game_game import game
 
 WAITING = 'waiting_for_turn'
 STARTED = 'turn_started'
@@ -77,6 +76,8 @@ class Player(object):
         self.name = name
         self.player_order = player_order
         self.AI = AI
+        if AI:
+            self.AI.player = self
 
         component_collection_factory = ComponentCollectionFactory()
         # self.cards = component_collection_factory('card', row_1)
@@ -95,6 +96,8 @@ class Player(object):
         )
 
     def on_enter_turn_started(self):
+        game.game_state.update()
+
         if self.AI:
             self.AI.take_turn()
 
@@ -148,6 +151,10 @@ class Player(object):
         #         ChipType.yellow_gold, chips_shortage
         #     )
 
+    @property
+    def is_current_player(self):
+        return self.state != WAITING
+
     def can_afford(self, chip_cost):
         chips_shortage = 0
         for chip_type in [chip_type for chip_type in ChipType if chip_type is not ChipType.yellow_gold]:
@@ -185,7 +192,7 @@ class Player(object):
         Has this player no items yet?
         :return:
         """
-        return holding_area.is_empty
+        return game.holding_area.is_empty
 
     def earned_multiple_tiles(self):
         """

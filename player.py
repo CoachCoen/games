@@ -1,4 +1,4 @@
-from transitions import Machine
+from transitions import Machine, State
 
 from game_objects import ComponentCollectionFactory, holding_area, \
     ChipCollection
@@ -8,12 +8,12 @@ from settings import config, Vector
 from data import ChipType
 # from holding_area import holding_area
 
-WAITING = 'waiting for turn'
-STARTED = 'turn started'
-IN_PROGRESS = 'turn in progress'
-VALID = 'valid turn'
-TILES_OFFERED = 'tiles on offer'
-TILE_SELECTED = 'tile selected'
+WAITING = 'waiting_for_turn'
+STARTED = 'turn_started'
+IN_PROGRESS = 'turn_in_progress'
+VALID = 'valid_turn'
+TILES_OFFERED = 'tiles_on_offer'
+TILE_SELECTED = 'tile_selected'
 
 
 # class PlayerState(object):
@@ -28,7 +28,7 @@ class Player(object):
     # TODO: Refactor this? Replace with enum? Move comments to top?
     states = [
         WAITING,     # someone else's turn
-        STARTED,         # turn started, nothing taken yet
+        STARTED,     # turn started, nothing taken yet
         IN_PROGRESS,     # turn started, something taken
         VALID,           # taken complete set of items, now confirm
         TILES_OFFERED,       # one or more noble tiles can be taken
@@ -73,9 +73,10 @@ class Player(object):
         dict(trigger='take_tile', source=TILE_SELECTED, dest=WAITING)
     ]
 
-    def __init__(self, name, player_order):
+    def __init__(self, name, AI, player_order):
         self.name = name
         self.player_order = player_order
+        self.AI = AI
 
         component_collection_factory = ComponentCollectionFactory()
         # self.cards = component_collection_factory('card', row_1)
@@ -92,6 +93,10 @@ class Player(object):
             transitions=Player.transitions,
             initial=WAITING
         )
+
+    def on_enter_turn_started(self):
+        if self.AI:
+            self.AI.take_turn()
 
     def has_chips_of_type(self, chip_type):
         # TODO: Refactor: better way to find the right chip stack
@@ -229,7 +234,7 @@ class Player(object):
             (0, 0, config.player_area_size.x, config.player_area_size.y),
             player_order=self.player_order,
             colour=ColourPalette.active_player_area
-            if self.state != 'waiting for turn'
+            if self.state != WAITING
             else ColourPalette.player_area
         )
         draw_text(

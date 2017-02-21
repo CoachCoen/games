@@ -5,8 +5,9 @@ from game_objects import TableFactory, holding_area
 from player import Player
 from settings import config
 from buttons import buttons
-# from holding_area import holding_area
 from game_state import game_state
+from ai_simple import RandomAI
+
 
 class Game(object):
     def __init__(self):
@@ -20,7 +21,7 @@ class Game(object):
 
     @property
     def current_player(self):
-        return [p for p in self.players if p.state != 'waiting for turn'][0]
+        return [p for p in self.players if p.state != 'waiting_for_turn'][0]
 
     def next_player(self):
         current = self.current_player
@@ -46,11 +47,14 @@ class GameFactory(object):
     def __init__(self):
         pass
 
-    def __call__(self, player_names):
+    def __call__(self, players):
         game = Game()
 
-        game.players = [Player(name, i)
-                        for (i, name) in enumerate(player_names)]
+        game.players = [Player(name, AI, i)
+                        for (i, (name, AI)) in enumerate(players)]
+        for player in game.players:
+            if player.AI:
+                player.AI.init_ai(game, player)
         table_factory = TableFactory()
         game.table = table_factory(game.player_count)
 
@@ -91,9 +95,21 @@ class App:
         easel.init_easel(self._display_surf)
         game_factory = GameFactory()
         self.the_game = game_factory(
+            players = [
+                ('Caroline', RandomAI()),
+                ('Nigel', RandomAI()),
+                ('Issie', RandomAI()),
+                # ('Coen', None)
+            ]
             # player_names=['Caroline', 'Nigel', 'Issie', 'Coen']
-            player_names = ['Caroline', 'Nigel']
+            # player_names = ['Caroline', 'Nigel']
         )
+
+        # TODO: Refactor? Cleaner initilisation
+        for player in self.the_game.players:
+            if player.AI:
+                player.AI.init_ai(self.the_game, player)
+
         refresh_display()
 
     def on_event(self, event):

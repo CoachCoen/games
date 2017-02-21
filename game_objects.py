@@ -165,6 +165,28 @@ class ChipCollection(AbstractGameComponentCollection):
     def count(self, chip_type):
         return sum(1 for chip in self.chips if chip.chip_type == chip_type)
 
+    # TODO: Refactor: some functions can be properties
+    # TODO: Refactor: shared code?
+
+    def top_chips(self):
+        return [
+            self.first_chip_of_type(chip_type) for chip_type in ChipType
+            if self.first_chip_of_type(chip_type)
+            ]
+
+    def chips_for_type(self, chip_type):
+        return [chip for chip in self.chips if chip.chip_type == chip_type]
+
+    @property
+    def chips_by_type(self):
+        return {chip_type: self.chips_for_type(chip_type)
+                for chip_type in ChipType}
+
+    def top_two_chips_by_type(self):
+        return [chips for chip_type, chips in self.chips_by_type.items()
+                if len(chips) >= 2
+                and chip_type is not ChipType.yellow_gold]
+
     def pay_chip_of_type(self, chip_type):
         chip = self.take_one(chip_type)
         if chip:
@@ -379,12 +401,16 @@ class CardDeck(AbstractGameComponentCollection):
             count = self.count_for_reward_type(chip_type)
 
             if count:
-                location = self.location - \
-                           Vector(2.5 * config.chip_size * i, 0)
+                # stack_location = self.location + \
+                #                  Vector
+                #                         i * 2.5 * scaling_factor * config.chip_size)
+
+                location = self.location + \
+                           Vector(2.5 * self.scaling_factor * config.chip_size * i, 0)
                 colour = chip_type_to_colour[chip_type]
 
                 draw_rectangle(
-                    self.location.to_rectangle(
+                    location.to_rectangle(
                         (config.chip_font_size * self.scaling_factor,
                          config.chip_font_size * self.scaling_factor)),
                     player_order=self.player_order,

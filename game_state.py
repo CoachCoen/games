@@ -1,4 +1,7 @@
+from itertools import combinations
+
 from data import ChipType
+
 
 def get_is_turn_complete():
     holding_area = game_state.game.holding_area
@@ -89,10 +92,56 @@ def get_valid_actions():
 
     return valid_actions
 
+
+def get_valid_action_sets():
+    """
+    This player can take:
+    3 different (non-yellow) chips
+    2 of the same chip, if at least 4 of that type available
+    Any card which they can afford
+    1 yellow chip plus any card (reserve - don't take)
+    """
+
+    valid_action_sets = {}
+    table_chips = game_state.game.table.chips
+
+    # 3 different (non-yellow) chips
+    available_chips = [
+        chip for chip in table_chips.top_chips()
+        if chip.chip_type is not ChipType.yellow_gold]
+
+    valid_action_sets['3 chips'] = list(combinations(available_chips, 3)) \
+        if len(available_chips) >= 3 \
+        else []
+
+    valid_action_sets['2 chips'] = table_chips.top_two_chips_by_type()
+
+    valid_action_sets['card'] = []
+    valid_action_sets['reserve card'] = []
+    first_yellow_chip = table_chips.first_chip_of_type(ChipType.yellow_gold)
+    for row in game_state.game.table.card_grid:
+        for card_slot in row:
+            card = card_slot.card
+            if not card:
+                continue
+
+            # If no chip picked, can select any which the player can afford
+            if game_state.game.current_player.can_afford(card.chip_cost):
+                valid_action_sets['card'].append([card])
+
+            if first_yellow_chip:
+                valid_action_sets['reserve card'].append(
+                    [card, first_yellow_chip]
+                )
+
+    return valid_action_sets
+
+
 class GameState(object):
     def __init__(self):
         self._is_turn_complete = None
         self._valid_actions = None
+        self._valid_action_sets = None
         self.game = None
 
     def update(self, game):
@@ -111,5 +160,11 @@ class GameState(object):
         if self._valid_actions is None:
             self._valid_actions = get_valid_actions()
         return self._valid_actions
+
+    @property
+    def valid_action_sets(self):
+        if self._valid_action_sets is None:
+            self._valid_action_sets = get_valid_action_sets()
+        return self._valid_action_sets
 
 game_state = GameState()

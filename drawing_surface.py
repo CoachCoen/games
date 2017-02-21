@@ -32,7 +32,7 @@ chip_type_to_colour = {
 }
 
 def _translate_to_player(player_order, location):
-    left = 0 if player_order in [0, 2] \
+    left = 0 if player_order in [0, 3] \
         else config.tabletop_size.x - config.player_area_size.x
     top = 0 if player_order in [0, 1] \
         else config.tabletop_size.y - config.player_area_size.y
@@ -41,7 +41,7 @@ def _translate_to_player(player_order, location):
     if isinstance(location, Vector):
         return location + Vector(left, top)
 
-    return (location[0] + left, location[1] + top) + location[2:]
+    return (location[0] + left, location[1] + top) + tuple(location[2:])
 
 
 def scale_vertices(vertices):

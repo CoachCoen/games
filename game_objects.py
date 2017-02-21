@@ -42,7 +42,7 @@ class Card(AbstractGameComponent):
         self.location = location
         action = ReturnCard(self, game.holding_area) if can_return \
             else TakeCard(self, game.holding_area)
-        if self in game.game_state.valid_actions:
+        if self in game.valid_actions:
             buttons.add(
                 self.location.to_rectangle(config.card_size),
                 action
@@ -301,7 +301,7 @@ class ChipCollection(AbstractGameComponentCollection):
                 stack_location = self.location + \
                              Vector(i * 2.5 * scaling_factor * config.chip_size, 0)
 
-            if can_click and top_chip in game.game_state.valid_actions:
+            if can_click and top_chip in game.valid_actions:
                 buttons.add(
                     circle_location_to_rectangle(
                         stack_location, config.chip_size * scaling_factor
@@ -718,7 +718,7 @@ class HoldingArea(object):
             text='Cancel'
         ).embody()
 
-        if game.game_state.is_turn_complete:
+        if game.is_turn_complete:
             buttons.add(
                 (location + config.confirm_button_location)
                     .to_rectangle(config.button_size),

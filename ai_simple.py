@@ -37,7 +37,7 @@ class AbstractAI(object):
 
 class RandomAI(AbstractAI):
     def _choose_move(self):
-        valid_action_sets = game.game_state.valid_action_sets
+        valid_action_sets = game.valid_action_sets
 
         for action_type in ['card', '3 chips', '2 chips', 'reserve card']:
             if len(valid_action_sets[action_type]):

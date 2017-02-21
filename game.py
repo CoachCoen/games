@@ -9,7 +9,7 @@ from game_objects import Table, HoldingArea
 from player import Player
 from settings import config
 from buttons import buttons
-from game_state import GameState
+# from game_state import GameState
 from ai_simple import RandomAI
 from game_game import game
 
@@ -33,7 +33,7 @@ def init_game(player_details):
         players=players,
         table=Table(len(players)),
         holding_area=HoldingArea(),
-        game_state=GameState(),
+        # game_state=GameState(),
         buttons=buttons
     )
 

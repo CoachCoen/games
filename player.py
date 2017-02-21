@@ -96,7 +96,7 @@ class Player(object):
         )
 
     def on_enter_turn_started(self):
-        game.game_state.update()
+        game.refresh_state()
 
         if self.AI:
             self.AI.take_turn()

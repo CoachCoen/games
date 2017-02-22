@@ -10,14 +10,13 @@ class TakeCard(AbstractAction):
         self.card = card
 
     def activate(self):
-        self.card.source.card = None
         game.holding_area.card = self.card
         game.current_player.take_component()
         return True
 
 
 def return_card(card):
-    card.source.card = card
+    game.table.card_grid.return_card(card)
     game.holding_area.card = None
 
 
@@ -80,8 +79,9 @@ class Confirm(AbstractAction):
 
             # Draw a new card and assign it to the original card's slot
             game.current_player.add_card(card)
-            card.source.card = card.card_deck.pop()
-            card.source.card.source = card.source
+            game.table.card_grid.fill_empty_spaces()
+            # card.source.card = game.table.card_deck.pop()
+            # card.source.card.source = card.source
 
             game.holding_area.card = None
 

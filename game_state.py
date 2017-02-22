@@ -1,7 +1,8 @@
 import pygame
 from itertools import combinations
 
-from data import ChipType
+from chip_types import ChipType
+# from data import ChipType
 
 
 class Game(object):
@@ -15,6 +16,7 @@ class Game(object):
         self.table = None
         self.holding_area = None
         self.buttons = None
+        # self.chip_types = None
         self._is_turn_complete = None
         self._valid_actions = None
         self._valid_action_sets = None
@@ -24,6 +26,8 @@ class Game(object):
         self.table = table
         self.holding_area = holding_area
         self.buttons = buttons
+        # self.chip_types = chip_types
+
 
     @property
     def player_count(self):
@@ -172,20 +176,20 @@ class Game(object):
                     and table_chips.count(chip_type) <= 2:
                 continue
 
-            valid_actions.append(
-                game.table.chips.first_chip_of_type(chip_type)
-            )
+            valid_actions.append(chip)
 
         # Which cards can be selected?
         # TODO: More Pythonic way to loop through this?
-        for row in game.table.card_grid:
+        for row in game.table.card_grid.cards:
             for card_slot in row:
                 card = card_slot.card
                 if not card:
                     continue
 
                 # If yellow chip picked, can select all
-                if holding_area_chips.any_chip_of_type(ChipType.yellow_gold):
+                if holding_area_chips.any_chip_of_type(
+                        ChipType.yellow_gold
+                ):
                     valid_actions.append(card)
 
                 # If non-yellow chip picked, can't select any card
@@ -198,8 +202,7 @@ class Game(object):
 
         return valid_actions
 
-    @staticmethod
-    def _get_valid_action_sets():
+    def _get_valid_action_sets(self):
         """
         This player can take:
         3 different (non-yellow) chips
@@ -226,7 +229,7 @@ class Game(object):
         valid_action_sets['reserve card'] = []
         first_yellow_chip = table_chips.first_chip_of_type(
             ChipType.yellow_gold)
-        for row in game.table.card_grid:
+        for row in game.table.card_grid.cards:
             for card_slot in row:
                 card = card_slot.card
                 if not card:

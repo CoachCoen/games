@@ -4,7 +4,7 @@ from game_objects import ComponentCollectionFactory, ChipCollection
 from drawing_surface import draw_rectangle, draw_text
 from drawing_surface import ColourPalette
 from settings import config
-from data import ChipType
+from game_objects import ChipType
 from game_state import game
 
 WAITING = 'waiting_for_turn'

@@ -1,9 +1,9 @@
 import pygame
-
 from enum import Enum
 
-from settings import config, Vector
-from data import ChipType
+from settings import config
+from chip_types import ChipType
+from vector import Vector
 
 
 class ColourPalette(Enum):
@@ -21,15 +21,6 @@ class ColourPalette(Enum):
     holding_area = 22
     button = 23
     active_player_area = 24
-
-chip_type_to_colour = {
-    ChipType.red_ruby: ColourPalette.red_chip,
-    ChipType.blue_sapphire: ColourPalette.blue_chip,
-    ChipType.white_diamond: ColourPalette.white_chip,
-    ChipType.green_emerald: ColourPalette.green_chip,
-    ChipType.black_onyx: ColourPalette.black_chip,
-    ChipType.yellow_gold: ColourPalette.yellow_chip
-}
 
 
 def _translate_to_player(player_order, location):
@@ -123,13 +114,13 @@ class Easel(object):
         ColourPalette.player_area: pygame.Color(70, 70, 70, 70),
         ColourPalette.active_player_area: pygame.Color(100, 30, 30, 70),
         ColourPalette.holding_area: pygame.Color(120, 120, 120, 120),
-        ColourPalette.green_chip: pygame.Color(0, 127, 0, 255),
-        ColourPalette.red_chip: pygame.Color(127, 0, 0, 255),
-        ColourPalette.black_chip: pygame.Color(10, 10, 10, 255),
-        ColourPalette.white_chip: pygame.Color(255, 255, 255, 255),
-        ColourPalette.yellow_chip: pygame.Color(244, 238, 66, 255),
-        ColourPalette.blue_chip: pygame.Color(0, 0, 127, 255),
-        ColourPalette.button: pygame.Color(120, 170, 170, 120)
+        ColourPalette.button: pygame.Color(120, 170, 170, 120),
+        ChipType.green_emerald: pygame.Color(0, 127, 0, 255),
+        ChipType.red_ruby: pygame.Color(127, 0, 0, 255),
+        ChipType.black_onyx: pygame.Color(10, 10, 10, 255),
+        ChipType.white_diamond: pygame.Color(255, 255, 255, 255),
+        ChipType.yellow_gold: pygame.Color(244, 238, 66, 255),
+        ChipType.blue_sapphire: pygame.Color(0, 0, 127, 255),
     }
 
     def __init__(self):

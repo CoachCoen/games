@@ -1,16 +1,3 @@
-from enum import Enum
-
-
-# TODO Find a better home for this
-class ChipType(Enum):
-    green_emerald = 1
-    blue_sapphire = 2
-    red_ruby = 3
-    white_diamond = 4
-    black_onyx = 5
-    yellow_gold = 6
-
-
 row_1 = """
 3 red:green
 3 black:blue

@@ -1,22 +1,37 @@
+"""
+    Game objects: cards, chips, tokens
+    Game object containers: card deck, card slot, card grid,
+        chip collection, tile collection, table, holding area
+"""
 from random import shuffle
+from enum import Enum
 
-from data import ChipType
 from data import row_1, row_2, row_3
 
 from settings import config
 from vector import Vector
+from chip_types import ChipType
 
 from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
 from drawing_surface import ColourPalette
-from drawing_surface import chip_type_to_colour
+
+from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard, \
+    Cancel, Confirm
 
 from buttons import buttons
-
-from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard
-from game_actions import Cancel, Confirm
-
 from game_state import game
+
+
+class ComponentState(Enum):
+    """
+    Different places where a component can be
+    Used to decide what to do when clicking on a component
+    """
+    holding_area = 1
+    player = 2
+    card_grid = 3
+    card_decks = 4
 
 
 class AbstractFactory(object):
@@ -30,7 +45,29 @@ class AbstractGameComponent(object):
     """
     Simple grouping of game component classes
     """
-    pass
+    def __init__(self):
+        self.location = None
+        self.scaling_factor = None
+        self.sub_components = []
+
+    def embody(self, location, scaling_factor=1, **kwargs):
+        self.location = location
+        self.scaling_factor = scaling_factor
+        self._draw()
+        for sc, sc_location, sc_scaling in self.sub_components:
+            sc.embody(self.location + sc_location, scaling_factor)
+        self.buttonify()
+
+    def _draw(self):
+        """
+        Show this component. Any sub components will be drawn
+         by their own _draw method (via embody())
+        :return:
+        """
+        return NotImplemented
+
+    def buttonify(self):
+        pass
 
 
 class AbstractGameComponentCollection(object):
@@ -49,51 +86,65 @@ class Card(AbstractGameComponent):
     - points: victory points
     """
     def __init__(self, chip_cost, reward_chip, points):
+        super().__init__()
         self.chip_cost = chip_cost
-        self.reward_chip = reward_chip
         self.points = points
-        self.location = None
-        self.source = None
+        self.reward_chip = reward_chip
+        self.sub_components = [
+            (chip_cost, config.cost_location, config.chip_cost_scaling),
+            (reward_chip, config.reward_chip_location,
+             config.reward_chip_scaling)
+        ]
 
-    def embody(self, location, can_return=False):
-        self.location = location
-        action = ReturnCard(self) if can_return \
-            else TakeCard(self)
+    @property
+    def position(self):
+        """
+        Where is the card: holding_area, player's hand or card grid
+        """
+        if self == game.holding_area.card:
+            return ComponentState.holding_area
+
+        if game.current_player.cards.contains(self):
+            return ComponentState.player
+
+        if game.table.card_grid.contains(self):
+            return ComponentState.card_grid
+
+    def buttonify(self):
+        """
+        Turn the card into a 'button' so the user can click on it
+        """
         if self in game.valid_actions:
+            # If in holding area, return the card
+            # otherwise, take the card
+            action = ReturnCard(self) \
+                if self.position == ComponentState.holding_area \
+                else TakeCard(self)
+
+            # Create button, add to list, and draw a line around
+            # the card, to show it can be taken
             buttons.add(
                 self.location.to_rectangle(config.card_size),
                 action
             ).embody()
 
-        self._draw()
-
     def _draw(self):
+        """
+        Draw the rectangle and the value (points)
+        The cost (chips) and resulting chip types
+        will draw themselves
+        """
         draw_rectangle(self.location.to_rectangle(config.card_size),
                        ColourPalette.card_background)
         if self.points:
             draw_text(self.location + config.points_location, str(self.points))
 
-        self.chip_cost.embody(
-            self.location + config.cost_location,
-            scaling_factor=config.chip_cost_scaling
-        )
 
-        self.reward_chip.embody(
-            self.location + config.reward_chip_location,
-            scaling_factor=config.reward_chip_scaling
-        )
-
-
-class CardSlot(object):
+class CardSlot(AbstractGameComponent):
     def __init__(self, card):
+        super().__init__()
         self.card = card
-        self.card.source = self
-        self.location = None
-
-    def embody(self, location):
-        self.location = location
-        if self.card:
-            self.card.embody(self.location)
+        self.sub_components = [(card, Vector(0, 0), 1)]
 
 
 class CardDeck(AbstractGameComponentCollection):
@@ -110,6 +161,9 @@ class CardDeck(AbstractGameComponentCollection):
 
     def add(self, card):
         self.cards.append(card)
+
+    def contains(self, card):
+        return card in self.cards
 
     def embody(self, location, group_by_type=False,
                scaling_factor=1, player_order=None):
@@ -132,20 +186,20 @@ class CardDeck(AbstractGameComponentCollection):
                 location = \
                     self.location + \
                     Vector(2.5 * self.scaling_factor * config.chip_size * i, 0)
-                colour = chip_type_to_colour[chip_type]
+                # colour = chip_type_to_colour[chip_type]
 
                 draw_rectangle(
                     location.to_rectangle(
                         (config.chip_font_size * self.scaling_factor,
                          config.chip_font_size * self.scaling_factor)),
                     player_order=self.player_order,
-                    colour=colour
+                    colour=chip_type
                 )
 
                 draw_text(
                     location - Vector(3, 6),
                     str(count),
-                    text_colour=colour,
+                    text_colour=chip_type,
                     reverse_colour=True,
                     font_size=config.chip_font_size * self.scaling_factor,
                     player_order=self.player_order
@@ -169,28 +223,97 @@ class CardDeck(AbstractGameComponentCollection):
         return sum(c.points for c in self.cards)
 
 
+class CardGrid(AbstractGameComponentCollection):
+    def __init__(self, cards):
+        self.cards = cards
+
+    def contains(self, card):
+        # TODO: Nested do loop?
+        for row in self.cards:
+            if card in row:
+                return True
+        return False
+
+    def fill_empty_spaces(self):
+        for i, row in enumerate(self.cards):
+            for j, card in enumerate(row):
+                if not card:
+                    self.cards[i][j] = game.table.card_decks[i].pop()
+
+    def return_card(self, card):
+        for i, row in enumerate(self.cards):
+            for j, card in enumerate(row):
+                if not card:
+                    self[i][j] = card
+                    return
+
+
 class Chip(AbstractGameComponent):
-    def __init__(self, chip_type, colour, source=None):
+    def __init__(self, chip_type):
+        super().__init__()
         self.chip_type = chip_type
-        self.colour = colour
-        self.location = None
-        self.source = source
 
-    def return_to_supply(self):
-        self.source.add_one(self)
+        # TODO: Single property
+        self.colour = chip_type
+        # self.location = None
+        # self.source = source
 
-    # TODO Better way to handle scaling factor and player_order (context handler?)
-    def embody(self, location, scaling_factor=1, player_order=None,
-               can_click=False):
-        self.location = location
-        if can_click:
+    @property
+    def position(self):
+        for (location, state) in [
+            (game.holding_area.chips, ComponentState.holding_area),
+            (game.current_player.chips, ComponentState.holding_area),
+            (game.table.chips, ComponentState.card_grid)
+        ]:
+            if location.contains(self):
+                return state
+
+    def buttonify(self):
+        if self in game.valid_actions:
+            action = ReturnChip(self) \
+                if self.position == ComponentState.holding_area \
+                else TakeChip(self)
+
             buttons.add(
                 circle_location_to_rectangle(
-                    self.location, config.chip_size * scaling_factor
+                    self.location, config.chip_size * self.scaling_factor
                 ),
-                ReturnChip(self)
+                action
             ).embody()
-        self._draw(scaling_factor, player_order)
+
+            # buttons.add(
+            #     self.location.to_rectangle(config.card_size),
+            #     action
+            # ).embody()
+
+                        # if game.holding_area.chips.contains(self):
+        #     return ComponentState.holding_area
+        #
+        # if game.current_player.chips.contains(self):
+        #     return ComponentState.player
+        #
+        # if game.table.chips.contains(self):
+        #     return ComponentState.card_grid
+
+        # TODO: Also check in the card decks
+
+
+    def return_to_supply(self):
+        game.table.chips.add_one(self)
+        # self.source.add_one(self)
+
+    # # TODO Better way to handle scaling factor and player_order (context handler?)
+    # def embody(self, location, scaling_factor=1, player_order=None,
+    #            can_click=False):
+    #     self.location = location
+    #     if can_click:
+    #         buttons.add(
+    #             circle_location_to_rectangle(
+    #                 self.location, config.chip_size * scaling_factor
+    #             ),
+    #             ReturnChip(self)
+    #         ).embody()
+    #     self._draw(scaling_factor, player_order)
 
     def _draw(self, scaling_factor=1, player_order=None):
         draw_circle(
@@ -222,6 +345,9 @@ class ChipCollection(AbstractGameComponentCollection):
         for chip in self.chips:
             target.add_one(chip)
         self.chips = []
+
+    def contains(self, chip):
+        return chip in self.chips
 
     def count(self, chip_type):
         return sum(1 for chip in self.chips if chip.chip_type == chip_type)
@@ -392,16 +518,20 @@ class ChipCollection(AbstractGameComponentCollection):
 
 class Tile(AbstractGameComponent):
     def __init__(self, chip_cost, points):
+        super().__init__()
         self.chip_cost = chip_cost
         self.points = points
-        self.location = None
+        self.sub_components = [(
+            chip_cost, config.cost_location, config.chip_cost_scaling
+        )]
+        # self.location = None
 
-    def embody(self, location):
-        self.location = location
-        self._draw()
-        self.chip_cost.embody(self.location + config.cost_location,
-                              scaling_factor=config.chip_cost_scaling
-                              )
+    # def embody(self, location):
+    #     self.location = location
+    #     self._draw()
+    #     self.chip_cost.embody(self.location + config.cost_location,
+    #                           scaling_factor=config.chip_cost_scaling
+    #                           )
 
     def _draw(self):
         draw_rectangle(
@@ -421,6 +551,9 @@ class TileCollection(AbstractGameComponentCollection):
     def shuffle_and_limit(self, count):
         shuffle(self.tiles)
         self.tiles = self.tiles[:count]
+
+    def contains(self, tile):
+        return tile in self.tiles
 
     @property
     def points(self):
@@ -485,7 +618,7 @@ class Table(object):
 
         self.chips = chips
         self.card_decks = card_decks
-        self.card_grid = card_grid
+        self.card_grid = CardGrid(card_grid)
         self.tiles = tiles
 
     @staticmethod
@@ -521,7 +654,7 @@ class Table(object):
                              Vector(0, i * (config.card_size.y +
                                             config.card_spacing)))
 
-        for i, card_row in enumerate(self.card_grid):
+        for i, card_row in enumerate(self.card_grid.cards):
             for j, card_slot in enumerate(card_row):
                 card_slot.embody(
                     config.central_area_location +
@@ -626,12 +759,12 @@ class ComponentFactory(AbstractFactory):
     @staticmethod
     def chip_factory(details):
         return Chip(*{
-            'red': (ChipType.red_ruby, ColourPalette.red_chip),
-            'blue': (ChipType.blue_sapphire, ColourPalette.blue_chip),
-            'white': (ChipType.white_diamond, ColourPalette.white_chip),
-            'green': (ChipType.green_emerald, ColourPalette.green_chip),
-            'black': (ChipType.black_onyx, ColourPalette.black_chip),
-            'yellow': (ChipType.yellow_gold, ColourPalette.yellow_chip)
+            'red': (ChipType.red_ruby, ),
+            'blue': (ChipType.blue_sapphire, ),
+            'white': (ChipType.white_diamond, ),
+            'green': (ChipType.green_emerald, ),
+            'black': (ChipType.black_onyx, ),
+            'yellow': (ChipType.yellow_gold, )
         }[details])
 
     @staticmethod
@@ -687,7 +820,7 @@ class ComponentCollectionFactory(AbstractFactory):
                 chip_count = int(chip_count)
                 for _ in range(chip_count):
                     chip = self.component_factory('chip', colour_name)
-                    chip.source = chips
+                    # chip.source = chips
                     chips.add_one(chip)
         return chips
 

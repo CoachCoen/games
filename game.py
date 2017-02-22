@@ -54,7 +54,7 @@ class App:
                 ('Caroline', RandomAI()),
                 ('Nigel', RandomAI()),
                 ('Issie', RandomAI()),
-                ('Coen', None)
+                # ('Coen', None)
             ]
         )
 

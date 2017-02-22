@@ -180,8 +180,7 @@ class Game(object):
         # Which cards can be selected?
         # TODO: More Pythonic way to loop through this?
         for row in game.table.card_grid.cards:
-            for card_slot in row:
-                card = card_slot.card
+            for card in row:
                 if not card:
                     continue
 

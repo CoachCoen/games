@@ -43,7 +43,7 @@ class AbstractFactory(object):
 
 class AbstractGameComponent(object):
     """
-    Simple grouping of game component classes
+    Abstract game component
     """
     def __init__(self):
         self.location = None
@@ -51,11 +51,19 @@ class AbstractGameComponent(object):
         self.sub_components = []
 
     def embody(self, location, scaling_factor=1, **kwargs):
+        """
+        Show this component, plus any sub components,
+        at the specified location and scaling factor
+        If it can be clicked on, also add a button
+        """
         self.location = location
         self.scaling_factor = scaling_factor
         self._draw()
+
+        # embody sub components
         for sc, sc_location, sc_scaling in self.sub_components:
             sc.embody(self.location + sc_location, scaling_factor)
+
         self.buttonify()
 
     def _draw(self):
@@ -67,6 +75,7 @@ class AbstractGameComponent(object):
         return NotImplemented
 
     def buttonify(self):
+        # To be overwritten for classes which can be clicked on
         pass
 
 
@@ -140,14 +149,10 @@ class Card(AbstractGameComponent):
             draw_text(self.location + config.points_location, str(self.points))
 
 
-# class CardSlot(AbstractGameComponent):
-#     def __init__(self, card):
-#         super().__init__()
-#         self.card = card
-#         self.sub_components = [(card, Vector(0, 0), 1)]
-
-
 class CardDeck(AbstractGameComponentCollection):
+    """
+    Card deck class - a collection of cards
+    """
     def __init__(self, cards):
         self.cards = cards
         self.location = None
@@ -157,53 +162,43 @@ class CardDeck(AbstractGameComponentCollection):
         shuffle(self.cards)
 
     def pop(self):
+        """
+        Return the top card of the deck
+        """
         return self.cards.pop() if self.cards else None
 
     def add(self, card):
+        """
+        Add the card to the deck
+        """
         self.cards.append(card)
 
     def contains(self, card):
+        """
+        Returns True if the card is in this deck
+        """
         return card in self.cards
 
-    def embody(self, location, group_by_type=False,
+    def embody(self, location,
                scaling_factor=1, player_order=None):
+        """
+        Draw the card deck at this location
+        """
         self.location = location
         self.player_order = player_order
         self.scaling_factor = scaling_factor
-        if group_by_type:
-            self._draw_grouped_by_type()
-        else:
-            self._draw()
+        self._draw()
 
-    def _draw_grouped_by_type(self):
-        for (i, chip_type) in enumerate(
-                [chip_type for chip_type in ChipType
-                 if chip_type != ChipType.yellow_gold]
-        ):
-            count = self.count_for_reward_type(chip_type)
-
-            if count:
-                location = \
-                    self.location + \
-                    Vector(2.5 * self.scaling_factor * config.chip_size * i, 0)
-                # colour = chip_type_to_colour[chip_type]
-
-                draw_rectangle(
-                    location.to_rectangle(
-                        (config.chip_font_size * self.scaling_factor,
-                         config.chip_font_size * self.scaling_factor)),
-                    player_order=self.player_order,
-                    colour=chip_type
-                )
-
-                draw_text(
-                    location - Vector(3, 6),
-                    str(count),
-                    text_colour=chip_type,
-                    reverse_colour=True,
-                    font_size=config.chip_font_size * self.scaling_factor,
-                    player_order=self.player_order
-                )
+    @property
+    def counts_for_type(self):
+        """
+        Returns a dict {chip_type: number of cards which produce these}
+        :return:
+        """
+        return {
+            chip_type: self.count_for_reward_type(chip_type)
+            for chip_type in ChipType
+        }
 
     def _draw(self):
         draw_rectangle(self.location.to_rectangle(config.card_size),
@@ -228,11 +223,7 @@ class CardGrid(AbstractGameComponentCollection):
         self.cards = cards
 
     def contains(self, card):
-        # TODO: Nested do loop?
-        for row in self.cards:
-            if card in row:
-                return True
-        return False
+        return any(card in row for row in self.cards)
 
     def fill_empty_spaces(self):
         for i, row in enumerate(self.cards):
@@ -244,7 +235,7 @@ class CardGrid(AbstractGameComponentCollection):
         for i, row in enumerate(self.cards):
             for j, c in enumerate(row):
                 if not c:
-                    self[i][j] = card
+                    self.cards[i][j] = card
                     return
 
 
@@ -252,11 +243,6 @@ class Chip(AbstractGameComponent):
     def __init__(self, chip_type):
         super().__init__()
         self.chip_type = chip_type
-
-        # TODO: Single property
-        self.colour = chip_type
-        # self.location = None
-        # self.source = source
 
     @property
     def position(self):
@@ -281,45 +267,14 @@ class Chip(AbstractGameComponent):
                 action
             ).embody()
 
-            # buttons.add(
-            #     self.location.to_rectangle(config.card_size),
-            #     action
-            # ).embody()
-
-                        # if game.holding_area.chips.contains(self):
-        #     return ComponentState.holding_area
-        #
-        # if game.current_player.chips.contains(self):
-        #     return ComponentState.player
-        #
-        # if game.table.chips.contains(self):
-        #     return ComponentState.card_grid
-
-        # TODO: Also check in the card decks
-
-
     def return_to_supply(self):
         game.table.chips.add_one(self)
-        # self.source.add_one(self)
-
-    # # TODO Better way to handle scaling factor and player_order (context handler?)
-    # def embody(self, location, scaling_factor=1, player_order=None,
-    #            can_click=False):
-    #     self.location = location
-    #     if can_click:
-    #         buttons.add(
-    #             circle_location_to_rectangle(
-    #                 self.location, config.chip_size * scaling_factor
-    #             ),
-    #             ReturnChip(self)
-    #         ).embody()
-    #     self._draw(scaling_factor, player_order)
 
     def _draw(self, scaling_factor=1, player_order=None):
         draw_circle(
             self.location,
             int(config.chip_size * scaling_factor),
-            self.colour,
+            self.chip_type,
             player_order=player_order
         )
 
@@ -338,7 +293,6 @@ class ChipCollection(AbstractGameComponentCollection):
     def return_chips(self):
         for chip in self.chips:
             chip.return_to_supply()
-            # chip.source.add_one(chip)
         self.chips = []
 
     def transfer_chips(self, target):
@@ -354,6 +308,13 @@ class ChipCollection(AbstractGameComponentCollection):
 
     # TODO: Refactor: some functions can be properties
     # TODO: Refactor: shared code?
+
+    @property
+    def counts_for_type(self):
+        return {
+            chip_type: self.count(chip_type=chip_type)
+            for chip_type in ChipType
+        }
 
     def top_chips(self):
         return [
@@ -489,13 +450,6 @@ class ChipCollection(AbstractGameComponentCollection):
                     self.location + \
                     Vector(i * 2.5 * scaling_factor * config.chip_size, 0)
 
-            # if can_click and top_chip in game.valid_actions:
-            #     buttons.add(
-            #         circle_location_to_rectangle(
-            #             stack_location, config.chip_size * scaling_factor
-            #         ),
-            #         TakeChip(top_chip)
-            #     ).embody()
             top_chip.embody(
                 stack_location,
                 scaling_factor,
@@ -504,7 +458,7 @@ class ChipCollection(AbstractGameComponentCollection):
             )
 
             # TODO: Better way of getting the colour?
-            text_colour = self.first_chip_of_type(chip_type).colour
+            text_colour = self.first_chip_of_type(chip_type).chip_type
 
             draw_text(
                 stack_location - Vector(3, 6),

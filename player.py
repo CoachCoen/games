@@ -1,7 +1,8 @@
 from transitions import Machine
 
 from game_objects import ComponentCollectionFactory, ChipCollection
-from drawing_surface import draw_rectangle, draw_text
+from drawing_surface import draw_rectangle, draw_text, draw_squares_row, \
+    draw_circles_row
 from drawing_surface import ColourPalette
 from settings import config
 from game_objects import ChipType
@@ -217,18 +218,18 @@ class Player(object):
 
     def embody(self):
         self._draw()
-        self.chips.embody(
+
+        chip_counts = self.chips.counts_for_type
+        card_counts = self.cards.counts_for_type
+        draw_circles_row(
             config.player_chip_stack_location,
-            player_order=self.player_order,
-            direction='horizontal',
-            show_empty=True,
-            scaling_factor=0.7
+            chip_counts,
+            player_order=self.player_order
         )
-        self.cards.embody(
-            location=config.player_card_deck_location,
-            group_by_type=True,
-            player_order = self.player_order,
-            scaling_factor=0.7
+        draw_squares_row(
+            config.player_card_deck_location,
+            card_counts,
+            player_order=self.player_order
         )
 
     # TODO: Refactor this - messy?

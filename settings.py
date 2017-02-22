@@ -44,7 +44,8 @@ class Config(object):
     player_name_location = Vector(5, 5)
 
     player_chip_stack_location = Vector(40, 55)
-    player_card_deck_location = player_chip_stack_location + Vector(0, 50)
+    player_item_size = 30
+    player_card_deck_location = player_chip_stack_location + Vector(0, 20)
 
     player_points_location = Vector(player_area_size.x - 40, 20)
 

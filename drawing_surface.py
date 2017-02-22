@@ -105,6 +105,52 @@ def draw_circle(location, radius, colour, player_order=None):
                        int(radius * config.scaling_factor))
 
 
+def draw_squares_row(location, counts, player_order=None):
+    for i, chip_type in enumerate(ChipType):
+        if counts[chip_type]:
+            item_location = \
+                location + Vector((1.5 * i - 0.5) * config.player_item_size, 0)
+            draw_rectangle(
+                item_location.to_rectangle(
+                    Vector(config.player_item_size, config.player_item_size
+                           )
+                ), colour=chip_type,
+                player_order=player_order
+            )
+
+            draw_text(
+                item_location + Vector(5, 1),
+                str(counts[chip_type]),
+                text_colour=chip_type,
+                reverse_colour=True,
+                font_size=config.chip_font_size * 0.7,
+                player_order=player_order
+            )
+
+
+def draw_circles_row(location, counts, player_order=None):
+    for i, chip_type in enumerate(ChipType):
+        if counts[chip_type]:
+            item_location = \
+                location + Vector(1.5 * i * config.player_item_size, 0)
+
+            draw_circle(
+                item_location,
+                config.player_item_size/2,
+                colour=chip_type,
+                player_order=player_order
+            )
+
+            draw_text(
+                item_location - Vector(5, 8),
+                str(counts[chip_type]),
+                text_colour=chip_type,
+                reverse_colour=True,
+                font_size=config.chip_font_size * 0.7,
+                player_order=player_order
+            )
+
+
 class Easel(object):
     colour_palette = {
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),

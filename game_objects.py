@@ -140,11 +140,11 @@ class Card(AbstractGameComponent):
             draw_text(self.location + config.points_location, str(self.points))
 
 
-class CardSlot(AbstractGameComponent):
-    def __init__(self, card):
-        super().__init__()
-        self.card = card
-        self.sub_components = [(card, Vector(0, 0), 1)]
+# class CardSlot(AbstractGameComponent):
+#     def __init__(self, card):
+#         super().__init__()
+#         self.card = card
+#         self.sub_components = [(card, Vector(0, 0), 1)]
 
 
 class CardDeck(AbstractGameComponentCollection):
@@ -242,8 +242,8 @@ class CardGrid(AbstractGameComponentCollection):
 
     def return_card(self, card):
         for i, row in enumerate(self.cards):
-            for j, card in enumerate(row):
-                if not card:
+            for j, c in enumerate(row):
+                if not c:
                     self[i][j] = card
                     return
 
@@ -593,7 +593,7 @@ class Table(object):
 
         card_grid = []
         for card_deck in card_decks:
-            card_grid.append([CardSlot(card_deck.pop()) for _ in range(4)])
+            card_grid.append([card_deck.pop() for _ in range(4)])
 
         tiles = component_collection_factory(
             'tile',

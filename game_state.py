@@ -2,7 +2,6 @@ import pygame
 from itertools import combinations
 
 from chip_types import ChipType
-# from data import ChipType
 
 
 class Game(object):
@@ -230,8 +229,8 @@ class Game(object):
         first_yellow_chip = table_chips.first_chip_of_type(
             ChipType.yellow_gold)
         for row in game.table.card_grid.cards:
-            for card_slot in row:
-                card = card_slot.card
+            for card in row:
+                # card = card_slot.card
                 if not card:
                     continue
 

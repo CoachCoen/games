@@ -1,9 +1,9 @@
-from transitions import Machine, State
+from transitions import Machine
 
 from game_objects import ComponentCollectionFactory, ChipCollection
 from drawing_surface import draw_rectangle, draw_text
 from drawing_surface import ColourPalette
-from settings import config, Vector
+from settings import config
 from data import ChipType
 from game_state import game
 
@@ -13,14 +13,6 @@ IN_PROGRESS = 'turn_in_progress'
 VALID = 'valid_turn'
 TILES_OFFERED = 'tiles_on_offer'
 TILE_SELECTED = 'tile_selected'
-
-
-# class PlayerState(object):
-#     def __init__(self, name):
-#         self.name = name
-#
-#
-
 
 
 class Player(object):
@@ -41,16 +33,16 @@ class Player(object):
         # Take a component, if complete turn taken go to VALID, otherwise
         # go to/stay in IN PROGRESS
         dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
-             dest=IN_PROGRESS, unless='complete_turn_taken'),
+             dest=IN_PROGRESS, unless='complete_turn_taken', after='refresh_game_state'),
         dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
-             dest=VALID, conditions='complete_turn_taken'),
+             dest=VALID, conditions='complete_turn_taken', after='refresh_game_state'),
 
         # Return a component, if empty selection go to STARTED, otherwise
         # stay in IN PROGRESS
         dict(trigger='return_component', source=IN_PROGRESS, dest=STARTED,
-             conditions='empty_selection'),
+             conditions='empty_selection', after='refresh_game_state'),
         dict(trigger='return_component', source=IN_PROGRESS, dest=IN_PROGRESS,
-             unless='empty_selection'),
+             unless='empty_selection', after='refresh_game_state'),
 
         # Valid (set of components) selected - confirm/reject?
         # TODO: Re-instate once tiles, etc, in place
@@ -100,6 +92,10 @@ class Player(object):
 
         if self.AI:
             self.AI.take_turn()
+
+    @staticmethod
+    def refresh_game_state():
+        game.refresh_state()
 
     def has_chips_of_type(self, chip_type):
         # TODO: Refactor: better way to find the right chip stack

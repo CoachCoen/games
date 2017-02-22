@@ -14,7 +14,6 @@ class Game(object):
         self.players = None
         self.table = None
         self.holding_area = None
-        # self.game_state = None
         self.buttons = None
         self._is_turn_complete = None
         self._valid_actions = None
@@ -24,7 +23,6 @@ class Game(object):
         self.players = players
         self.table = table
         self.holding_area = holding_area
-        # self.game_state = game_state
         self.buttons = buttons
 
     @property

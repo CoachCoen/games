@@ -4,7 +4,7 @@ from data import ChipType
 from data import row_1, row_2, row_3
 
 from settings import config
-from settings import Vector
+from vector import Vector
 
 from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
@@ -20,21 +20,40 @@ from game_state import game
 
 
 class AbstractFactory(object):
+    """
+    Simple grouping of factory classes
+    """
     pass
 
 
 class AbstractGameComponent(object):
+    """
+    Simple grouping of game component classes
+    """
+    pass
+
+
+class AbstractGameComponentCollection(object):
+    """
+    Simple grouping of game component collection classes
+    """
     pass
 
 
 class Card(AbstractGameComponent):
+    """
+    A card, which consists of:
+    - chip cost: a set of chips to be paid when buying this card
+    - reward chip: the discount which this card gives towards
+        buying another card
+    - points: victory points
+    """
     def __init__(self, chip_cost, reward_chip, points):
         self.chip_cost = chip_cost
         self.reward_chip = reward_chip
         self.points = points
         self.location = None
         self.source = None
-        self.card_deck = None
 
     def embody(self, location, can_return=False):
         self.location = location
@@ -77,6 +96,79 @@ class CardSlot(object):
             self.card.embody(self.location)
 
 
+class CardDeck(AbstractGameComponentCollection):
+    def __init__(self, cards):
+        self.cards = cards
+        self.location = None
+        self.player_order = None
+        self.scaling_factor = 1
+
+        shuffle(self.cards)
+
+    def pop(self):
+        return self.cards.pop() if self.cards else None
+
+    def add(self, card):
+        self.cards.append(card)
+
+    def embody(self, location, group_by_type=False,
+               scaling_factor=1, player_order=None):
+        self.location = location
+        self.player_order = player_order
+        self.scaling_factor = scaling_factor
+        if group_by_type:
+            self._draw_grouped_by_type()
+        else:
+            self._draw()
+
+    def _draw_grouped_by_type(self):
+        for (i, chip_type) in enumerate(
+                [chip_type for chip_type in ChipType
+                 if chip_type != ChipType.yellow_gold]
+        ):
+            count = self.count_for_reward_type(chip_type)
+
+            if count:
+                location = \
+                    self.location + \
+                    Vector(2.5 * self.scaling_factor * config.chip_size * i, 0)
+                colour = chip_type_to_colour[chip_type]
+
+                draw_rectangle(
+                    location.to_rectangle(
+                        (config.chip_font_size * self.scaling_factor,
+                         config.chip_font_size * self.scaling_factor)),
+                    player_order=self.player_order,
+                    colour=colour
+                )
+
+                draw_text(
+                    location - Vector(3, 6),
+                    str(count),
+                    text_colour=colour,
+                    reverse_colour=True,
+                    font_size=config.chip_font_size * self.scaling_factor,
+                    player_order=self.player_order
+                )
+
+    def _draw(self):
+        draw_rectangle(self.location.to_rectangle(config.card_size),
+                       ColourPalette.card_deck_background)
+        if len(self.cards):
+            draw_text(
+                self.location + config.points_location,
+                str(len(self.cards))
+            )
+
+    def count_for_reward_type(self, chip_type):
+        return sum([1 for c in self.cards
+                    if c.reward_chip.chip_type == chip_type])
+
+    @property
+    def points(self):
+        return sum(c.points for c in self.cards)
+
+
 class Chip(AbstractGameComponent):
     def __init__(self, chip_type, colour, source=None):
         self.chip_type = chip_type
@@ -91,14 +183,14 @@ class Chip(AbstractGameComponent):
     def embody(self, location, scaling_factor=1, player_order=None,
                can_click=False):
         self.location = location
-        self._draw(scaling_factor, player_order)
         if can_click:
             buttons.add(
                 circle_location_to_rectangle(
                     self.location, config.chip_size * scaling_factor
                 ),
                 ReturnChip(self)
-            )
+            ).embody()
+        self._draw(scaling_factor, player_order)
 
     def _draw(self, scaling_factor=1, player_order=None):
         draw_circle(
@@ -107,33 +199,6 @@ class Chip(AbstractGameComponent):
             self.colour,
             player_order=player_order
         )
-
-
-class Tile(AbstractGameComponent):
-    def __init__(self, chip_cost, points):
-        self.chip_cost = chip_cost
-        self.points = points
-        self.location = None
-
-    def embody(self, location):
-        self.location = location
-        self._draw()
-        self.chip_cost.embody(self.location + config.cost_location,
-                              scaling_factor=config.chip_cost_scaling
-                              )
-
-    def _draw(self):
-        draw_rectangle(
-            self.location.to_rectangle(config.tile_size),
-            ColourPalette.card_background
-        )
-        draw_text(self.location + config.points_location,
-                  str(self.points)
-                  )
-
-
-class AbstractGameComponentCollection(object):
-    pass
 
 
 # TODO Move this somewhere more sensible
@@ -298,17 +363,18 @@ class ChipCollection(AbstractGameComponentCollection):
                     self.location + \
                     Vector(i * 2.5 * scaling_factor * config.chip_size, 0)
 
-            if can_click and top_chip in game.valid_actions:
-                buttons.add(
-                    circle_location_to_rectangle(
-                        stack_location, config.chip_size * scaling_factor
-                    ),
-                    TakeChip(top_chip)
-                ).embody()
+            # if can_click and top_chip in game.valid_actions:
+            #     buttons.add(
+            #         circle_location_to_rectangle(
+            #             stack_location, config.chip_size * scaling_factor
+            #         ),
+            #         TakeChip(top_chip)
+            #     ).embody()
             top_chip.embody(
                 stack_location,
                 scaling_factor,
-                player_order=player_order
+                player_order=player_order,
+                can_click=(can_click or top_chip in game.valid_actions)
             )
 
             # TODO: Better way of getting the colour?
@@ -324,80 +390,27 @@ class ChipCollection(AbstractGameComponentCollection):
             )
 
 
-class CardDeck(AbstractGameComponentCollection):
-    def __init__(self, cards):
+class Tile(AbstractGameComponent):
+    def __init__(self, chip_cost, points):
+        self.chip_cost = chip_cost
+        self.points = points
         self.location = None
-        self.cards = cards
-        self.player_order = None
-        self.scaling_factor = 1
 
-        # Back reference, to make it easier to draw the next card
-        for card in cards:
-            card.card_deck = self
-        shuffle(self.cards)
-
-    def pop(self):
-        return self.cards.pop() if self.cards else None
-
-    def add(self, card):
-        self.cards.append(card)
-
-    def embody(self, location, group_by_type=False,
-               scaling_factor=1, player_order=None):
+    def embody(self, location):
         self.location = location
-        self.player_order = player_order
-        self.scaling_factor = scaling_factor
-        if group_by_type:
-            self._draw_grouped_by_type()
-        else:
-            self._draw()
-
-    def _draw_grouped_by_type(self):
-        for (i, chip_type) in enumerate(
-                [chip_type for chip_type in ChipType
-                 if chip_type != ChipType.yellow_gold]
-        ):
-            count = self.count_for_reward_type(chip_type)
-
-            if count:
-                location = \
-                    self.location + \
-                    Vector(2.5 * self.scaling_factor * config.chip_size * i, 0)
-                colour = chip_type_to_colour[chip_type]
-
-                draw_rectangle(
-                    location.to_rectangle(
-                        (config.chip_font_size * self.scaling_factor,
-                         config.chip_font_size * self.scaling_factor)),
-                    player_order=self.player_order,
-                    colour=colour
-                )
-
-                draw_text(
-                    location - Vector(3, 6),
-                    str(count),
-                    text_colour=colour,
-                    reverse_colour=True,
-                    font_size=config.chip_font_size * self.scaling_factor,
-                    player_order=self.player_order
-                )
+        self._draw()
+        self.chip_cost.embody(self.location + config.cost_location,
+                              scaling_factor=config.chip_cost_scaling
+                              )
 
     def _draw(self):
-        draw_rectangle(self.location.to_rectangle(config.card_size),
-                       ColourPalette.card_deck_background)
-        if len(self.cards):
-            draw_text(
-                self.location + config.points_location,
-                str(len(self.cards))
-            )
-
-    def count_for_reward_type(self, chip_type):
-        return sum([1 for c in self.cards
-                    if c.reward_chip.chip_type == chip_type])
-
-    @property
-    def points(self):
-        return sum(c.points for c in self.cards)
+        draw_rectangle(
+            self.location.to_rectangle(config.tile_size),
+            ColourPalette.card_background
+        )
+        draw_text(self.location + config.points_location,
+                  str(self.points)
+                  )
 
 
 class TileCollection(AbstractGameComponentCollection):
@@ -528,6 +541,79 @@ class Table(object):
         self._draw_player_corners()
 
 
+class HoldingArea(object):
+    """
+    During a player's turn, holds the items which
+    the player has selected, before they confirm this
+    """
+    def __init__(self):
+        self.chips = ChipCollection()
+        self.card = None
+        self.location = None
+        self.game = None
+
+    def clear(self):
+        self.__init__()
+
+    def add_chip(self, chip):
+        self.chips.add_one(chip)
+
+    def embody(self):
+        if not self.chips and not self.card:
+            return
+        self._draw()
+
+        location = config.holding_area_location
+
+        self.chips.embody(
+            location=location + config.holding_area_chips_location,
+            direction='horizontal',
+            scaling_factor=0.7,
+            can_click=True
+        )
+
+        if self.card:
+            self.card.embody(
+                location + config.holding_area_card_location,
+                can_return=True
+            )
+
+        buttons.add(
+            (
+                location + config.cancel_button_location
+             ).to_rectangle(config.button_size),
+            Cancel(),
+            text='Cancel'
+        ).embody()
+
+        if game.is_turn_complete:
+            buttons.add(
+                (
+                    location + config.confirm_button_location
+                ).to_rectangle(config.button_size),
+                Confirm(),
+                text='Confirm'
+            ).embody()
+
+    @staticmethod
+    def _draw():
+        draw_rectangle(
+            config.holding_area_location.to_rectangle(
+                config.holding_area_size
+            ),
+            ColourPalette.holding_area
+        )
+
+        draw_text(
+            config.holding_area_location +
+            config.holding_area_name_location,
+            text=game.current_player.name
+        )
+
+    def is_empty(self):
+        return not self.card and self.chips.empty
+
+
 class ComponentFactory(AbstractFactory):
     def __call__(self, component_type, details):
         func = {
@@ -618,73 +704,3 @@ class ComponentCollectionFactory(AbstractFactory):
                    ])
 
 
-class HoldingArea(object):
-    """
-    During a player's turn, holds the items which
-    the player has selected, before they confirm this
-    """
-    def __init__(self):
-        self.chips = ChipCollection()
-        self.card = None
-        self.location = None
-        self.game = None
-
-    def clear(self):
-        self.__init__()
-
-    def add_chip(self, chip):
-        self.chips.add_one(chip)
-
-    def embody(self):
-        if not self.chips and not self.card:
-            return
-        self._draw()
-
-        location = config.holding_area_location
-
-        self.chips.embody(
-            location=location + config.holding_area_chips_location,
-            direction='horizontal',
-            scaling_factor=0.7
-        )
-
-        if self.card:
-            self.card.embody(
-                location + config.holding_area_card_location,
-                can_return=True
-            )
-
-        buttons.add(
-            (
-                location + config.cancel_button_location
-             ).to_rectangle(config.button_size),
-            Cancel(),
-            text='Cancel'
-        ).embody()
-
-        if game.is_turn_complete:
-            buttons.add(
-                (
-                    location + config.confirm_button_location
-                ).to_rectangle(config.button_size),
-                Confirm(),
-                text='Confirm'
-            ).embody()
-
-    @staticmethod
-    def _draw():
-        draw_rectangle(
-            config.holding_area_location.to_rectangle(
-                config.holding_area_size
-            ),
-            ColourPalette.holding_area
-        )
-
-        draw_text(
-            config.holding_area_location +
-            config.holding_area_name_location,
-            text=game.current_player.name
-        )
-
-    def is_empty(self):
-        return not self.card and self.chips.empty

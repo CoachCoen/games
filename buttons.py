@@ -25,6 +25,7 @@ class ButtonCollection(object):
                 for button in self.buttons
                 if button.clicked(mouse_position)
         ):
+            game.refresh_state()
             game.refresh_display()
 
     def reset(self):

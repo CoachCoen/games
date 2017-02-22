@@ -58,13 +58,15 @@ class AbstractGameComponent(object):
         """
         self.location = location
         self.scaling_factor = scaling_factor
+        self.buttonify()
         self._draw()
 
         # embody sub components
         for sc, sc_location, sc_scaling in self.sub_components:
-            sc.embody(self.location + sc_location, scaling_factor)
-
-        self.buttonify()
+            sc.embody(
+                location=self.location + sc_location,
+                scaling_factor=sc_scaling * self.scaling_factor
+            )
 
     def _draw(self):
         """
@@ -75,7 +77,9 @@ class AbstractGameComponent(object):
         return NotImplemented
 
     def buttonify(self):
-        # To be overwritten for classes which can be clicked on
+        """
+        To be overwritten for classes which can be clicked on
+        """
         pass
 
 
@@ -179,6 +183,31 @@ class CardDeck(AbstractGameComponentCollection):
         """
         return card in self.cards
 
+    @property
+    def counts_for_type(self):
+        """
+        Returns a dict {chip_type: number of cards which produce these}
+        :return:
+        """
+        return {
+            chip_type: self._count_for_reward_type(chip_type)
+            for chip_type in ChipType
+        }
+
+    def _count_for_reward_type(self, chip_type):
+        """
+        How many cards are there of the given chip type
+        """
+        return sum([1 for c in self.cards
+                    if c.reward_chip.chip_type == chip_type])
+
+    @property
+    def points(self):
+        """
+        Total number of (victory) points in this deck
+        """
+        return sum(c.points for c in self.cards)
+
     def embody(self, location,
                scaling_factor=1, player_order=None):
         """
@@ -189,77 +218,97 @@ class CardDeck(AbstractGameComponentCollection):
         self.scaling_factor = scaling_factor
         self._draw()
 
-    @property
-    def counts_for_type(self):
-        """
-        Returns a dict {chip_type: number of cards which produce these}
-        :return:
-        """
-        return {
-            chip_type: self.count_for_reward_type(chip_type)
-            for chip_type in ChipType
-        }
-
     def _draw(self):
-        draw_rectangle(self.location.to_rectangle(config.card_size),
-                       ColourPalette.card_deck_background)
+        """
+        Draw the card: rectangle and number of cards
+        """
         if len(self.cards):
+            draw_rectangle(self.location.to_rectangle(config.card_size),
+                           ColourPalette.card_deck_background)
             draw_text(
                 self.location + config.points_location,
                 str(len(self.cards))
             )
 
-    def count_for_reward_type(self, chip_type):
-        return sum([1 for c in self.cards
-                    if c.reward_chip.chip_type == chip_type])
-
-    @property
-    def points(self):
-        return sum(c.points for c in self.cards)
-
 
 class CardGrid(AbstractGameComponentCollection):
+    """
+    Grid, 3 rows of 4 cards
+    """
     def __init__(self, cards):
         self.cards = cards
 
     def contains(self, card):
+        """
+        Is this card anywhere in the grid?
+        """
         return any(card in row for row in self.cards)
 
     def fill_empty_spaces(self):
+        """
+        Goes through every card slot. If it is empty, draws
+        a card (if available) to fill the empty slot
+        """
         for i, row in enumerate(self.cards):
             for j, card in enumerate(row):
                 if not card:
                     self.cards[i][j] = game.table.card_decks[i].pop()
 
     def return_card(self, card):
+        """
+        Note: Should only be called if there is one slot free
+        Puts the card in the first (and only) free slot
+        """
         for i, row in enumerate(self.cards):
             for j, c in enumerate(row):
                 if not c:
                     self.cards[i][j] = card
                     return
 
+    def take_card(self, card):
+        """
+        Removes the card from the grid
+        """
+        for i in range(3):
+            for j in range(4):
+                if self.cards[i][j] == card:
+                    self.cards[i][j] = None
+
 
 class Chip(AbstractGameComponent):
+    """
+    Chip class
+    """
     def __init__(self, chip_type):
         super().__init__()
         self.chip_type = chip_type
 
     @property
     def position(self):
+        """
+        Where (holding area, current player's hand or supply)
+        is this chip?
+        """
         for (location, state) in [
             (game.holding_area.chips, ComponentState.holding_area),
-            (game.current_player.chips, ComponentState.holding_area),
+            (game.current_player.chips, ComponentState.player),
             (game.table.chips, ComponentState.card_grid)
         ]:
             if location.contains(self):
                 return state
 
     def buttonify(self):
+        """
+        If this chip can be moved, turn it into a button
+        """
         if self in game.valid_actions:
+            # If this is in the holding area, return it on click
+            # otherwise move it to the holding area
             action = ReturnChip(self) \
                 if self.position == ComponentState.holding_area \
                 else TakeChip(self)
 
+            # Create button and draw it (through embody() )
             buttons.add(
                 circle_location_to_rectangle(
                     self.location, config.chip_size * self.scaling_factor
@@ -451,8 +500,8 @@ class ChipCollection(AbstractGameComponentCollection):
                     Vector(i * 2.5 * scaling_factor * config.chip_size, 0)
 
             top_chip.embody(
-                stack_location,
-                scaling_factor,
+                location=stack_location,
+                scaling_factor=scaling_factor,
                 player_order=player_order,
                 can_click=(can_click or top_chip in game.valid_actions)
             )
@@ -609,14 +658,15 @@ class Table(object):
                                             config.card_spacing)))
 
         for i, card_row in enumerate(self.card_grid.cards):
-            for j, card_slot in enumerate(card_row):
-                card_slot.embody(
-                    config.central_area_location +
-                    config.card_decks_location +
-                    Vector(
-                        (j + 1) * (config.card_size.x + config.card_spacing),
-                        i * (config.card_size.y + config.card_spacing))
-                )
+            for j, card in enumerate(card_row):
+                if card:
+                    card.embody(
+                        config.central_area_location +
+                        config.card_decks_location +
+                        Vector(
+                            (j + 1) * (config.card_size.x + config.card_spacing),
+                            i * (config.card_size.y + config.card_spacing))
+                    )
 
         self.tiles.embody(
             config.central_area_location +

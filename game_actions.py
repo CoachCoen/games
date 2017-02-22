@@ -10,6 +10,7 @@ class TakeCard(AbstractAction):
         self.card = card
 
     def activate(self):
+        game.table.card_grid.take_card(self.card)
         game.holding_area.card = self.card
         game.current_player.take_component()
         return True
@@ -51,8 +52,8 @@ class TakeChip(AbstractAction):
 
 
 def return_chip(chip):
-    game.holding_area.remove_chip(chip)
-    chip.source.add_one()
+    chip.return_to_supply()
+    game.holding_area.chips.take_chip(chip)
 
 
 class ReturnChip(AbstractAction):

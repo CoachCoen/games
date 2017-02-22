@@ -137,13 +137,17 @@ class Game(object):
         return False
 
     def _get_valid_actions(self):
-        if self.is_turn_complete:
-            return []
 
         holding_area_chips = self.holding_area.chips
         table_chips = self.table.chips
 
         valid_actions = []
+        valid_actions += holding_area_chips.chips
+        if self.holding_area.card:
+            valid_actions.append(self.holding_area.card)
+
+        if self.is_turn_complete:
+            return valid_actions
 
         # Which chips can be selected?
         for chip_type in ChipType:

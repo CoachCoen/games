@@ -39,15 +39,16 @@ class Config(object):
     reward_chip_location = Vector(80, 20)
     reward_chip_scaling = 0.7
 
-    player_area_size = Vector(300, 180)
+    player_area_size = Vector(300, 225)
 
     player_name_location = Vector(5, 5)
 
-    player_chip_stack_location = Vector(40, 55)
+    player_chip_stack_location = Vector(40, 40)
     player_item_size = 30
     player_card_deck_location = player_chip_stack_location + Vector(0, 20)
+    player_reserved_location = Vector(10, 95)
 
-    player_points_location = Vector(player_area_size.x - 40, 20)
+    player_points_location = Vector(player_area_size.x - 30, 5)
 
     holding_area_size = Vector(350, 200)
     holding_area_location = Vector(1000, 300)

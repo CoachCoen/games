@@ -126,11 +126,21 @@ class Game(object):
         if holding_area.card:
             return True
 
-        # No chips left to take
-        # TODO: Fix/Test this
-        if not holding_area.chips.empty \
-                and not game.table.chips.any_non_yellow_chips:
-            return True
+        # TODO - remove old code
+        # if holding_area.chips.any_non_yellow_chips \
+        #         and not game.table.chips.any_non_yellow_chips:
+        #     return True
+
+        # TODO: complete this
+        # One chip taken, no other colours available,
+        # and two or less of this colour available
+        # if holding_area.chips.any_non_yellow_chips and len(holding_area.chips) == 1 and
+
+        # Two chips taken, no other colours available
+
+        # If some (non yellow) chips taken,
+        #   and can't take second one o
+
 
         return False
 
@@ -138,6 +148,7 @@ class Game(object):
 
         holding_area_chips = self.holding_area.chips
         table_chips = self.table.chips
+        reserved_cards = self.current_player.reserved
 
         valid_actions = []
         valid_actions += holding_area_chips.chips
@@ -153,6 +164,11 @@ class Game(object):
 
             # No chip of this type in the supply
             if not chip:
+                continue
+
+            # Can only take yellow disk if < 3 cards reserved
+            if chip.chip_type == ChipType.yellow_gold \
+                    and len(reserved_cards) > 2:
                 continue
 
             # If yellow selected, can't select any other chips
@@ -221,7 +237,7 @@ class Game(object):
 
         valid_action_sets['3 chips'] = list(combinations(available_chips, 3)) \
             if len(available_chips) >= 3 \
-            else []
+            else [available_chips]
 
         valid_action_sets['2 chips'] = table_chips.top_two_chips_by_type()
 

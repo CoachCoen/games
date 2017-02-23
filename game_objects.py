@@ -5,6 +5,7 @@
 """
 from random import shuffle
 from enum import Enum
+from collections import OrderedDict
 
 from data import row_1, row_2, row_3
 
@@ -48,9 +49,10 @@ class AbstractGameComponent(object):
     def __init__(self):
         self.location = None
         self.scaling_factor = None
+        self.player_order = None
         self.sub_components = []
 
-    def embody(self, location, scaling_factor=1, **kwargs):
+    def embody(self, location, scaling_factor=1, player_order=None, **kwargs):
         """
         Show this component, plus any sub components,
         at the specified location and scaling factor
@@ -58,6 +60,7 @@ class AbstractGameComponent(object):
         """
         self.location = location
         self.scaling_factor = scaling_factor
+        self.player_order = player_order
         self.buttonify()
         self._draw()
 
@@ -65,7 +68,8 @@ class AbstractGameComponent(object):
         for sc, sc_location, sc_scaling in self.sub_components:
             sc.embody(
                 location=self.location + sc_location,
-                scaling_factor=sc_scaling * self.scaling_factor
+                scaling_factor=sc_scaling * self.scaling_factor,
+                player_order=self.player_order
             )
 
     def _draw(self):
@@ -98,11 +102,12 @@ class Card(AbstractGameComponent):
         buying another card
     - points: victory points
     """
-    def __init__(self, chip_cost, reward_chip, points):
+    def __init__(self, chip_cost, reward_chip, points, player_order=None):
         super().__init__()
         self.chip_cost = chip_cost
         self.points = points
         self.reward_chip = reward_chip
+        self.player_order = player_order
         self.sub_components = [
             (chip_cost, config.cost_location, config.chip_cost_scaling),
             (reward_chip, config.reward_chip_location,
@@ -147,10 +152,17 @@ class Card(AbstractGameComponent):
         The cost (chips) and resulting chip types
         will draw themselves
         """
-        draw_rectangle(self.location.to_rectangle(config.card_size),
-                       ColourPalette.card_background)
+        draw_rectangle(
+            self.location.to_rectangle(config.card_size),
+            ColourPalette.card_background,
+            player_order=self.player_order
+        )
         if self.points:
-            draw_text(self.location + config.points_location, str(self.points))
+            draw_text(
+                self.location + config.points_location,
+                str(self.points),
+                player_order=self.player_order
+            )
 
 
 class CardDeck(AbstractGameComponentCollection):
@@ -164,6 +176,9 @@ class CardDeck(AbstractGameComponentCollection):
         self.scaling_factor = 1
 
         shuffle(self.cards)
+
+    def __len__(self):
+        return len(self.cards)
 
     def pop(self):
         """
@@ -216,11 +231,26 @@ class CardDeck(AbstractGameComponentCollection):
         self.location = location
         self.player_order = player_order
         self.scaling_factor = scaling_factor
-        self._draw()
+        if self.player_order:
+            self.draw_as_cards()
+        else:
+            self._draw_as_deck()
 
-    def _draw(self):
+    def draw_as_cards(self):
         """
-        Draw the card: rectangle and number of cards
+        Draw as a spread out row of cards
+        """
+        for i, card in enumerate(self.cards):
+            card.embody(
+                location=self.location + Vector(
+                    1.1 * i * config.card_size.x, 0
+                ),
+                player_order=self.player_order
+            )
+
+    def _draw_as_deck(self):
+        """
+        Draw the card deck: rectangle and number of cards
         """
         if len(self.cards):
             draw_rectangle(self.location.to_rectangle(config.card_size),
@@ -323,7 +353,7 @@ class Chip(AbstractGameComponent):
         """
         game.table.chips.add_one(self)
 
-    def _draw(self, player_order=None):
+    def _draw(self):
         """
         Draw the chip
         """
@@ -331,7 +361,7 @@ class Chip(AbstractGameComponent):
             self.location,
             int(config.chip_size * self.scaling_factor),
             self.chip_type,
-            player_order=player_order
+            player_order=self.player_order
         )
 
 
@@ -373,9 +403,12 @@ class ChipCollection(AbstractGameComponentCollection):
         return [chip for chip in self.chips if chip.chip_type == chip_type]
 
     def chips_by_type(self, show_empty=True):
-        return {chip_type: self.chips_for_type(chip_type)
-                for chip_type in ChipType
-                if self.chips_for_type(chip_type) or show_empty}
+        chips = OrderedDict()
+        for chip_type in ChipType:
+            c = self.chips_for_type(chip_type)
+            if c:
+                chips[chip_type] = c
+        return chips
 
     def top_two_chips_by_type(self):
         return [chips[:2] for chip_type, chips in self.chips_by_type().items()

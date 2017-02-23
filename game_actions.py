@@ -1,5 +1,5 @@
 from game_state import game
-
+from chip_types import ChipType
 
 class AbstractAction(object):
     pass
@@ -72,10 +72,15 @@ class ReturnChip(AbstractAction):
 class Confirm(AbstractAction):
     @staticmethod
     def activate():
-        game.holding_area.chips.transfer_chips(game.current_player.chips)
+        card = game.holding_area.card
 
-        if game.holding_area.card:
-            card = game.holding_area.card
+        if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
+            # Yellow chip taken, so reserved card
+            game.current_player.reserve_card(card)
+            game.table.card_grid.fill_empty_spaces()
+
+        elif card:
+            # Take card
             game.current_player.pay_cost(card.chip_cost)
 
             # Draw a new card and assign it to the original card's slot
@@ -84,8 +89,8 @@ class Confirm(AbstractAction):
             # card.source.card = game.table.card_deck.pop()
             # card.source.card.source = card.source
 
-            game.holding_area.card = None
-
+        game.holding_area.card = None
+        game.holding_area.chips.transfer_chips(game.current_player.chips)
         game.next_player()
 
         return True

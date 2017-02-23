@@ -81,6 +81,7 @@ class Player(object):
         # )
         self.chips = ChipCollection()
         self.tiles = component_collection_factory('tile', '')
+        self.reserved = component_collection_factory('card', '')
         self.machine = Machine(
             model=self,
             states=Player.states,
@@ -172,6 +173,9 @@ class Player(object):
     def add_card(self, card):
         self.cards.add(card)
 
+    def reserve_card(self, card):
+        self.reserved.add(card)
+
     def complete_turn_taken(self):
         """
         Has this player taken a complete set of items?
@@ -229,6 +233,8 @@ class Player(object):
             card_counts,
             player_order=self.player_order
         )
+        self.reserved.embody(config.player_reserved_location,
+                             player_order=self.player_order)
 
     # TODO: Refactor this - messy?
     def _draw(self):

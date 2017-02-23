@@ -25,8 +25,6 @@ class Game(object):
         self.table = table
         self.holding_area = holding_area
         self.buttons = buttons
-        # self.chip_types = chip_types
-
 
     @property
     def player_count(self):

@@ -29,11 +29,15 @@ def _translate_to_player(player_order, location):
     top = 0 if player_order in [0, 1] \
         else config.tabletop_size.y - config.player_area_size.y
 
-    # TODO Tidy this up?
     if isinstance(location, Vector):
         return location + Vector(left, top)
 
     return (location[0] + left, location[1] + top) + tuple(location[2:])
+
+
+def circle_location_to_rectangle(location, size):
+    return (location.x - size, location.y - size,
+            2 * size, 2 * size)
 
 
 def scale_vertices(vertices):
@@ -73,7 +77,7 @@ def draw_rectangle(rectangle, colour, player_order=None):
                      rectangle)
 
 
-def draw_text(location, text, font_size=24, text_colour=None,
+def draw_text(location, text, font_size=24.0, text_colour=None,
               reverse_colour=False, player_order=None):
     myfont = pygame.font.SysFont("monospace bold",
                                  int(font_size * config.scaling_factor))

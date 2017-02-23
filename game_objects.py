@@ -14,7 +14,7 @@ from chip_types import ChipType
 
 from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
-from drawing_surface import ColourPalette
+from drawing_surface import ColourPalette, circle_location_to_rectangle
 
 from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard, \
     Cancel, Confirm
@@ -317,21 +317,22 @@ class Chip(AbstractGameComponent):
             ).embody()
 
     def return_to_supply(self):
+        """
+        Return this chip to the central supply
+        It doesn't remove it from the previous position
+        """
         game.table.chips.add_one(self)
 
     def _draw(self, player_order=None):
+        """
+        Draw the chip
+        """
         draw_circle(
             self.location,
             int(config.chip_size * self.scaling_factor),
             self.chip_type,
             player_order=player_order
         )
-
-
-# TODO Move this somewhere more sensible
-def circle_location_to_rectangle(location, size):
-    return (location.x - size, location.y - size,
-            2 * size, 2 * size)
 
 
 class ChipCollection(AbstractGameComponentCollection):
@@ -355,9 +356,6 @@ class ChipCollection(AbstractGameComponentCollection):
     def count(self, chip_type):
         return sum(1 for chip in self.chips if chip.chip_type == chip_type)
 
-    # TODO: Refactor: some functions can be properties
-    # TODO: Refactor: shared code?
-
     @property
     def counts_for_type(self):
         return {
@@ -374,13 +372,13 @@ class ChipCollection(AbstractGameComponentCollection):
     def chips_for_type(self, chip_type):
         return [chip for chip in self.chips if chip.chip_type == chip_type]
 
-    @property
-    def chips_by_type(self):
+    def chips_by_type(self, show_empty=True):
         return {chip_type: self.chips_for_type(chip_type)
-                for chip_type in ChipType}
+                for chip_type in ChipType
+                if self.chips_for_type(chip_type) or show_empty}
 
     def top_two_chips_by_type(self):
-        return [chips for chip_type, chips in self.chips_by_type.items()
+        return [chips[:2] for chip_type, chips in self.chips_by_type().items()
                 if len(chips) >= 2
                 and chip_type is not ChipType.yellow_gold]
 
@@ -429,7 +427,6 @@ class ChipCollection(AbstractGameComponentCollection):
     def different_types(self):
         return len({chip.chip_type for chip in self.chips})
 
-    # TODO: Check if this is still being used
     def take_one(self, chip_type):
         """
         Remove a chip of the requested type off the stack
@@ -467,29 +464,9 @@ class ChipCollection(AbstractGameComponentCollection):
                show_empty=False):
         self.location = location
 
-        raw_chip_idx = [
-            (
-                chip_type,
-                [chip.chip_type for chip in self.chips].count(chip_type)
-            )
-            for chip_type in ChipType
-            ]
-
-        if not show_empty:
-            chip_idx = [
-                (chip_type, count) for (chip_type, count) in raw_chip_idx
-                if count > 0]
-        else:
-            chip_idx = raw_chip_idx
-
-        for (i, (chip_type, count)) in enumerate(chip_idx):
-            # TODO - rename other instances of top chip to 'top_chip'
-            top_chip = self.first_chip_of_type(chip_type)
-
-            if not top_chip:
-                continue
-
-            # TODO: Use constant/enum instead?
+        chips_by_type = self.chips_by_type(show_empty=show_empty)
+        for i, (chip_type, chip_stack) in enumerate(chips_by_type.items()):
+            top_chip = chip_stack[0]
             if direction == 'vertical':
                 stack_location = \
                     self.location + \
@@ -501,18 +478,17 @@ class ChipCollection(AbstractGameComponentCollection):
 
             top_chip.embody(
                 location=stack_location,
-                scaling_factor=
-                scaling_factor * config.holding_area_chip_scaling,
+                scaling_factor=scaling_factor * config
+                    .holding_area_chip_scaling,
                 player_order=player_order,
                 can_click=(can_click or top_chip in game.valid_actions)
             )
 
-            # TODO: Better way of getting the colour?
-            text_colour = self.first_chip_of_type(chip_type).chip_type
+            text_colour = top_chip.chip_type
 
             draw_text(
                 stack_location - Vector(3, 6),
-                str(self.count(chip_type)),
+                str(len(chip_stack)),
                 text_colour=text_colour,
                 reverse_colour=True,
                 font_size=config.chip_font_size * scaling_factor,
@@ -665,7 +641,8 @@ class Table(object):
                         config.central_area_location +
                         config.card_decks_location +
                         Vector(
-                            (j + 1) * (config.card_size.x + config.card_spacing),
+                            (j + 1) *
+                            (config.card_size.x + config.card_spacing),
                             i * (config.card_size.y + config.card_spacing))
                     )
 

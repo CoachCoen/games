@@ -422,6 +422,13 @@ class ChipCollection(AbstractGameComponentCollection):
             return True
         return False
 
+    def has_other_colours(self, colours):
+        return any(
+            c for c in self.chips
+            if c.chip_type not in [b.chip_type for b in colours] +
+            [ChipType.yellow_gold]
+        )
+
     def _position_of_first_chip_of_type(self, chip_type):
         indices = [i for i, chip in enumerate(self.chips)
                    if chip.chip_type == chip_type]

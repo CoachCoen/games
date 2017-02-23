@@ -319,10 +319,10 @@ class Chip(AbstractGameComponent):
     def return_to_supply(self):
         game.table.chips.add_one(self)
 
-    def _draw(self, scaling_factor=1, player_order=None):
+    def _draw(self, player_order=None):
         draw_circle(
             self.location,
-            int(config.chip_size * scaling_factor),
+            int(config.chip_size * self.scaling_factor),
             self.chip_type,
             player_order=player_order
         )
@@ -501,7 +501,8 @@ class ChipCollection(AbstractGameComponentCollection):
 
             top_chip.embody(
                 location=stack_location,
-                scaling_factor=scaling_factor,
+                scaling_factor=
+                scaling_factor * config.holding_area_chip_scaling,
                 player_order=player_order,
                 can_click=(can_click or top_chip in game.valid_actions)
             )

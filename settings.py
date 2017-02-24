@@ -3,7 +3,7 @@ from vector import Vector
 
 class Config(object):
     tabletop_size = Vector(1366, 768)
-    scaling_factor = 2
+    scaling_factor = 1
 
     card_size = Vector(100, 120)
     card_spacing = 10

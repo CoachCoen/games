@@ -126,21 +126,21 @@ class Game(object):
         if holding_area.card:
             return True
 
-        # TODO - remove old code
-        # if holding_area.chips.any_non_yellow_chips \
-        #         and not game.table.chips.any_non_yellow_chips:
-        #     return True
+        table_chips = game.table.chips
 
-        # TODO: complete this
-        # One chip taken, no other colours available,
+        # One non-yellow chip taken, no other colours available,
         # and two or less of this colour available
-        # if holding_area.chips.any_non_yellow_chips and len(holding_area.chips) == 1 and
+        if holding_area.chips.any_non_yellow_chips \
+                and len(holding_area.chips) == 1:
+            held_chip = holding_area.chips.chips[0]
+            if not table_chips.has_other_colours([held_chip]) \
+                    and table_chips.count(held_chip) <= 2:
+                return True
 
         # Two chips taken, no other colours available
-
-        # If some (non yellow) chips taken,
-        #   and can't take second one o
-
+        if len(holding_area.chips) <= 2 and \
+                not table_chips.has_other_colours(holding_area.chips.chips):
+            return True
 
         return False
 

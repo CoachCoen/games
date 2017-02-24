@@ -23,7 +23,7 @@ class ColourPalette(Enum):
     active_player_area = 24
 
 
-def _translate_to_player(player_order, location):
+def translate_to_player(player_order, location):
     left = 0 if player_order in [0, 3] \
         else config.tabletop_size.x - config.player_area_size.x
     top = 0 if player_order in [0, 1] \
@@ -68,7 +68,7 @@ def draw_pologon(vertices, colour):
 
 def draw_rectangle(rectangle, colour, player_order=None):
     if player_order:
-        rectangle = _translate_to_player(
+        rectangle = translate_to_player(
             player_order=player_order, location=rectangle
         )
 
@@ -91,7 +91,7 @@ def draw_text(location, text, font_size=24.0, text_colour=None,
     label = myfont.render(text, 3, text_colour)
 
     if player_order:
-        location = _translate_to_player(
+        location = translate_to_player(
             player_order=player_order, location=location
         )
 
@@ -101,7 +101,7 @@ def draw_text(location, text, font_size=24.0, text_colour=None,
 
 def draw_circle(location, radius, colour, player_order=None):
     if player_order:
-        location = _translate_to_player(
+        location = translate_to_player(
             player_order=player_order, location=location
         )
     location = scale_vertices(location)

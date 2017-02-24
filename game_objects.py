@@ -4,7 +4,6 @@
         chip collection, tile collection, table, holding area
 """
 from random import shuffle
-from enum import Enum
 from collections import OrderedDict
 
 from data import row_1, row_2, row_3
@@ -12,6 +11,7 @@ from data import row_1, row_2, row_3
 from settings import config
 from vector import Vector
 from chip_types import ChipType
+from component_states import ComponentState
 
 from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
     draw_circle
@@ -22,17 +22,6 @@ from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard, \
 
 from buttons import buttons
 from game_state import game
-
-
-class ComponentState(Enum):
-    """
-    Different places where a component can be
-    Used to decide what to do when clicking on a component
-    """
-    holding_area = 1
-    player = 2
-    card_grid = 3
-    card_decks = 4
 
 
 class AbstractFactory(object):
@@ -128,6 +117,9 @@ class Card(AbstractGameComponent):
         if game.table.card_grid.contains(self):
             return ComponentState.card_grid
 
+        if game.current_player.reserved.contains(self):
+            return ComponentState.reserved
+
     def buttonify(self):
         """
         Turn the card into a 'button' so the user can click on it
@@ -143,7 +135,8 @@ class Card(AbstractGameComponent):
             # the card, to show it can be taken
             buttons.add(
                 self.location.to_rectangle(config.card_size),
-                action
+                action,
+                player_order=self.player_order
             ).embody()
 
     def _draw(self):
@@ -180,11 +173,22 @@ class CardDeck(AbstractGameComponentCollection):
     def __len__(self):
         return len(self.cards)
 
+    def empty(self):
+        """
+        Remove all cards
+        """
+        self.cards = []
+
     def pop(self):
         """
         Return the top card of the deck
         """
         return self.cards.pop() if self.cards else None
+
+    def take_card(self, card):
+        index = self.cards.index(card)
+        if index > -1:
+            del(self.cards[index])
 
     def add(self, card):
         """
@@ -209,6 +213,10 @@ class CardDeck(AbstractGameComponentCollection):
             for chip_type in ChipType
         }
 
+    def produces_for_chip_type(self, chip_type):
+        # TODO: make a single function?
+        return self._count_for_reward_type(chip_type)
+
     def _count_for_reward_type(self, chip_type):
         """
         How many cards are there of the given chip type
@@ -231,7 +239,7 @@ class CardDeck(AbstractGameComponentCollection):
         self.location = location
         self.player_order = player_order
         self.scaling_factor = scaling_factor
-        if self.player_order:
+        if self.player_order is not None:
             self.draw_as_cards()
         else:
             self._draw_as_deck()
@@ -402,7 +410,7 @@ class ChipCollection(AbstractGameComponentCollection):
     def chips_for_type(self, chip_type):
         return [chip for chip in self.chips if chip.chip_type == chip_type]
 
-    def chips_by_type(self, show_empty=True):
+    def chips_by_type(self):
         chips = OrderedDict()
         for chip_type in ChipType:
             c = self.chips_for_type(chip_type)
@@ -504,7 +512,7 @@ class ChipCollection(AbstractGameComponentCollection):
                show_empty=False):
         self.location = location
 
-        chips_by_type = self.chips_by_type(show_empty=show_empty)
+        chips_by_type = self.chips_by_type()
         for i, (chip_type, chip_stack) in enumerate(chips_by_type.items()):
             top_chip = chip_stack[0]
             if direction == 'vertical':

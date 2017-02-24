@@ -1,5 +1,7 @@
 from game_state import game
 from chip_types import ChipType
+from component_states import ComponentState
+
 
 class AbstractAction(object):
     pass
@@ -10,7 +12,10 @@ class TakeCard(AbstractAction):
         self.card = card
 
     def activate(self):
-        game.table.card_grid.take_card(self.card)
+        if self.card.position == ComponentState.card_grid:
+            game.table.card_grid.take_card(self.card)
+        elif self.card.position == ComponentState.reserved:
+            game.current_player.reserved.take_card(self.card)
         game.holding_area.card = self.card
         game.current_player.take_component()
         return True
@@ -72,24 +77,25 @@ class ReturnChip(AbstractAction):
 class Confirm(AbstractAction):
     @staticmethod
     def activate():
-        card = game.holding_area.card
+        held_card = game.holding_area.card
 
         if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
             # Yellow chip taken, so reserved card
-            game.current_player.reserve_card(card)
+            game.current_player.reserve_card(held_card)
             game.table.card_grid.fill_empty_spaces()
 
-        elif card:
+        elif held_card:
             # Take card
-            game.current_player.pay_cost(card.chip_cost)
+            game.current_player.pay_cost(held_card.chip_cost)
 
             # Draw a new card and assign it to the original card's slot
-            game.current_player.add_card(card)
+            game.current_player.add_card(held_card)
             game.table.card_grid.fill_empty_spaces()
             # card.source.card = game.table.card_deck.pop()
             # card.source.card.source = card.source
 
         game.holding_area.card = None
+
         game.holding_area.chips.transfer_chips(game.current_player.chips)
         game.next_player()
 

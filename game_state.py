@@ -119,7 +119,7 @@ class Game(object):
             return True
 
         # 3 different chips selected
-        if len(holding_area.chips) == 3:
+        if len(holding_area.chips) == 3 and holding_area.chips.different_types == 3:
             return True
 
         # 1 card selected
@@ -134,11 +134,11 @@ class Game(object):
                 and len(holding_area.chips) == 1:
             held_chip = holding_area.chips.chips[0]
             if not table_chips.has_other_colours([held_chip]) \
-                    and table_chips.count(held_chip) <= 2:
+                    and table_chips.count(held_chip.chip_type) <= 2:
                 return True
 
         # Two chips taken, no other colours available
-        if len(holding_area.chips) <= 2 and \
+        if len(holding_area.chips) == 2 and \
                 not table_chips.has_other_colours(holding_area.chips.chips):
             return True
 
@@ -216,6 +216,11 @@ class Game(object):
                 if game.current_player.can_afford(card.chip_cost):
                     valid_actions.append(card)
 
+        # Any reserved cards which this player can afford?
+        for card in game.current_player.reserved.cards:
+            if game.current_player.can_afford(card.chip_cost):
+                valid_actions.append(card)
+
         return valid_actions
 
     def _get_valid_action_sets(self):
@@ -229,6 +234,7 @@ class Game(object):
 
         valid_action_sets = {}
         table_chips = game.table.chips
+        table_chips_by_type = table_chips.chips_by_type()
 
         # 3 different (non-yellow) chips
         available_chips = [
@@ -239,7 +245,10 @@ class Game(object):
             if len(available_chips) >= 3 \
             else [available_chips]
 
-        valid_action_sets['2 chips'] = table_chips.top_two_chips_by_type()
+        valid_action_sets['2 chips'] = [
+            table_chips_by_type[chip_type][:2] for chip_type in table_chips_by_type.keys()
+            if len(table_chips_by_type[chip_type]) >= 4
+            ]
 
         valid_action_sets['card'] = []
         valid_action_sets['reserve card'] = []
@@ -259,6 +268,12 @@ class Game(object):
                     valid_action_sets['reserve card'].append(
                         [card, first_yellow_chip]
                     )
+
+        valid_action_sets['buy reserved'] = []
+
+        for card in game.current_player.reserved.cards:
+            if game.current_player.can_afford(card.chip_cost):
+                valid_action_sets['buy reserved'].append(card)
 
         return valid_action_sets
 

@@ -73,12 +73,7 @@ class Player(object):
             self.AI.player = self
 
         component_collection_factory = ComponentCollectionFactory()
-        # self.cards = component_collection_factory('card', row_1)
         self.cards = component_collection_factory('card', '')
-        # TODO: Remove this when done testing showing the players' hands
-        # self.chips = component_collection_factory(
-        #     'chip', '2 blue,2 white,2 black,2 green,2 red,1 yellow'
-        # )
         self.chips = ChipCollection()
         self.tiles = component_collection_factory('tile', '')
         self.reserved = component_collection_factory('card', '')
@@ -104,34 +99,56 @@ class Player(object):
                 return chip_stack.chip_count
         return 0
 
-    def pay_cost_for_single_chip_type(self, chip_type, cost):
-        # TODO: Refactor, create index?
-        for chip_stack in self.chip_stacks.chip_stacks:
-            if chip_stack.chip.chip_type == chip_type:
-                available = chip_stack.chip_count
-
-                # Return the chips
-                # TODO: Better way of doing this?
-                for _ in range(min(available, cost)):
-                    chip_stack.chip.source.add_one()
-
-                if available >= cost:
-                    chip_stack.chip_count -= cost
-                    return 0
-                else:
-                    chip_stack.chip_count = 0
-                    return cost - available
-        # Should never get here
+    # def pay_cost_for_single_chip_type(self, chip_type, cost):
+    #     # TODO: Refactor, create index?
+    #     for chip_stack in self.chip_stacks.chip_stacks:
+    #         if chip_stack.chip.chip_type == chip_type:
+    #             available = chip_stack.chip_count
+    #
+    #             # Return the chips
+    #             # TODO: Better way of doing this?
+    #             for _ in range(min(available, cost)):
+    #                 chip_stack.chip.source.add_one()
+    #
+    #             if available >= cost:
+    #                 chip_stack.chip_count -= cost
+    #                 return 0
+    #             else:
+    #                 chip_stack.chip_count = 0
+    #                 return cost - available
+    #     # Should never get here
 
     def pay_cost(self, chip_cost):
+        """
+        Pay the chip_cost, after deduction any discounts through cards this players owns
+        """
         # Assumption: Can afford it
-        chips_shortage = 0
-        for chip in chip_cost.chips:
-            if not self.chips.pay_chip_of_type(chip.chip_type):
-                chips_shortage += 1
+        cost_by_type = chip_cost.counts_for_type
 
-        for _ in range(chips_shortage):
-            self.chips.pay_chip_of_type(ChipType.yellow_gold)
+        for chip_type in ChipType:
+            to_pay = cost_by_type[chip_type] - self.cards.produces_for_chip_type(chip_type)
+
+            if to_pay:
+                for _ in range(to_pay):
+                    # pay the chip - or pay a gold one if normal chip not available
+                    if not self.chips.pay_chip_of_type(chip_type):
+                        self.chips.pay_chip_of_type(ChipType.yellow_gold)
+
+        # chips_shortage = 0
+        # for chip_type in [chip_type for chip_type in ChipType if chip_type is not ChipType.yellow_gold]:
+        #     count = chip_cost.count(chip_type)
+        #
+        #     available = self.chips.count(chip_type) + self.cards.produces_for_chip_type(chip_type)
+        #
+        #
+        #
+        # chips_shortage = 0
+        # for chip in chip_cost.chips:
+        #     if not self.chips.pay_chip_of_type(chip.chip_type):
+        #         chips_shortage += 1
+        #
+        # for _ in range(chips_shortage):
+        #     self.chips.pay_chip_of_type(ChipType.yellow_gold)
 
         # for chip_stack in chip_cost.chip_stacks:
         #     count = chip_stack.chip_count
@@ -156,7 +173,7 @@ class Player(object):
         for chip_type in [chip_type for chip_type in ChipType if chip_type is not ChipType.yellow_gold]:
             count = chip_cost.count(chip_type)
 
-            available = self.chips.count(chip_type)
+            available = self.chips.count(chip_type) + self.cards.produces_for_chip_type(chip_type)
             if available < count:
                 chips_shortage += \
                     count - available

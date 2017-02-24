@@ -1,7 +1,7 @@
 import pygame
 
 from drawing_surface import scale_vertices, draw_rectangle, draw_text, \
-    grow_rectangle
+    grow_rectangle, translate_to_player
 from drawing_surface import ColourPalette
 from settings import Vector, config
 from game_state import game
@@ -11,9 +11,9 @@ class ButtonCollection(object):
     def __init__(self):
         self.buttons = []
 
-    def add(self, rectangle, action, text=None):
-        button = VisibleButton(rectangle, action, text) if text \
-            else Button(rectangle, action)
+    def add(self, rectangle, action, text=None, player_order=None):
+        button = VisibleButton(rectangle, action, text, player_order) if text \
+            else Button(rectangle, action, player_order)
         self.buttons.append(button)
         return button
 
@@ -33,7 +33,11 @@ class ButtonCollection(object):
 
 
 class Button(object):
-    def __init__(self, rectangle, action):
+    def __init__(self, rectangle, action, player_order=None):
+        # TODO: ?? Move player_order further down - make consistent
+        if player_order is not None:
+            rectangle = translate_to_player(player_order, rectangle)
+
         self.rectangle = rectangle
         self.action = action
 
@@ -60,9 +64,11 @@ class Button(object):
 
 
 class VisibleButton(Button):
-    def __init__(self, rectangle, action, text):
+    def __init__(self, rectangle, action, text, player_order):
+
         super().__init__(rectangle, action)
         self.text = text
+        self.player_order = player_order
 
     def _draw(self):
         draw_rectangle(self.rectangle, ColourPalette.button)

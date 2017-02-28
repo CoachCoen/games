@@ -13,8 +13,8 @@ from vector import Vector
 from chip_types import ChipType
 from component_states import ComponentState
 
-from drawing_surface import draw_rectangle, draw_pologon, draw_text, \
-    draw_circle
+from drawing_surface import draw_rectangle, draw_polygon, draw_text, \
+    draw_circle, draw_card
 from drawing_surface import ColourPalette, circle_location_to_rectangle
 
 from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard, \
@@ -145,11 +145,12 @@ class Card(AbstractGameComponent):
         The cost (chips) and resulting chip types
         will draw themselves
         """
-        draw_rectangle(
-            self.location.to_rectangle(config.card_size),
-            ColourPalette.card_background,
-            player_order=self.player_order
-        )
+        draw_card(self.location, self.player_order)
+        # draw_rectangle(
+        #     self.location.to_rectangle(config.card_size),
+        #     ColourPalette.card_background,
+        #     player_order=self.player_order
+        # )
         if self.points:
             draw_text(
                 self.location + config.points_location,
@@ -662,7 +663,7 @@ class Table(object):
             (config.tabletop_size.x, config.tabletop_size.y),
             (config.tabletop_size.x, 0)
         ]:
-            draw_pologon([
+            draw_polygon([
                 (x, abs(y - config.tabletop_size.x / 2.2)),
                 (abs(x - config.tabletop_size.y / 2.2), y),
                 (x, y)],

@@ -1,9 +1,11 @@
+import pygame
+
 from vector import Vector
 
 
 class Config(object):
     tabletop_size = Vector(1366, 768)
-    scaling_factor = 1
+    scaling_factor = 2
 
     card_size = Vector(100, 120)
     card_spacing = 10

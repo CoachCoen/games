@@ -58,11 +58,10 @@ class RandomAI(AbstractAI):
             return
 
         actions = [self._action_for_item(item) for item in my_move
-                   if self._action_for_item(item)]  # + [Confirm(holding_area)]
+                   if self._action_for_item(item)]
 
         for action in actions:
             action.activate()
-
 
 class SimpleAI(AbstractAI):
     pass

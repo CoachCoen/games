@@ -17,7 +17,8 @@ class TakeCard(AbstractAction):
         elif self.card.position == ComponentState.reserved:
             game.current_player.reserved.take_card(self.card)
         game.holding_area.card = self.card
-        game.current_player.take_component()
+        if game.current_player.is_human:
+            game.current_player.take_component()
         return True
 
 
@@ -52,7 +53,9 @@ class TakeChip(AbstractAction):
         # Move chip from supply to holding area
         game.table.chips.take_chip(self.chip)
         game.holding_area.add_chip(self.chip)
-        game.current_player.take_component()
+        # game.refresh_state()
+        if game.current_player.is_human:
+            game.current_player.take_component()
         return True
 
 
@@ -77,34 +80,34 @@ class ReturnChip(AbstractAction):
 class Confirm(AbstractAction):
     @staticmethod
     def activate():
-        held_card = game.holding_area.card
-
-        if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
-            # Yellow chip taken, so reserved card
-            game.current_player.reserve_card(held_card)
-            game.table.card_grid.fill_empty_spaces()
-
-        elif held_card:
-            # Take card
-            game.current_player.pay_cost(held_card.chip_cost)
-
-            # Draw a new card and assign it to the original card's slot
-            game.current_player.add_card(held_card)
-            game.table.card_grid.fill_empty_spaces()
-            # card.source.card = game.table.card_deck.pop()
-            # card.source.card.source = card.source
-
-        game.holding_area.card = None
-
-        game.holding_area.chips.transfer_chips(game.current_player.chips)
-        game.next_player()
-
+        # held_card = game.holding_area.card
+        #
+        # if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
+        #     # Yellow chip taken, so reserved card
+        #     game.current_player.reserve_card(held_card)
+        #     game.table.card_grid.fill_empty_spaces()
+        #
+        # elif held_card:
+        #     # Take card
+        #     game.current_player.pay_cost(held_card.chip_cost)
+        #
+        #     # Draw a new card and assign it to the original card's slot
+        #     game.current_player.add_card(held_card)
+        #     game.table.card_grid.fill_empty_spaces()
+        #     # card.source.card = game.table.card_deck.pop()
+        #     # card.source.card.source = card.source
+        #
+        # game.holding_area.card = None
+        #
+        # game.holding_area.chips.transfer_chips(game.current_player.chips)
+        game.current_player.confirm()
         return True
 
 
 class Cancel(AbstractAction):
     @staticmethod
     def activate():
+        # TODO: ? Move this into a start/end of state transition method in 'player' module?
         game.holding_area.chips.return_chips()
 
         if game.holding_area.card:

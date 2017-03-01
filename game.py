@@ -12,6 +12,13 @@ from buttons import buttons
 from ai_simple import RandomAI
 from game_state import game
 
+# import logging
+# logging.basicConfig(level=logging.INFO)
+
+import logging
+from transitions import logger
+logger.setLevel(logging.INFO)
+
 
 def init_game(player_details):
     """
@@ -59,7 +66,8 @@ class App:
         )
 
         # player[0] is the start player
-        game.players[0].start()
+        game.current_player = game.players[0]
+        game.current_player.start()
 
         game.refresh_display()
 

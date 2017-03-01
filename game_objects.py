@@ -749,7 +749,9 @@ class HoldingArea(object):
             text='Cancel'
         ).embody()
 
-        if game.is_turn_complete:
+        # if game.is_turn_complete:
+        # TODO: Import & use VALID
+        if game.current_player.state == 'valid_turn':
             buttons.add(
                 (
                     location + config.confirm_button_location

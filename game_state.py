@@ -15,10 +15,8 @@ class Game(object):
         self.table = None
         self.holding_area = None
         self.buttons = None
-        # self.chip_types = None
-        self._is_turn_complete = None
-        self._valid_actions = None
-        self._valid_action_sets = None
+        self.current_player = None
+        self._earned_tiles = None
 
     def init_game(self, players, table, holding_area, buttons):
         self.players = players
@@ -34,34 +32,22 @@ class Game(object):
         """
         return len(self.players)
 
-    @property
-    def current_player(self):
-        """
-        Players can be in different states. All but one player
-        will always be 'waiting', whilst the other (current) player
-        will be in one of the other states
-        :return: The one player who currently isn't 'waiting'
-        """
-        return [p for p in self.players if p.is_current_player][0]
-
     def next_player(self):
         """
         Move to the next player
         """
-        current = self.current_player
+        i = self.players.index(self.current_player)
 
-        # Confirm the current player's action
-        current.confirm()
+        # Current player now waiting for their next turn
+        self.current_player.wait()
 
         # Find the index of the next player
-        i = self.players.index(current)
         try:
-            next_p = self.players[i + 1]
+            self.current_player = self.players[i + 1]
         except IndexError:
-            next_p = self.players[0]
+            self.current_player = self.players[0]
 
-        # The next player can start their turn
-        next_p.start()
+        self.current_player.start()
 
     def embody(self):
         """
@@ -87,31 +73,34 @@ class Game(object):
         self.embody()
         pygame.display.flip()
 
-    def refresh_state(self):
-        self._is_turn_complete = None
-        self._valid_actions = None
-        self._valid_action_sets = None
+    def show_state(self):
+        print(", ".join(["%s: %s" % (player.name, player.state) for player in self.players]))
+
+    # @property
+    # def earned_tiles(self):
+    #     if self._earned_tiles is None:
+    #         self._earned_tiles = self._get_earned_tiles
+    #         print("Earned %s tiles" % len(self._earned_tiles))
+    #     return self._earned_tiles
+
+    @property
+    def earned_multiple_tiles(self):
+        return len(self.earned_tiles) > 1
+
+    @property
+    def earned_single_tile(self):
+        return len(self.earned_tiles) == 1
+
+    @property
+    def earned_tiles(self):
+        # TODO: Remove 'result'
+    # def _get_earned_tiles(self):
+        result = [tile for tile in game.table.tiles.tiles if game.current_player.can_afford(tile.chip_cost)]
+        print("Earned %s tiles" % len(result))
+        return result
 
     @property
     def is_turn_complete(self):
-        if self._is_turn_complete is None:
-            self._is_turn_complete = \
-                self._get_is_turn_complete()
-        return self._is_turn_complete
-
-    @property
-    def valid_actions(self):
-        if self._valid_actions is None:
-            self._valid_actions = self._get_valid_actions()
-        return self._valid_actions
-
-    @property
-    def valid_action_sets(self):
-        if self._valid_action_sets is None:
-            self._valid_action_sets = self._get_valid_action_sets()
-        return self._valid_action_sets
-
-    def _get_is_turn_complete(self):
         holding_area = self.holding_area
         # 2 of same chip selected
         if len(holding_area.chips) == 2 \
@@ -144,19 +133,20 @@ class Game(object):
 
         return False
 
-    def _get_valid_actions(self):
-
+    @property
+    def valid_actions(self):
+        # TODO: Either cache this, or use an "is_valid_action(item)" function
         holding_area_chips = self.holding_area.chips
         table_chips = self.table.chips
         reserved_cards = self.current_player.reserved
 
-        valid_actions = []
-        valid_actions += holding_area_chips.chips
+        result = []
+        result += holding_area_chips.chips
         if self.holding_area.card:
-            valid_actions.append(self.holding_area.card)
+            result.append(self.holding_area.card)
 
         if self.is_turn_complete:
-            return valid_actions
+            return result
 
         # Which chips can be selected?
         for chip_type in ChipType:
@@ -193,7 +183,7 @@ class Game(object):
                     and table_chips.count(chip_type) <= 2:
                 continue
 
-            valid_actions.append(chip)
+            result.append(chip)
 
         # Which cards can be selected?
         # TODO: More Pythonic way to loop through this?
@@ -206,7 +196,7 @@ class Game(object):
                 if holding_area_chips.any_chip_of_type(
                         ChipType.yellow_gold
                 ):
-                    valid_actions.append(card)
+                    result.append(card)
 
                 # If non-yellow chip picked, can't select any card
                 if not holding_area_chips.empty:
@@ -214,16 +204,17 @@ class Game(object):
 
                 # If no chip picked, can select any which the player can afford
                 if game.current_player.can_afford(card.chip_cost):
-                    valid_actions.append(card)
+                    result.append(card)
 
         # Any reserved cards which this player can afford?
         for card in game.current_player.reserved.cards:
             if game.current_player.can_afford(card.chip_cost):
-                valid_actions.append(card)
+                result.append(card)
 
-        return valid_actions
+        return result
 
-    def _get_valid_action_sets(self):
+    @property
+    def valid_action_sets(self):
         """
         This player can take:
         3 different (non-yellow) chips
@@ -232,7 +223,7 @@ class Game(object):
         1 yellow chip plus any card (reserve - don't take)
         """
 
-        valid_action_sets = {}
+        result = {}
         table_chips = game.table.chips
         table_chips_by_type = table_chips.chips_by_type()
 
@@ -241,41 +232,39 @@ class Game(object):
             chip for chip in table_chips.top_chips()
             if chip.chip_type is not ChipType.yellow_gold]
 
-        valid_action_sets['3 chips'] = list(combinations(available_chips, 3)) \
+        result['3 chips'] = list(combinations(available_chips, 3)) \
             if len(available_chips) >= 3 \
             else [available_chips]
 
-        valid_action_sets['2 chips'] = [
+        result['2 chips'] = [
             table_chips_by_type[chip_type][:2] for chip_type in table_chips_by_type.keys()
             if len(table_chips_by_type[chip_type]) >= 4
             ]
 
-        valid_action_sets['card'] = []
-        valid_action_sets['reserve card'] = []
+        result['card'] = []
+        result['reserve card'] = []
         first_yellow_chip = table_chips.first_chip_of_type(
             ChipType.yellow_gold)
         for row in game.table.card_grid.cards:
             for card in row:
-                # card = card_slot.card
                 if not card:
                     continue
 
                 # If no chip picked, can select any which the player can afford
                 if game.current_player.can_afford(card.chip_cost):
-                    valid_action_sets['card'].append([card])
+                    result['card'].append([card])
 
                 if first_yellow_chip:
-                    valid_action_sets['reserve card'].append(
+                    result['reserve card'].append(
                         [card, first_yellow_chip]
                     )
 
-        valid_action_sets['buy reserved'] = []
+                result['buy reserved'] = []
 
         for card in game.current_player.reserved.cards:
             if game.current_player.can_afford(card.chip_cost):
-                valid_action_sets['buy reserved'].append(card)
+                result['buy reserved'].append(card)
 
-        return valid_action_sets
-
+        return result
 
 game = Game()

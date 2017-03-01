@@ -14,6 +14,7 @@ IN_PROGRESS = 'turn_in_progress'
 VALID = 'valid_turn'
 TILES_OFFERED = 'tiles_on_offer'
 TILE_SELECTED = 'tile_selected'
+TURN_FINISHED = 'turn_finished'
 
 
 class Player(object):
@@ -24,45 +25,52 @@ class Player(object):
         IN_PROGRESS,     # turn started, something taken
         VALID,           # taken complete set of items, now confirm
         TILES_OFFERED,       # one or more noble tiles can be taken
-        TILE_SELECTED        # noble tile selected, now confirm
+        TILE_SELECTED,        # noble tile selected, now confirm
+        TURN_FINISHED,      # End of turn
     ]
 
     transitions = [
         # Start a player's turn
-        dict(trigger='start', source=WAITING, dest=STARTED),
+        dict(trigger='start', source=WAITING, dest=STARTED, after=['show_state'],
+             conditions='human_player'),
+
+        dict(trigger='start', source=WAITING, dest=VALID, after=['ai_makes_move', 'show_state'],
+             conditions='ai_player'),
 
         # Take a component, if complete turn taken go to VALID, otherwise
         # go to/stay in IN PROGRESS
         dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
-             dest=IN_PROGRESS, unless='complete_turn_taken', after='refresh_game_state'),
+             dest=IN_PROGRESS, unless='complete_turn_taken', after='show_state'),
         dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
-             dest=VALID, conditions='complete_turn_taken', after='refresh_game_state'),
+             dest=VALID, conditions='complete_turn_taken', after='show_state'),
 
         # Return a component, if empty selection go to STARTED, otherwise
         # stay in IN PROGRESS
         dict(trigger='return_component', source=IN_PROGRESS, dest=STARTED,
-             conditions='empty_selection', after='refresh_game_state'),
+             conditions='empty_selection', after='show_state'),
         dict(trigger='return_component', source=IN_PROGRESS, dest=IN_PROGRESS,
-             unless='empty_selection', after='refresh_game_state'),
+             unless='empty_selection', after='show_state'),
 
         # Valid (set of components) selected - confirm/reject?
-        # TODO: Re-instate once tiles, etc, in place
-        # dict(trigger='confirm', source=VALID, dest=TILES_OFFERED,
-        #      conditions='earned_multiple_tiles'),
-        # dict(trigger='confirm', source=VALID, dest=TILE_SELECTED,
-        #      conditions='earned_single_tile'),
-        # dict(trigger='confirm', source=VALID, dest=WAITING,
-        #      unless=['earned_multiple_tiles', 'earned_single_tile']),
-        dict(trigger='confirm', source=[IN_PROGRESS], dest=WAITING),
+        dict(trigger='confirm', source=VALID, dest=TILES_OFFERED,
+             conditions='earned_multiple_tiles', after='show_state'),
+        dict(trigger='confirm', source=VALID, dest=TILE_SELECTED,
+             conditions='earned_single_tile', after='show_state'),
+        dict(trigger='confirm', source=VALID, dest=TURN_FINISHED,
+             unless=['earned_multiple_tiles', 'earned_single_tile'],
+             before='_confirm_component_selection', after='show_state'),
 
-        dict(trigger='cancel', source=[IN_PROGRESS, VALID], dest=STARTED),
+        dict(trigger='cancel', source=[IN_PROGRESS, VALID], dest=STARTED, after='show_state'),
 
         # Multiple nobles tiles offered, take one
         dict(trigger='select_tile', source=[TILES_OFFERED, TILE_SELECTED],
-             dest=TILE_SELECTED),
+             dest=TILE_SELECTED, after='show_state'),
 
         # Confirm selection, end of turn
-        dict(trigger='take_tile', source=TILE_SELECTED, dest=WAITING)
+        dict(trigger='take_tile', source=TILE_SELECTED, dest=TURN_FINISHED, after='show_state'),
+
+        # Back to waiting
+        dict(trigger='wait', source=TURN_FINISHED, dest=WAITING, after='show_state'),
     ]
 
     def __init__(self, name, AI, player_order):
@@ -84,13 +92,29 @@ class Player(object):
             initial=WAITING
         )
 
-    def on_enter_turn_started(self):
-        if self.AI:
-            self.AI.take_turn()
+    def ai_makes_move(self):
+        self.AI.take_turn()
 
-    @staticmethod
-    def refresh_game_state():
-        game.refresh_state()
+    def on_enter_turn_started(self):
+        game.refresh_display()
+
+    def on_enter_turn_finished(self):
+        game.next_player()
+
+    def show_state(self):
+        # game.show_state()
+        pass
+        # TODO: Remove game.show_state() method
+
+    def human_player(self):
+        return game.current_player.is_human
+
+    def ai_player(self):
+        return not game.current_player.is_human
+
+    @property
+    def is_human(self):
+        return self.AI is None
 
     def has_chips_of_type(self, chip_type):
         # TODO: Refactor: better way to find the right chip stack
@@ -98,25 +122,6 @@ class Player(object):
             if chip_stack.chip.chip_type == chip_type:
                 return chip_stack.chip_count
         return 0
-
-    # def pay_cost_for_single_chip_type(self, chip_type, cost):
-    #     # TODO: Refactor, create index?
-    #     for chip_stack in self.chip_stacks.chip_stacks:
-    #         if chip_stack.chip.chip_type == chip_type:
-    #             available = chip_stack.chip_count
-    #
-    #             # Return the chips
-    #             # TODO: Better way of doing this?
-    #             for _ in range(min(available, cost)):
-    #                 chip_stack.chip.source.add_one()
-    #
-    #             if available >= cost:
-    #                 chip_stack.chip_count -= cost
-    #                 return 0
-    #             else:
-    #                 chip_stack.chip_count = 0
-    #                 return cost - available
-    #     # Should never get here
 
     def pay_cost(self, chip_cost):
         """
@@ -133,36 +138,6 @@ class Player(object):
                     # pay the chip - or pay a gold one if normal chip not available
                     if not self.chips.pay_chip_of_type(chip_type):
                         self.chips.pay_chip_of_type(ChipType.yellow_gold)
-
-        # chips_shortage = 0
-        # for chip_type in [chip_type for chip_type in ChipType if chip_type is not ChipType.yellow_gold]:
-        #     count = chip_cost.count(chip_type)
-        #
-        #     available = self.chips.count(chip_type) + self.cards.produces_for_chip_type(chip_type)
-        #
-        #
-        #
-        # chips_shortage = 0
-        # for chip in chip_cost.chips:
-        #     if not self.chips.pay_chip_of_type(chip.chip_type):
-        #         chips_shortage += 1
-        #
-        # for _ in range(chips_shortage):
-        #     self.chips.pay_chip_of_type(ChipType.yellow_gold)
-
-        # for chip_stack in chip_cost.chip_stacks:
-        #     count = chip_stack.chip_count
-        #     if not count:
-        #         continue
-        #
-        #     chips_shortage += self.pay_cost_for_single_chip_type(
-        #         chip_stack.chip.chip_type, count
-        #     )
-        #
-        # if chips_shortage:
-        #     self.pay_cost_for_single_chip_type(
-        #         ChipType.yellow_gold, chips_shortage
-        #     )
 
     @property
     def is_current_player(self):
@@ -181,12 +156,6 @@ class Player(object):
         # Missing chips can be replaced by yellow chips
         return chips_shortage <= self.chips.count(ChipType.yellow_gold)
 
-    def add_chip(self, chip):
-        # TODO: Refactor - maybe method for ChipStack?
-        for chip_stack in self.chip_stacks.chip_stacks:
-            if chip_stack.chip.chip_type == chip.chip_type:
-                chip_stack.chip_count += 1
-
     def add_card(self, card):
         self.cards.add(card)
 
@@ -201,7 +170,7 @@ class Player(object):
         - 1 card
         :return:
         """
-        return False
+        return game.is_turn_complete
 
     def empty_selection(self):
         """
@@ -215,21 +184,14 @@ class Player(object):
         Are there multiple noble tiles available for this player?
         :return:
         """
-        pass
+        return game.earned_multiple_tiles
 
     def earned_single_tile(self):
         """
         Is there a single noble tile available for this player?
         :return:
         """
-        pass
-
-    def start_turn(self):
-        """
-        Do this before going into the 'turn started' stage
-        :return:
-        """
-        pass
+        return game.earned_single_tile
 
     @property
     def points(self):
@@ -275,52 +237,21 @@ class Player(object):
                 player_order=self.player_order
             )
 
-        # for i, chip_type in enumerate(ChipType):
-        #     total = self.cards.count_for_reward_type(chip_type)
-        #     chip_stack = self.chip_stacks.get_stack_for_chip_type(chip_type)
-        #
-        #     if total:
-        #         location = (
-        #             config.player_chip_stack_location.x +
-        #             i * (config.chip_size + config.chip_spacing) -
-        #             0.5 * config.chip_size,
-        #             config.player_chip_stack_location.y + config.chip_size,
-        #             config.chip_size, config.chip_size
-        #         )
-        #         draw_rectangle(
-        #             location,
-        #             colour=chip_stack.chip.colour,
-        #             player_order=self.player_order)
-        #         draw_text(
-        #             location,
-        #             str(total),
-        #             player_order=self.player_order,
-        #             text_colour=chip_stack.chip.colour,
-        #             font_size=config.chip_cost_scaling * config.chip_font_size,
-        #             reverse_colour=True
-        #         )
-        #
-        #     # TODO: Move chip_stack.embody into self.embody()
-        #     if chip_stack.chip_count:
-        #         chip_stack.embody(
-        #             config.player_chip_stack_location +
-        #             Vector(i * (config.chip_size + config.chip_spacing), 0),
-        #             scaling_factor=config.chip_cost_scaling,
-        #             player_order=self.player_order
-        #         )
-        #         total += chip_stack.chip_count
-        #
-        #     if total:
-        #         location = (config.player_chip_stack_location.x +
-        #                     i * (config.chip_size + config.chip_spacing) -
-        #                     0.5 * config.chip_size,
-        #                     config.player_chip_stack_location.y +
-        #                     2.5 * config.chip_size,
-        #                     config.chip_size, config.chip_size)
-        #
-        #         draw_text(
-        #             location,
-        #             str(total),
-        #             player_order=self.player_order,
-        #             text_colour=chip_stack.chip.colour
-        #         )
+    def _confirm_component_selection(self):
+        held_card = game.holding_area.card
+
+        if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
+            # Yellow chip taken, so reserved card
+            self.reserve_card(held_card)
+            game.table.card_grid.fill_empty_spaces()
+
+        elif held_card:
+            # Take card
+            self.pay_cost(held_card.chip_cost)
+
+            # Draw a new card and assign it to the original card's slot
+            self.add_card(held_card)
+            game.table.card_grid.fill_empty_spaces()
+
+        game.holding_area.card = None
+        game.holding_area.chips.transfer_chips(self.chips)

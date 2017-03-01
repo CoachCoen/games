@@ -259,8 +259,7 @@ class Game(object):
                         [card, first_yellow_chip]
                     )
 
-                result['buy reserved'] = []
-
+        result['buy reserved'] = []
         for card in game.current_player.reserved.cards:
             if game.current_player.can_afford(card.chip_cost):
                 result['buy reserved'].append(card)

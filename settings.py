@@ -1,10 +1,9 @@
-import pygame
-
 from vector import Vector
+from settings_local import local_config
 
 
 class Config(object):
-    tabletop_size = Vector(1366, 768)
+    tabletop_size = Vector(0, 0)
     scaling_factor = 2
 
     card_size = Vector(100, 120)
@@ -67,3 +66,4 @@ class Config(object):
     confirm_button_location = Vector(100, 160)
 
 config = Config()
+config.__dict__.update(local_config)

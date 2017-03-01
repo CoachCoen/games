@@ -36,7 +36,7 @@ class RandomAI(AbstractAI):
     def _choose_move():
         valid_action_sets = game.valid_action_sets
 
-        for action_type in ['card', '3 chips', '2 chips', 'reserve card']:
+        for action_type in ['card', '3 chips', '2 chips', 'reserve card', 'buy reserved']:
             if len(valid_action_sets[action_type]):
                 return choice(valid_action_sets[action_type])
 

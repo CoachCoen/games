@@ -52,7 +52,7 @@ class App:
         """
         pygame.init()
         self._display_surf = pygame.display.set_mode(
-            (0, 0),
+            list(config.tabletop_size),
             pygame.HWSURFACE | pygame.DOUBLEBUF
         ) # | pygame.FULLSCREEN
         config.scaling_factor = pygame.display.Info().current_w / 1366.0
@@ -63,7 +63,7 @@ class App:
                 ('Caroline', RandomAI()),
                 ('Nigel', RandomAI()),
                 ('Issie', RandomAI()),
-                ('Coen', None)
+                # ('Coen', None)
             ]
         )
 

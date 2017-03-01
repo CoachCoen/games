@@ -197,9 +197,8 @@ class Easel(object):
     def card_image(self):
         if self._card_image is None:
             self._card_image = pygame.image.\
-                load('yellow_card.png'). \
+                load('resources/yellow_card.png'). \
                 convert_alpha()
-            # self._card_image = self.surface.convert_alpha(self._card_image)
             self._card_image = pygame.transform.scale(
                 self._card_image,
                 list(config.card_size * config.scaling_factor)

@@ -52,10 +52,12 @@ class App:
         """
         pygame.init()
         self._display_surf = pygame.display.set_mode(
-            list(config.tabletop_size * config.scaling_factor),
+            (0, 0),
             pygame.HWSURFACE | pygame.DOUBLEBUF
-        )
+        ) # | pygame.FULLSCREEN
+        config.scaling_factor = pygame.display.Info().current_w / 1366.0
         easel.init_easel(self._display_surf)
+
         init_game(
             player_details=[
                 ('Caroline', RandomAI()),
@@ -80,6 +82,8 @@ class App:
         :param event: the event
         """
         if event.type == pygame.QUIT:
+            self._running = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             self._running = False
         if event.type == pygame.MOUSEBUTTONUP:
             game.buttons.process_mouse_click()

@@ -47,7 +47,7 @@ def scale_vertices(vertices):
     :return:
     """
     if isinstance(vertices, (int, float)):
-        return config.scaling_factor * vertices
+        return int(config.scaling_factor * vertices)
     return [scale_vertices(i) for i in vertices]
 
 
@@ -60,7 +60,17 @@ def grow_rectangle(rectangle, increase):
     )
 
 
-def draw_pologon(vertices, colour):
+def draw_card(location, player_order=None):
+    if player_order:
+        location = translate_to_player(
+            player_order=player_order, location=location
+        )
+
+    location = scale_vertices(location)
+    easel.surface.blit(easel.card_image, location)
+
+
+def draw_polygon(vertices, colour):
     vertices = scale_vertices(vertices)
     pygame.draw.polygon(easel.surface, easel.colour(colour),
                         vertices, 0)
@@ -175,11 +185,26 @@ class Easel(object):
 
     def __init__(self):
         self.surface = None
+        self._card_image = None
 
     def init_easel(self, surface):
         self.surface = surface
 
     def colour(self, name):
         return self.colour_palette[name]
+
+    @property
+    def card_image(self):
+        if self._card_image is None:
+            self._card_image = pygame.image.\
+                load('yellow_card.png'). \
+                convert_alpha()
+            # self._card_image = self.surface.convert_alpha(self._card_image)
+            self._card_image = pygame.transform.scale(
+                self._card_image,
+                list(config.card_size * config.scaling_factor)
+            )
+        return self._card_image
+
 
 easel = Easel()

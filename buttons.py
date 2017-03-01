@@ -17,8 +17,7 @@ class ButtonCollection(object):
         self.buttons.append(button)
         return button
 
-    def process_mouse_click(self):
-        mouse_position = pygame.mouse.get_pos()
+    def process_mouse_click(self, mouse_position):
 
         if any(
                 button.action.activate()

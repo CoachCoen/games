@@ -86,7 +86,7 @@ class App:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             self._running = False
         if event.type == pygame.MOUSEBUTTONUP:
-            game.buttons.process_mouse_click()
+            game.buttons.process_mouse_click(pygame.mouse.get_pos())
 
     @staticmethod
     def on_cleanup():

@@ -18,3 +18,6 @@ class Vector(object):
 
     def __mul__(self, other):
         return Vector(self.x * other, self.y * other)
+
+    def __eq__(self, other):
+        return list(self) == list(other)

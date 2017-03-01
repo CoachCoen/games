@@ -6,6 +6,7 @@ from game_actions import AbstractAction
 from game import game
 from settings import config
 
+
 class DummyAction(AbstractAction):
     pass
 

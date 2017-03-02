@@ -46,9 +46,9 @@ class Player(object):
 
         # Return a component, if empty selection go to STARTED, otherwise
         # stay in IN PROGRESS
-        dict(trigger='return_component', source=IN_PROGRESS, dest=STARTED,
+        dict(trigger='return_component', source=[IN_PROGRESS, VALID], dest=STARTED,
              conditions='empty_selection', after='show_state'),
-        dict(trigger='return_component', source=IN_PROGRESS, dest=IN_PROGRESS,
+        dict(trigger='return_component', source=[IN_PROGRESS, VALID], dest=IN_PROGRESS,
              unless='empty_selection', after='show_state'),
 
         # Valid (set of components) selected - confirm/reject?
@@ -60,7 +60,8 @@ class Player(object):
              unless=['earned_multiple_tiles', 'earned_single_tile'],
              before='_confirm_component_selection', after='show_state'),
 
-        dict(trigger='cancel', source=[IN_PROGRESS, VALID], dest=STARTED, after='show_state'),
+        dict(trigger='cancel', source=[IN_PROGRESS, VALID], dest=STARTED,
+             after=['cancel_move_in_progress', 'show_state']),
 
         # Multiple nobles tiles offered, take one
         dict(trigger='select_tile', source=[TILES_OFFERED, TILE_SELECTED],
@@ -100,6 +101,13 @@ class Player(object):
 
     def on_enter_turn_finished(self):
         game.next_player()
+
+    def cancel_move_in_progress(self):
+        game.holding_area.chips.return_chips()
+
+        if game.holding_area.card:
+            game.table.card_grid.return_card(game.holding_area.card)
+            game.holding_area.card = None
 
     def show_state(self):
         # game.show_state()

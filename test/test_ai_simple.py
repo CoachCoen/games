@@ -1,34 +1,48 @@
 import unittest
-from unittest.mock import patch
-# import random
+from unittest.mock import patch, PropertyMock
 
-from ai_simple import RandomAI
-from game import game
-# from ai_simple import random
+import ai_simple
+from game_state import Game
 
 
-# remove random element from the random ai
-def take_first(my_list):
+def mock_choice(my_list):
     return my_list[0]
 
 
-def dummy_action_sets():
-    return {
-        'card': 'Hello'
-    }
-
-
-@unittest.skip('Under development')
 class TestAISimple(unittest.TestCase):
+    """
+    Test the simple AIs, which pick a move from a list of valid moves
+    """
 
-    # @patch(random, 'choice', take_first)
-    @patch('random.choice', new_callable=take_first)
-    # @patch('game.valid_action_sets', new_callable=dummy_action_sets)
-    @patch.object(game, 'valid_action_sets', new_callable=dummy_action_sets)
-    def test_random_ai(self, _1, _2):
-        random_ai = RandomAI()
+    @patch('ai_simple.choice', side_effect=mock_choice)
+    @patch.object(Game, 'valid_action_sets', new_callable=PropertyMock)
+    def test_random_ai(self, m_valid_action_sets, _):
+        """
+        Random AI picks a (near) random move from a list of possible moves
+        """
+        random_ai = ai_simple.RandomAI()
+
+        m_valid_action_sets.return_value = {
+            'card': ['Hello', 'Fred', 'Sue']
+        }
         move = random_ai._choose_move()
         self.assertEqual(move, 'Hello')
+
+        # Picks a card over a set of 3 chips
+        m_valid_action_sets.return_value = {
+            '3 chips': ['Green', 'Blue', 'White'],
+            'card': ['Hello', 'Fred', 'Sue']
+        }
+        move = random_ai._choose_move()
+        self.assertEqual(move, 'Hello')
+
+        # Sanity check
+        m_valid_action_sets.return_value = {
+            '3 chips': ['Green', 'Blue', 'White'],
+            'card': []
+        }
+        move = random_ai._choose_move()
+        self.assertEqual(move, 'Green')
 
 if __name__ == '__main__':
     unittest.main()

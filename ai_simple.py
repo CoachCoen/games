@@ -20,6 +20,7 @@ Flow
             * Or I could manually change the move
 """
 from random import choice
+# import random
 
 from game_objects import Chip, Card
 from game_actions import TakeChip, TakeCard
@@ -62,6 +63,7 @@ class RandomAI(AbstractAI):
 
         for action in actions:
             action.activate()
+
 
 class SimpleAI(AbstractAI):
     pass

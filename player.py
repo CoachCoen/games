@@ -94,7 +94,9 @@ class Player(object):
         )
 
     def ai_makes_move(self):
+        game.AI_move = True
         self.AI.take_turn()
+        game.AI_move = False
 
     def on_enter_turn_started(self):
         game.refresh_display()
@@ -110,8 +112,8 @@ class Player(object):
             game.holding_area.card = None
 
     def show_state(self):
-        # game.show_state()
-        pass
+        game.show_state()
+        # pass
         # TODO: Remove game.show_state() method
 
     def human_player(self):

@@ -776,6 +776,7 @@ class HoldingArea(object):
             text=game.current_player.name
         )
 
+    @property
     def is_empty(self):
         return not self.card and self.chips.empty
 

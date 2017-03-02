@@ -17,6 +17,7 @@ class Game(object):
         self.buttons = None
         self.current_player = None
         self._earned_tiles = None
+        self.AI_move = False
 
     def init_game(self, players, table, holding_area, buttons):
         self.players = players

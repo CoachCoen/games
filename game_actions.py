@@ -48,7 +48,8 @@ class TakeChip(AbstractAction):
         # Move chip from supply to holding area
         game.table.chips.take_chip(self.chip)
         game.holding_area.add_chip(self.chip)
-        if game.current_player.is_human:
+        # if game.current_player.is_human:
+        if not game.AI_move:
             game.current_player.take_component()
         return True
 

@@ -12,9 +12,6 @@ from buttons import buttons
 from ai_simple import RandomAI
 from game_state import game
 
-# import logging
-# logging.basicConfig(level=logging.INFO)
-
 import logging
 from transitions import logger
 logger.setLevel(logging.INFO)

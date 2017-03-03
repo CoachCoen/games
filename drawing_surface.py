@@ -165,6 +165,31 @@ def draw_circles_row(location, counts, player_order=None):
             )
 
 
+def _draw_tablecloth():
+    draw_rectangle((0, 0) + tuple(config.tabletop_size),
+                   ColourPalette.table_cloth)
+
+
+def _draw_player_corners():
+    for (x, y) in [
+        (0, 0),
+        (0, config.tabletop_size.y),
+        (config.tabletop_size.x, config.tabletop_size.y),
+        (config.tabletop_size.x, 0)
+    ]:
+        draw_polygon([
+            (x, abs(y - config.tabletop_size.x / 2.2)),
+            (abs(x - config.tabletop_size.y / 2.2), y),
+            (x, y)],
+            ColourPalette.corners
+        )
+
+
+def draw_table():
+    _draw_tablecloth()
+    _draw_player_corners()
+
+
 class Easel(object):
     colour_palette = {
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),

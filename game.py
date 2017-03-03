@@ -5,7 +5,7 @@ Main module - game initialisation and flow
 import pygame
 
 from drawing_surface import easel
-from game_objects import Table, HoldingArea
+from game_objects import ComponentCollection
 from player import Player
 from settings import config
 from buttons import buttons
@@ -30,11 +30,13 @@ def init_game(player_details):
         )
         for (i, (name, AI)) in enumerate(player_details)]
 
+    components = ComponentCollection()
+    components.init_components(len(players))
+
     game.init_game(
         players=players,
-        table=Table(len(players)),
-        holding_area=HoldingArea(),
-        buttons=buttons
+        buttons=buttons,
+        components=components
     )
 
 
@@ -65,10 +67,11 @@ class App:
         )
 
         # player[0] is the start player
-        game.current_player = game.players[0]
-        game.current_player.start()
+        # game.current_player = game.players[0]
+        # game.current_player.start()
 
-        game.refresh_display()
+        game.embody()
+        # game.refresh_display()
 
         # Notify main game loop that the initialisation is done
         self._running = True

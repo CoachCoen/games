@@ -3,6 +3,9 @@ from itertools import combinations
 
 from chip_types import ChipType
 
+from drawing_surface import draw_table
+# from game_objects import IN_PLAYER_AREA, IN_HOLDING_AREA, IN_SUPPLY, IN_RESERVED_AREA
+# from game_objects import Chip
 
 class Game(object):
     """
@@ -11,17 +14,15 @@ class Game(object):
     """
 
     def __init__(self):
-        self.players = None
-        self.table = None
-        self.holding_area = None
-        self.buttons = None
+        self.components = None
         self.current_player = None
-        self._earned_tiles = None
+        self.buttons = None
+        self.players = None
 
-    def init_game(self, players, table, holding_area, buttons):
+    def init_game(self, players, buttons, components):
+
         self.players = players
-        self.table = table
-        self.holding_area = holding_area
+        self.components = components
         self.buttons = buttons
 
     @property
@@ -57,21 +58,28 @@ class Game(object):
         """
 
         # Remove previously created buttons
-        game.buttons.reset()
+        print("Reinstate this: in game_state")
+        # game.buttons.reset()
 
-        self.table.embody()
-        for player in self.players:
-            player.embody()
-        self.holding_area.embody()
+        # self._draw()
+        draw_table()
 
-    def refresh_display(self):
-        """
-        Show the current game state
-        Called after every state change, e.g. after player
-        clicks on a piece (which moves it to the holding area)
-        """
-        self.embody()
+        self.components.embody()
+        # self.components.embody()
+        # self.table.embody()
+        # for player in self.players:
+        #     player.embody()
+        # self.holding_area.embody()
         pygame.display.flip()
+
+    # def refresh_display(self):
+    #     """
+    #     Show the current game state
+    #     Called after every state change, e.g. after player
+    #     clicks on a piece (which moves it to the holding area)
+    #     """
+    #     self.embody()
+    #     pygame.display.flip()
 
     def show_state(self):
         print(", ".join(["%s: %s" % (player.name, player.state) for player in self.players]))
@@ -136,6 +144,7 @@ class Game(object):
     @property
     def valid_actions(self):
         # TODO: Either cache this, or use an "is_valid_action(item)" function
+        return []
         holding_area_chips = self.holding_area.chips
         table_chips = self.table.chips
         reserved_cards = self.current_player.reserved

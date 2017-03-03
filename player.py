@@ -1,6 +1,7 @@
 from transitions import Machine
 
-from game_objects import ComponentCollectionFactory, ChipCollection
+# from game_objects import ComponentCollectionFactory, ChipCollection
+# from game_objects import Components
 from drawing_surface import draw_rectangle, draw_text, draw_squares_row, \
     draw_circles_row
 from drawing_surface import ColourPalette
@@ -8,62 +9,62 @@ from settings import config
 from game_objects import ChipType
 from game_state import game
 
-WAITING = 'waiting_for_turn'
-STARTED = 'turn_started'
-IN_PROGRESS = 'turn_in_progress'
-VALID = 'valid_turn'
+# State machine states for Player
+PLAYER_WAITING = 'waiting_for_turn'
+TURN_STARTED = 'turn_started'
+TURN_IN_PROGRESS = 'turn_in_progress'
+TURN_VALID = 'valid_turn'
 TILES_OFFERED = 'tiles_on_offer'
 TILE_SELECTED = 'tile_selected'
 TURN_FINISHED = 'turn_finished'
 
 
 class Player(object):
-    # TODO: Refactor this? Replace with enum? Move comments to top?
     states = [
-        WAITING,     # someone else's turn
-        STARTED,     # turn started, nothing taken yet
-        IN_PROGRESS,     # turn started, something taken
-        VALID,           # taken complete set of items, now confirm
-        TILES_OFFERED,       # one or more noble tiles can be taken
-        TILE_SELECTED,        # noble tile selected, now confirm
-        TURN_FINISHED,      # End of turn
+        PLAYER_WAITING,
+        TURN_STARTED,
+        TURN_IN_PROGRESS,
+        TURN_VALID,
+        TILES_OFFERED,
+        TILE_SELECTED,
+        TURN_FINISHED,
     ]
 
     transitions = [
         # Start a player's turn
-        dict(trigger='start', source=WAITING, dest=STARTED, after=['show_state'],
+        dict(trigger='start', source=PLAYER_WAITING, dest=TURN_STARTED, after=['show_state'],
              conditions='human_player'),
 
         # For AI players, select the move and take the (first) component
-        dict(trigger='start', source=WAITING, dest=VALID,
+        dict(trigger='start', source=PLAYER_WAITING, dest=TURN_VALID,
              after=['ai_makes_move', 'show_state'],
              conditions='ai_player'),
 
         # Take a component, if complete turn taken go to VALID, otherwise
         # go to/stay in IN PROGRESS
 
-        dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
-             dest=IN_PROGRESS, unless='complete_turn_taken', after='show_state'),
-        dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
-             dest=VALID, conditions='complete_turn_taken', after='show_state'),
+        dict(trigger='take_component', source=[TURN_STARTED, TURN_IN_PROGRESS],
+             dest=TURN_IN_PROGRESS, unless='complete_turn_taken', after='show_state'),
+        dict(trigger='take_component', source=[TURN_STARTED, TURN_IN_PROGRESS],
+             dest=TURN_VALID, conditions='complete_turn_taken', after='show_state'),
 
         # Return a component, if empty selection go to STARTED, otherwise
         # stay in IN PROGRESS
-        dict(trigger='return_component', source=[IN_PROGRESS, VALID], dest=STARTED,
+        dict(trigger='return_component', source=[TURN_IN_PROGRESS, TURN_VALID], dest=TURN_STARTED,
              conditions='empty_selection', after='show_state'),
-        dict(trigger='return_component', source=[IN_PROGRESS, VALID], dest=IN_PROGRESS,
+        dict(trigger='return_component', source=[TURN_IN_PROGRESS, TURN_VALID], dest=TURN_IN_PROGRESS,
              unless='empty_selection', after='show_state'),
 
         # Valid (set of components) selected - confirm/reject?
-        dict(trigger='confirm', source=VALID, dest=TILES_OFFERED,
+        dict(trigger='confirm', source=TURN_VALID, dest=TILES_OFFERED,
              conditions='earned_multiple_tiles', after='show_state'),
-        dict(trigger='confirm', source=VALID, dest=TILE_SELECTED,
+        dict(trigger='confirm', source=TURN_VALID, dest=TILE_SELECTED,
              conditions='earned_single_tile', after='show_state'),
-        dict(trigger='confirm', source=VALID, dest=TURN_FINISHED,
+        dict(trigger='confirm', source=TURN_VALID, dest=TURN_FINISHED,
              unless=['earned_multiple_tiles', 'earned_single_tile'],
              before='_confirm_component_selection', after='show_state'),
 
-        dict(trigger='cancel', source=[IN_PROGRESS, VALID], dest=STARTED,
+        dict(trigger='cancel', source=[TURN_IN_PROGRESS, TURN_VALID], dest=TURN_STARTED,
              after=['cancel_move_in_progress', 'show_state']),
 
         # Multiple nobles tiles offered, take one
@@ -74,7 +75,7 @@ class Player(object):
         dict(trigger='take_tile', source=TILE_SELECTED, dest=TURN_FINISHED, after='show_state'),
 
         # Back to waiting
-        dict(trigger='wait', source=TURN_FINISHED, dest=WAITING, after='show_state'),
+        dict(trigger='wait', source=TURN_FINISHED, dest=PLAYER_WAITING, after='show_state'),
     ]
 
     def __init__(self, name, AI, player_order):
@@ -84,16 +85,16 @@ class Player(object):
         if AI:
             self.AI.player = self
 
-        component_collection_factory = ComponentCollectionFactory()
-        self.cards = component_collection_factory('card', '')
-        self.chips = ChipCollection()
-        self.tiles = component_collection_factory('tile', '')
-        self.reserved = component_collection_factory('card', '')
+        # component_collection_factory = ComponentCollectionFactory()
+        # self.cards = component_collection_factory('card', '')
+        # self.chips = ChipCollection([])
+        # self.tiles = component_collection_factory('tile', '')
+        # self.reserved = component_collection_factory('card', '')
         self.machine = Machine(
             model=self,
             states=Player.states,
             transitions=Player.transitions,
-            initial=WAITING
+            initial=PLAYER_WAITING
         )
 
     def ai_makes_move(self):
@@ -152,7 +153,7 @@ class Player(object):
 
     @property
     def is_current_player(self):
-        return self.state != WAITING
+        return self.state != PLAYER_WAITING
 
     def can_afford(self, chip_cost):
         chips_shortage = 0
@@ -232,7 +233,7 @@ class Player(object):
             (0, 0, config.player_area_size.x, config.player_area_size.y),
             player_order=self.player_order,
             colour=ColourPalette.active_player_area
-            if self.state != WAITING
+            if self.state != PLAYER_WAITING
             else ColourPalette.player_area
         )
         draw_text(

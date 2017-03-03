@@ -2,9 +2,10 @@ import unittest
 from unittest import mock
 
 from game import game, init_game
-from game_actions import TakeCard, ReturnCard, TakeChip, ReturnChip
+from game_actions import MoveComponentToHoldingArea, ReturnCard, ReturnChip
 from game_state import Game
 from game_objects import ComponentFactory
+from ai_simple import RandomAI
 
 
 class TestGameActions(unittest.TestCase):
@@ -13,10 +14,10 @@ class TestGameActions(unittest.TestCase):
     def setUp(self, _):
         init_game(
             player_details=[
-                ('Caroline', None),
-                ('Nigel', None),
-                ('Issie', None),
-                ('Coen', None)
+                ('Caroline', RandomAI()),
+                ('Nigel', RandomAI()),
+                ('Issie', RandomAI()),
+                ('Coen', RandomAI())
             ]
         )
         game.current_player = game.players[0]
@@ -25,7 +26,7 @@ class TestGameActions(unittest.TestCase):
 
     def test_take_card_from_grid(self):
         card = game.table.card_grid.cards[1][1]
-        action = TakeCard(card)
+        action = MoveComponentToHoldingArea(card)
         action.activate()
 
         # Card now in the holding area, no longer on the table
@@ -37,7 +38,7 @@ class TestGameActions(unittest.TestCase):
         game.current_player.reserved.empty()
         game.current_player.reserved.add(card)
         game.holding_area.card = None
-        action = TakeCard(card)
+        action = MoveComponentToHoldingArea(card)
         action.activate()
 
         # Card now in holding area, no longer reserved
@@ -46,7 +47,8 @@ class TestGameActions(unittest.TestCase):
 
     def test_return_card(self):
         card = game.table.card_grid.cards[1][1]
-        action = TakeCard(card)
+        card.take_card()
+        action = MoveComponentToHoldingArea(card)
         action.activate()
 
         action = ReturnCard(card)
@@ -58,8 +60,9 @@ class TestGameActions(unittest.TestCase):
 
     def test_take_chip(self):
         chip = game.table.chips.chips[0]
-        action = TakeChip(chip)
-        action.activate()
+        # action = TakeChip(chip)
+        # action.activate()
+        chip.move_to_holding_area()
 
         # Chip in holding area, not in the supply
         self.assertTrue(game.holding_area.chips.contains(chip))
@@ -67,7 +70,7 @@ class TestGameActions(unittest.TestCase):
 
     def test_return_chip(self):
         chip = game.table.chips.chips[0]
-        action = TakeChip(chip)
+        action = MoveComponentToHoldingArea(chip)
         action.activate()
 
         action = ReturnChip(chip)

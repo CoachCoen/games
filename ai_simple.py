@@ -22,8 +22,8 @@ Flow
 from random import choice
 # import random
 
-from game_objects import Chip, Card
-from game_actions import TakeChip, TakeCard
+# from game_objects import Chip, Card
+# from game_actions import MoveComponentToHoldingArea
 from game_state import game
 
 
@@ -43,26 +43,29 @@ class RandomAI(AbstractAI):
 
         return None
 
-    @staticmethod
-    def _action_for_item(item):
-        for object_type, action in [
-            (Chip, TakeChip),
-            (Card, TakeCard)
-        ]:
-            if isinstance(item, object_type):
-                return action(item)
-        return None
+    # @staticmethod
+    # def _action_for_item(item):
+    #     for object_type, action in [
+    #         (Chip, TakeChip),
+    #         (Card, TakeCard)
+    #     ]:
+    #         if isinstance(item, object_type):
+    #             return action(item)
+    #     return None
 
     def take_turn(self):
         my_move = self._choose_move()
         if not my_move:
             return
 
-        actions = [self._action_for_item(item) for item in my_move
-                   if self._action_for_item(item)]
+        for item in my_move:
+            item.move_to_holding_area()
 
-        for action in actions:
-            action.activate()
+        # actions = [self._action_for_item(item) for item in my_move
+        #            if self._action_for_item(item)]
+        #
+        # for action in actions:
+        #     action.activate()
 
 
 class SimpleAI(AbstractAI):

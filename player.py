@@ -34,11 +34,14 @@ class Player(object):
         dict(trigger='start', source=WAITING, dest=STARTED, after=['show_state'],
              conditions='human_player'),
 
-        dict(trigger='start', source=WAITING, dest=VALID, after=['ai_makes_move', 'show_state'],
+        # For AI players, select the move and take the (first) component
+        dict(trigger='start', source=WAITING, dest=VALID,
+             after=['ai_makes_move', 'show_state'],
              conditions='ai_player'),
 
         # Take a component, if complete turn taken go to VALID, otherwise
         # go to/stay in IN PROGRESS
+
         dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
              dest=IN_PROGRESS, unless='complete_turn_taken', after='show_state'),
         dict(trigger='take_component', source=[STARTED, IN_PROGRESS],
@@ -94,9 +97,7 @@ class Player(object):
         )
 
     def ai_makes_move(self):
-        game.AI_move = True
         self.AI.take_turn()
-        game.AI_move = False
 
     def on_enter_turn_started(self):
         game.refresh_display()

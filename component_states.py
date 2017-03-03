@@ -11,3 +11,4 @@ class ComponentState(Enum):
     card_grid = 3
     card_decks = 4
     reserved = 5
+    table = 6

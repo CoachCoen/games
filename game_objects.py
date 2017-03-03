@@ -17,7 +17,7 @@ from drawing_surface import draw_rectangle, draw_polygon, draw_text, \
     draw_circle, draw_card
 from drawing_surface import ColourPalette, circle_location_to_rectangle
 
-from game_actions import TakeChip, ReturnChip, TakeCard, ReturnCard, \
+from game_actions import ReturnComponent, MoveComponentToHoldingArea, \
     Cancel, Confirm
 
 from buttons import buttons
@@ -80,7 +80,8 @@ class AbstractGameComponentCollection(object):
     """
     Simple grouping of game component collection classes
     """
-    pass
+    def __init__(self):
+        self.previous_position = None
 
 
 class Card(AbstractGameComponent):
@@ -120,6 +121,14 @@ class Card(AbstractGameComponent):
         if game.current_player.reserved.contains(self):
             return ComponentState.reserved
 
+    def move_to_holding_area(self):
+        self.previous_position = self.position
+        if self.position == ComponentState.card_grid:
+            game.table.card_grid.take_card(self)
+        elif self.position == ComponentState.reserved:
+            game.current_player.reserved.take_card(self)
+        game.holding_area.card = self
+
     def buttonify(self):
         """
         Turn the card into a 'button' so the user can click on it
@@ -127,9 +136,9 @@ class Card(AbstractGameComponent):
         if self in game.valid_actions:
             # If in holding area, return the card
             # otherwise, take the card
-            action = ReturnCard(self) \
+            action = ReturnComponent(self) \
                 if self.position == ComponentState.holding_area \
-                else TakeCard(self)
+                else MoveComponentToHoldingArea(self)
 
             # Create button, add to list, and draw a line around
             # the card, to show it can be taken
@@ -157,6 +166,12 @@ class Card(AbstractGameComponent):
                 str(self.points),
                 player_order=self.player_order
             )
+
+    def return_to_previous_position(self):
+        if self.previous_position == ComponentState.card_grid:
+            game.table.card_grid.return_card(self)
+            game.holding_area.card = None
+        self.previous_position = None
 
 
 class CardDeck(AbstractGameComponentCollection):
@@ -331,7 +346,7 @@ class Chip(AbstractGameComponent):
         for (location, state) in [
             (game.holding_area.chips, ComponentState.holding_area),
             (game.current_player.chips, ComponentState.player),
-            (game.table.chips, ComponentState.card_grid)
+            (game.table.chips, ComponentState.table)
         ]:
             if location.contains(self):
                 return state
@@ -343,9 +358,9 @@ class Chip(AbstractGameComponent):
         if self in game.valid_actions:
             # If this is in the holding area, return it on click
             # otherwise move it to the holding area
-            action = ReturnChip(self) \
+            action = ReturnComponent(self) \
                 if self.position == ComponentState.holding_area \
-                else TakeChip(self)
+                else MoveComponentToHoldingArea(self)
 
             # Create button and draw it (through embody() )
             buttons.add(
@@ -355,12 +370,27 @@ class Chip(AbstractGameComponent):
                 action
             ).embody()
 
-    def return_to_supply(self):
-        """
-        Return this chip to the central supply
-        It doesn't remove it from the previous position
-        """
-        game.table.chips.add_one(self)
+    def return_to_previous_position(self):
+        if self.previous_position == ComponentState.table:
+            game.holding_area.chips.take_chip(self)
+            game.table.chips.add_one(self)
+        self.previous_position = None
+
+    def move_to_holding_area(self):
+        self.remember_position()
+        # self.previous_position = self.position
+        game.table.chips.take_chip(self)
+        game.holding_area.add_chip(self)
+
+    def remember_position(self):
+        self.previous_position = self.position
+
+    def move_to(self, target):
+        self.remember_position()
+        # Remove from current position
+
+        if self.position == ComponentState.table:
+        # Move to target
 
     def _draw(self):
         """
@@ -380,14 +410,16 @@ class ChipCollection(AbstractGameComponentCollection):
         self.location = None
 
     def return_chips(self):
-        for chip in self.chips:
-            chip.return_to_supply()
-        self.chips = []
+        for chip in self.chips[:]:
+            # chip.return_to_supply()
+            chip.return_to_previous_position()
+        # self.chips = []
 
     def transfer_chips(self, target):
-        for chip in self.chips:
-            target.add_one(chip)
-        self.chips = []
+        for chip in self.chips[:]:
+            chip.move_to(target)
+        #     target.add_one(chip)
+        # self.chips = []
 
     def contains(self, chip):
         return chip in self.chips
@@ -425,9 +457,9 @@ class ChipCollection(AbstractGameComponentCollection):
                 and chip_type is not ChipType.yellow_gold]
 
     def pay_chip_of_type(self, chip_type):
-        chip = self.take_one(chip_type)
+        chip = self.first_chip_of_type(chip_type)
         if chip:
-            chip.return_to_supply()
+            chip.return_to_previous_position()
             return True
         return False
 

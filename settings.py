@@ -14,7 +14,7 @@ class Config(object):
 
     points_location = Vector(40, 10)
 
-    cost_location = Vector(20, 15)
+    cost_location = Vector(20, 18)
 
     card_decks_location = Vector(50, 120)
 
@@ -28,7 +28,7 @@ class Config(object):
     chip_stack_size = 25
     chip_stack_spacing = 5
 
-    chip_cost_scaling = 0.5
+    chip_cost_scaling = 0.47
 
     tile_size = Vector(100, 100)
     tile_spacing = 10
@@ -37,7 +37,7 @@ class Config(object):
 
     chip_font_size = 36
 
-    reward_chip_location = Vector(80, 20)
+    reward_chip_location = Vector(75, 25)
     reward_chip_scaling = 0.7
 
     player_area_size = Vector(300, 225)

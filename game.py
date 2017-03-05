@@ -51,10 +51,10 @@ class App:
         """
         pygame.init()
         self._display_surf = pygame.display.set_mode(
-            list(config.tabletop_size),
+            list(config.tabletop_size * config.scaling_factor),
             pygame.HWSURFACE | pygame.DOUBLEBUF
         ) # | pygame.FULLSCREEN
-        config.scaling_factor = pygame.display.Info().current_w / 1366.0
+        # config.scaling_factor = pygame.display.Info().current_w / 1366.0
         easel.init_easel(self._display_surf)
 
         init_game(

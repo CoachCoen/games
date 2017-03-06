@@ -5,7 +5,8 @@ Main module - game initialisation and flow
 import pygame
 
 from drawing_surface import easel
-from game_objects import ComponentCollection
+from game_object_database import ComponentDatabase
+from game_object_factories import ComponentCollectionFactory
 from player import Player
 from settings import config
 from buttons import buttons
@@ -30,8 +31,9 @@ def init_game(player_details):
         )
         for (i, (name, AI)) in enumerate(player_details)]
 
-    components = ComponentCollection()
-    components.init_components(len(players))
+    components = ComponentDatabase()
+    components.init_components(len(players), component_collection_factory=ComponentCollectionFactory()
+)
 
     game.init_game(
         players=players,
@@ -59,16 +61,20 @@ class App:
 
         init_game(
             player_details=[
-                ('Caroline', RandomAI()),
-                ('Nigel', RandomAI()),
-                ('Issie', RandomAI()),
+                ('Caroline', None),
+                ('Nigel', None),
+                ('Issie', None),
+                ('Coen', None)
+                # ('Caroline', RandomAI()),
+                # ('Nigel', RandomAI()),
+                # ('Issie', RandomAI()),
                 # ('Coen', None)
-            ]
+            ],
         )
 
         # player[0] is the start player
-        # game.current_player = game.players[0]
-        # game.current_player.start()
+        game.current_player = game.players[0]
+        game.current_player.start()
 
         game.embody()
         # game.refresh_display()

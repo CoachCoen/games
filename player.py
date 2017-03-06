@@ -1,81 +1,70 @@
 from transitions import Machine
 
-# from game_objects import ComponentCollectionFactory, ChipCollection
-# from game_objects import Components
-from drawing_surface import draw_rectangle, draw_text, draw_squares_row, \
-    draw_circles_row
+from drawing_surface import draw_rectangle
 from drawing_surface import ColourPalette
 from settings import config
-from game_objects import ChipType
+from chip_types import ChipType
 from game_state import game
-
-# State machine states for Player
-PLAYER_WAITING = 'waiting_for_turn'
-TURN_STARTED = 'turn_started'
-TURN_IN_PROGRESS = 'turn_in_progress'
-TURN_VALID = 'valid_turn'
-TILES_OFFERED = 'tiles_on_offer'
-TILE_SELECTED = 'tile_selected'
-TURN_FINISHED = 'turn_finished'
+from states import PlayerStates
 
 
 class Player(object):
     states = [
-        PLAYER_WAITING,
-        TURN_STARTED,
-        TURN_IN_PROGRESS,
-        TURN_VALID,
-        TILES_OFFERED,
-        TILE_SELECTED,
-        TURN_FINISHED,
+        PlayerStates.player_waiting,
+        PlayerStates.turn_started,
+        PlayerStates.turn_in_progress,
+        PlayerStates.turn_valid,
+        PlayerStates.tiles_offered,
+        PlayerStates.tile_selected,
+        PlayerStates.turn_finished,
     ]
 
     transitions = [
         # Start a player's turn
-        dict(trigger='start', source=PLAYER_WAITING, dest=TURN_STARTED, after=['show_state'],
+        dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_started, after=['show_state'],
              conditions='human_player'),
 
         # For AI players, select the move and take the (first) component
-        dict(trigger='start', source=PLAYER_WAITING, dest=TURN_VALID,
+        dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_valid,
              after=['ai_makes_move', 'show_state'],
              conditions='ai_player'),
 
         # Take a component, if complete turn taken go to VALID, otherwise
         # go to/stay in IN PROGRESS
 
-        dict(trigger='take_component', source=[TURN_STARTED, TURN_IN_PROGRESS],
-             dest=TURN_IN_PROGRESS, unless='complete_turn_taken', after='show_state'),
-        dict(trigger='take_component', source=[TURN_STARTED, TURN_IN_PROGRESS],
-             dest=TURN_VALID, conditions='complete_turn_taken', after='show_state'),
+        dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
+             dest=PlayerStates.turn_in_progress, unless='complete_turn_taken', after='show_state'),
+        dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
+             dest=PlayerStates.turn_valid, conditions='complete_turn_taken', after='show_state'),
 
         # Return a component, if empty selection go to STARTED, otherwise
         # stay in IN PROGRESS
-        dict(trigger='return_component', source=[TURN_IN_PROGRESS, TURN_VALID], dest=TURN_STARTED,
+        dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_started,
              conditions='empty_selection', after='show_state'),
-        dict(trigger='return_component', source=[TURN_IN_PROGRESS, TURN_VALID], dest=TURN_IN_PROGRESS,
+        dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_in_progress,
              unless='empty_selection', after='show_state'),
 
         # Valid (set of components) selected - confirm/reject?
-        dict(trigger='confirm', source=TURN_VALID, dest=TILES_OFFERED,
+        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tiles_offered,
              conditions='earned_multiple_tiles', after='show_state'),
-        dict(trigger='confirm', source=TURN_VALID, dest=TILE_SELECTED,
+        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tile_selected,
              conditions='earned_single_tile', after='show_state'),
-        dict(trigger='confirm', source=TURN_VALID, dest=TURN_FINISHED,
+        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.turn_finished,
              unless=['earned_multiple_tiles', 'earned_single_tile'],
              before='_confirm_component_selection', after='show_state'),
 
-        dict(trigger='cancel', source=[TURN_IN_PROGRESS, TURN_VALID], dest=TURN_STARTED,
+        dict(trigger='cancel', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_started,
              after=['cancel_move_in_progress', 'show_state']),
 
         # Multiple nobles tiles offered, take one
-        dict(trigger='select_tile', source=[TILES_OFFERED, TILE_SELECTED],
-             dest=TILE_SELECTED, after='show_state'),
+        dict(trigger='select_tile', source=[PlayerStates.tiles_offered, PlayerStates.tile_selected],
+             dest=PlayerStates.tile_selected, after='show_state'),
 
         # Confirm selection, end of turn
-        dict(trigger='take_tile', source=TILE_SELECTED, dest=TURN_FINISHED, after='show_state'),
+        dict(trigger='take_tile', source=PlayerStates.tile_selected, dest=PlayerStates.turn_finished, after='show_state'),
 
         # Back to waiting
-        dict(trigger='wait', source=TURN_FINISHED, dest=PLAYER_WAITING, after='show_state'),
+        dict(trigger='wait', source=PlayerStates.turn_finished, dest=PlayerStates.player_waiting, after='show_state'),
     ]
 
     def __init__(self, name, AI, player_order):
@@ -85,16 +74,11 @@ class Player(object):
         if AI:
             self.AI.player = self
 
-        # component_collection_factory = ComponentCollectionFactory()
-        # self.cards = component_collection_factory('card', '')
-        # self.chips = ChipCollection([])
-        # self.tiles = component_collection_factory('tile', '')
-        # self.reserved = component_collection_factory('card', '')
         self.machine = Machine(
             model=self,
             states=Player.states,
             transitions=Player.transitions,
-            initial=PLAYER_WAITING
+            initial=PlayerStates.player_waiting
         )
 
     def ai_makes_move(self):
@@ -153,7 +137,7 @@ class Player(object):
 
     @property
     def is_current_player(self):
-        return self.state != PLAYER_WAITING
+        return self.state != PlayerStates.player_waiting
 
     def can_afford(self, chip_cost):
         chips_shortage = 0
@@ -212,20 +196,20 @@ class Player(object):
     def embody(self):
         self._draw()
 
-        chip_counts = self.chips.counts_for_type
-        card_counts = self.cards.counts_for_type
-        draw_circles_row(
-            config.player_chip_stack_location,
-            chip_counts,
-            player_order=self.player_order
-        )
-        draw_squares_row(
-            config.player_card_deck_location,
-            card_counts,
-            player_order=self.player_order
-        )
-        self.reserved.embody(config.player_reserved_location,
-                             player_order=self.player_order)
+        # chip_counts = self.chips.counts_for_type
+        # card_counts = self.cards.counts_for_type
+        # draw_circles_row(
+        #     config.player_chip_stack_location,
+        #     chip_counts,
+        #     player_order=self.player_order
+        # )
+        # draw_squares_row(
+        #     config.player_card_deck_location,
+        #     card_counts,
+        #     player_order=self.player_order
+        # )
+        # self.reserved.embody(config.player_reserved_location,
+        #                      player_order=self.player_order)
 
     # TODO: Refactor this - messy?
     def _draw(self):
@@ -233,21 +217,21 @@ class Player(object):
             (0, 0, config.player_area_size.x, config.player_area_size.y),
             player_order=self.player_order,
             colour=ColourPalette.active_player_area
-            if self.state != PLAYER_WAITING
+            if self.state != PlayerStates.player_waiting
             else ColourPalette.player_area
         )
-        draw_text(
-            (config.player_name_location.x, config.player_name_location.y),
-            self.name,
-            player_order=self.player_order
-        )
-        if self.points:
-            draw_text(
-                (config.player_points_location.x,
-                 config.player_points_location.y),
-                str(self.points),
-                player_order=self.player_order
-            )
+        # draw_text(
+        #     (config.player_name_location.x, config.player_name_location.y),
+        #     self.name,
+        #     player_order=self.player_order
+        # )
+        # if self.points:
+        #     draw_text(
+        #         (config.player_points_location.x,
+        #          config.player_points_location.y),
+        #         str(self.points),
+        #         player_order=self.player_order
+        #     )
 
     def _confirm_component_selection(self):
         held_card = game.holding_area.card

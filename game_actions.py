@@ -5,6 +5,18 @@ class AbstractAction(object):
     pass
 
 
+class Move(AbstractAction):
+    def __init__(self, transition):
+        # self.component = component
+        # self.new_state = new_state
+        self.transition = transition
+        print("Move created")
+
+    def activate(self):
+        self.transition()
+        return True
+
+
 class MoveComponentToHoldingArea(AbstractAction):
     def __init__(self, component):
         self.component = component

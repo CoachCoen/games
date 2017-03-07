@@ -5,7 +5,7 @@
 """
 from transitions import Machine
 
-from embody import EmbodyTileMixin
+from embody import EmbodyTileMixin, EmbodyChipMixin
 from states import PlayerStates, ComponentStates
 
 from embody import EmbodyCardMixin
@@ -27,7 +27,8 @@ class AbstractGameComponent(object):
         dict(
             trigger='to_holding_area',
             source=[ComponentStates.in_supply, ComponentStates.in_reserved_area],
-            dest=ComponentStates.in_holding_area
+            dest=ComponentStates.in_holding_area,
+            before='stash_state',
         ),
 
         # From holding area to player's hand
@@ -35,6 +36,7 @@ class AbstractGameComponent(object):
             trigger='to_player_area',
             source=[ComponentStates.in_holding_area],
             dest=ComponentStates.in_player_area,
+            before='stash_state',
         ),
 
         # From holding area to player's reserved area
@@ -42,18 +44,20 @@ class AbstractGameComponent(object):
             trigger='to_reserved_area',
             source=[ComponentStates.in_holding_area],
             dest=ComponentStates.in_reserved_area,
+            before='stash_state',
         ),
 
         # From player's hand back to the supply (e.g. when paying for a card)
         dict(
             trigger='to_supply',
-            source=[ComponentStates.in_player_area],
-            dest=ComponentStates.in_supply
+            source=[ComponentStates.in_player_area, ComponentStates.in_holding_area],
+            dest=ComponentStates.in_supply,
+            before='stash_state',
         )
     ]
 
     def __init__(self):
-        self.previous_position = None
+        self.previous_state = None
         self.player = None
         self.name = None
 
@@ -63,6 +67,12 @@ class AbstractGameComponent(object):
             transitions=AbstractGameComponent.transitions,
             initial=ComponentStates.in_supply
         )
+
+    def stash_state(self):
+        self.previous_state = self.state
+
+    def move_back(self):
+        self.state = self.previous_state
 
 
 class Card(AbstractGameComponent, EmbodyCardMixin):
@@ -83,7 +93,7 @@ class Card(AbstractGameComponent, EmbodyCardMixin):
         self.face_up = False
 
 
-class Chip(AbstractGameComponent):
+class Chip(AbstractGameComponent, EmbodyChipMixin):
     """
     Chip class
     """

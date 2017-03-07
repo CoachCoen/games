@@ -5,15 +5,16 @@ class AbstractAction(object):
     pass
 
 
-class Move(AbstractAction):
-    def __init__(self, transition):
+class ToDo(AbstractAction):
+    def __init__(self, actions):
         # self.component = component
         # self.new_state = new_state
-        self.transition = transition
+        self.actions = actions
         print("Move created")
 
     def activate(self):
-        self.transition()
+        for action in self.actions:
+            action()
         return True
 
 

@@ -543,21 +543,6 @@ class HoldingArea(object):
                 text='Confirm'
             ).embody()
 
-    @staticmethod
-    def _draw():
-        draw_rectangle(
-            config.holding_area_location.to_rectangle(
-                config.holding_area_size
-            ),
-            ColourPalette.holding_area
-        )
-
-        draw_text(
-            config.holding_area_location +
-            config.holding_area_name_location,
-            text=game.current_player.name
-        )
-
     @property
     def is_empty(self):
         return not self.card and self.chips.empty

@@ -6,9 +6,10 @@ from settings import config
 from chip_types import ChipType
 from game_state import game
 from states import PlayerStates
+from embody import EmbodyPlayerMixin
 
 
-class Player(object):
+class Player(EmbodyPlayerMixin):
     states = [
         PlayerStates.player_waiting,
         PlayerStates.turn_started,
@@ -91,11 +92,13 @@ class Player(object):
         game.next_player()
 
     def cancel_move_in_progress(self):
-        game.holding_area.chips.return_chips()
-
-        if game.holding_area.card:
-            game.table.card_grid.return_card(game.holding_area.card)
-            game.holding_area.card = None
+        for component in game.components.holding_area_components:
+            component.move_back()
+        # game.holding_area.chips.return_chips()
+        #
+        # if game.holding_area.card:
+        #     game.table.card_grid.return_card(game.holding_area.card)
+        #     game.holding_area.card = None
 
     def show_state(self):
         game.show_state()
@@ -173,7 +176,8 @@ class Player(object):
         Has this player no items yet?
         :return:
         """
-        return game.holding_area.is_empty
+        return game.components.holding_area_components.is_empty
+        # return game.holding_area.is_empty
 
     def earned_multiple_tiles(self):
         """
@@ -193,61 +197,28 @@ class Player(object):
     def points(self):
         return self.cards.points + self.tiles.points
 
-    def embody(self):
-        self._draw()
-
-        # chip_counts = self.chips.counts_for_type
-        # card_counts = self.cards.counts_for_type
-        # draw_circles_row(
-        #     config.player_chip_stack_location,
-        #     chip_counts,
-        #     player_order=self.player_order
-        # )
-        # draw_squares_row(
-        #     config.player_card_deck_location,
-        #     card_counts,
-        #     player_order=self.player_order
-        # )
-        # self.reserved.embody(config.player_reserved_location,
-        #                      player_order=self.player_order)
-
-    # TODO: Refactor this - messy?
-    def _draw(self):
-        draw_rectangle(
-            (0, 0, config.player_area_size.x, config.player_area_size.y),
-            player_order=self.player_order,
-            colour=ColourPalette.active_player_area
-            if self.state != PlayerStates.player_waiting
-            else ColourPalette.player_area
-        )
-        # draw_text(
-        #     (config.player_name_location.x, config.player_name_location.y),
-        #     self.name,
-        #     player_order=self.player_order
-        # )
-        # if self.points:
-        #     draw_text(
-        #         (config.player_points_location.x,
-        #          config.player_points_location.y),
-        #         str(self.points),
-        #         player_order=self.player_order
-        #     )
-
     def _confirm_component_selection(self):
-        held_card = game.holding_area.card
+        for c in game.components.holding_area_components:
+            c.player = game.current_player
+            c.to_player_area()
 
-        if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
-            # Yellow chip taken, so reserved card
-            self.reserve_card(held_card)
-            game.table.card_grid.fill_empty_spaces()
-
-        elif held_card:
-            # Take card
-            self.pay_cost(held_card.chip_cost)
-
-            # Draw a new card and assign it to the original card's slot
-            self.add_card(held_card)
-            game.table.card_grid.fill_empty_spaces()
-
-        game.holding_area.card = None
-        game.holding_area.chips.transfer_chips(self.chips)
+        # for chip in game.components.holding_area_chips:
+        #     chip.player = game.current_player
+        #     chip.to_player_area()
+        # held_card = game.holding_area.card
+        #
+        # if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
+        #     # Yellow chip taken, so reserved card
+        #     self.reserve_card(held_card)
+        #     game.table.card_grid.fill_empty_spaces()
+        #
+        # elif held_card:
+        #     # Take card
+        #     self.pay_cost(held_card.chip_cost)
+        #
+        #     # Draw a new card and assign it to the original card's slot
+        #     self.add_card(held_card)
+        #     game.table.card_grid.fill_empty_spaces()
+        #
+        # game.holding_area.card = None
+        # game.holding_area.chips.transfer_chips(self.chips)

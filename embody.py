@@ -2,18 +2,19 @@ from settings import config
 from vector import Vector
 from chip_types import ChipType
 from component_states import ComponentState
+from states import PlayerStates
 
 from drawing_surface import draw_rectangle, draw_text, \
     draw_circle, draw_card
 from drawing_surface import ColourPalette, circle_location_to_rectangle
 
-from game_actions import ReturnComponent, MoveComponentToHoldingArea
+from game_actions import ReturnComponent, MoveComponentToHoldingArea, Cancel, Confirm
 
 from states import ComponentStates
 
 from buttons import buttons
 from game_state import game
-from game_actions import Move
+from game_actions import ToDo
 
 VERTICAL = 0
 HORIZONTAL = 1
@@ -45,11 +46,15 @@ class EmbodyChipStackMixin(AbstractEmbodyMixin):
         ):
             chip_location = location + Vector(0, i * 2.5 * config.chip_size)
 
-            if chip_type in game.valid_actions:
-                chip = game.components.chip_from_supply(chip_type)
+            chip = game.components.chip_from_supply(chip_type)
+            # if chip in game.valid_actions or chip_type in game.valid_actions:
+
+            # TODO: Tidy up passing in current player here?
+            if game.components.is_valid_action(game.current_player, chip):
+            # if chip in game.valid_actions._in(chip):
                 buttons.add(
                     circle_location_to_rectangle(chip_location, config.chip_size),
-                    Move(chip.to_holding_area)
+                    ToDo([chip.to_holding_area, game.current_player.take_component])
                 ).embody()
 
             draw_circle(chip_location, config.chip_size, chip_type)
@@ -129,24 +134,50 @@ class EmbodyTileMixin(AbstractEmbodyMixin):
 
 
 class EmbodyChipMixin(AbstractEmbodyMixin):
+    def __init__(self):
+        self.column = None
+
+    @property
+    def location(self):
+        # Individual chips are only show in the holding area - if not, raise an error
+        assert self.state == ComponentStates.in_holding_area
+
+        return config.holding_area_location + \
+               config.holding_area_chips_location + \
+               Vector(self.column * config.chip_size * 2.5, 0)
+
+    def embody(self, column):
+        self.column = column
+        self.buttonify()
+        self._draw()
+
     def buttonify(self):
         """
         If this chip can be moved, turn it into a button
         """
-        if self in game.valid_actions:
-            # If this is in the holding area, return it on click
-            # otherwise move it to the holding area
-            action = ReturnComponent(self) \
-                if self.position == ComponentState.holding_area \
-                else MoveComponentToHoldingArea(self)
+        # chip = game.components.chip_from_supply(chip_type)
+        # if self in game.valid_actions:
+        # Only embodied (as a single chip) if it is in the holding area
+        # so always make it a button
+        buttons.add(
+            circle_location_to_rectangle(self.location, config.chip_size),
+            ToDo([self.to_supply, game.current_player.return_component])
+        ).embody()
 
-            # Create button and draw it (through embody() )
-            buttons.add(
-                circle_location_to_rectangle(
-                    self.location, config.chip_size * self.scaling_factor
-                ),
-                action
-            ).embody()
+        # if self in game.valid_actions:
+        #     # If this is in the holding area, return it on click
+        #     # otherwise move it to the holding area
+        #     action = ReturnComponent(self) \
+        #         if self.position == ComponentState.holding_area \
+        #         else MoveComponentToHoldingArea(self)
+        #
+        #     # Create button and draw it (through embody() )
+        #     buttons.add(
+        #         circle_location_to_rectangle(
+        #             self.location, config.chip_size * self.scaling_factor
+        #         ),
+        #         action
+        #     ).embody()
 
     def _draw(self):
         """
@@ -154,9 +185,8 @@ class EmbodyChipMixin(AbstractEmbodyMixin):
         """
         draw_circle(
             self.location,
-            int(config.chip_size * self.scaling_factor),
-            self.chip_type,
-            player_order=self.player_order
+            int(config.chip_size),
+            self.chip_type
         )
 
 
@@ -172,34 +202,68 @@ class EmbodyCardMixin(AbstractEmbodyMixin):
 
     @property
     def location(self):
-        column = self.column + 1 \
-            if self.face_up and self.state == ComponentStates.in_supply \
-            else 0
-        return \
-            config.card_decks_location + \
-            config.central_area_location +\
-            Vector(
-                   column * (config.card_size.x + config.card_spacing),
-                   self.row * (config.card_size.y + config.card_spacing)
-            )
+        if self.face_up and self.state == ComponentStates.in_supply:
+            return \
+                config.card_decks_location + \
+                config.central_area_location + \
+                Vector(
+                    (self.column + 1)* (config.card_size.x + config.card_spacing),
+                    self.row * (config.card_size.y + config.card_spacing)
+                )
+
+        elif self.state == ComponentStates.in_holding_area:
+            return config.holding_area_location + config.holding_area_card_location
+
+        # column = self.column + 1 \
+        #     if self.face_up and self.state == ComponentStates.in_supply \
+        #     else 0
+        # return \
+        #     config.card_decks_location + \
+        #     config.central_area_location +\
+        #     Vector(
+        #            column * (config.card_size.x + config.card_spacing),
+        #            self.row * (config.card_size.y + config.card_spacing)
+        #     )
 
     def buttonify(self):
         """
         Turn the card into a 'button' so the user can click on it
         """
-        if self in game.valid_actions:
-            # If in holding area, return the card
-            # otherwise, take the card
-            action = ReturnComponent(self) \
-                if self.position == ComponentState.holding_area \
-                else MoveComponentToHoldingArea(self)
-
-            # Create button, add to list, and draw a line around
-            # the card, to show it can be taken
+        # If currently in supply - move it to the holding area
+        if self.state == ComponentStates.in_supply and self in game.valid_actions:
             buttons.add(
                 self.location.to_rectangle(config.card_size),
-                action
+                ToDo([self.to_holding_area, game.current_player.take_component])
             ).embody()
+        elif self.state == ComponentStates.in_holding_area:
+            buttons.add(
+                self.location.to_rectangle(config.card_size),
+                ToDo([self.move_back, game.current_player.return_component])
+            ).embody()
+
+        # If currently in holding area - return to the previous location
+
+        # If currently reserved - move it to the holding area
+
+
+
+
+            # ToDo([self.to_supply, game.current_player.return_component])
+            #
+            #
+            #
+            # # If in holding area, return the card
+            # # otherwise, take the card
+            # action = ReturnComponent(self) \
+            #     if self.position == ComponentState.holding_area \
+            #     else MoveComponentToHoldingArea(self)
+            #
+            # # Create button, add to list, and draw a line around
+            # # the card, to show it can be taken
+            # buttons.add(
+            #     self.location.to_rectangle(config.card_size),
+            #     action
+            # ).embody()
 
     def draw(self):
         """
@@ -242,6 +306,88 @@ class EmbodyCardDeckCountMixin(AbstractEmbodyMixin):
                     str(self.card_deck_count[row])
                 )
 
+
+def _embody_holding_area():
+    _draw_holding_area()
+
+    buttons.add(
+        (
+            config.holding_area_location + config.cancel_button_location
+        ).to_rectangle(config.button_size),
+        Cancel(),
+        text='Cancel'
+    ).embody()
+
+    # if game.is_turn_complete:
+    # TODO: Import & use VALID
+    if game.components.turn_complete(game.current_player):
+        buttons.add(
+            (
+                config.holding_area_location + config.confirm_button_location
+            ).to_rectangle(config.button_size),
+            Confirm(),
+            text='Confirm'
+        ).embody()
+
+
+def _draw_holding_area():
+    draw_rectangle(
+        config.holding_area_location.to_rectangle(
+            config.holding_area_size
+        ),
+        ColourPalette.holding_area
+    )
+
+    draw_text(
+        config.holding_area_location +
+        config.holding_area_name_location,
+        text=game.current_player.name
+    )
+
+
+class EmbodyPlayerMixin(AbstractEmbodyMixin):
+    def embody(self):
+        self._draw()
+        game.components.chip_count_for_player(self).embody(self)
+        # chip_counts = self.chips.counts_for_type
+        # card_counts = self.cards.counts_for_type
+        # draw_circles_row(
+        #     config.player_chip_stack_location,
+        #     chip_counts,
+        #     player_order=self.player_order
+        # )
+        # draw_squares_row(
+        #     config.player_card_deck_location,
+        #     card_counts,
+        #     player_order=self.player_order
+        # )
+        # self.reserved.embody(config.player_reserved_location,
+        #                      player_order=self.player_order)
+
+    # TODO: Refactor this - messy?
+    def _draw(self):
+        draw_rectangle(
+            (0, 0, config.player_area_size.x, config.player_area_size.y),
+            player_order=self.player_order,
+            colour=ColourPalette.active_player_area
+            if self.state != PlayerStates.player_waiting
+            else ColourPalette.player_area
+        )
+        draw_text(
+            (config.player_name_location.x, config.player_name_location.y),
+            self.name,
+            player_order=self.player_order
+        )
+        # if self.points:
+        #     draw_text(
+        #         (config.player_points_location.x,
+        #          config.player_points_location.y),
+        #         str(self.points),
+        #         player_order=self.player_order
+        #     )
+
+
+
 class EmbodyComponentDatabaseMixin(AbstractEmbodyMixin):
     def embody(self):
         self.table_chips.embody()
@@ -250,12 +396,53 @@ class EmbodyComponentDatabaseMixin(AbstractEmbodyMixin):
             location=config.central_area_location + config.card_decks_location
         )
 
-        self.card_grid.embody()
-        # location=
-        #                       config.central_area_location +
-        #                       config.card_decks_location +
-        #                       Vector(config.card_size.x + config.card_spacing, 0)
-        #                       )
-        #
+        self.table_card_grid.embody()
+
         for tile in self.table_tiles.components:
             tile.embody()
+
+        holding_area_components = self.holding_area_components
+        if len(holding_area_components):
+            _embody_holding_area()
+        for i, chip in enumerate(self.holding_area_chips):
+            chip.embody(column=i)
+
+        # There can only be one card in the holding area - no need to specify a column
+        for card in self.holding_area_cards:
+            card.embody()
+
+        for player in game.players:
+            player.embody()
+
+
+class EmbodyPlayerChipStack(AbstractEmbodyMixin):
+    # TODO: Lots of overlap with other chip count/stack embody methods
+    def embody(self, player):
+        for i, chip_type in enumerate(
+                [c for c in ChipType if c in self.colour_count]
+        ):
+            if self.colour_count[chip_type]:
+                chip_location = config.player_chip_stack_location \
+                                + Vector(i * 2.5 * config.player_chip_stack_scaling * config.chip_size, 0)
+
+                # chip = game.components.chip_from_supply(chip_type)
+                # if chip in game.valid_actions:
+                #     buttons.add(
+                #         circle_location_to_rectangle(chip_location, config.chip_size),
+                #         ToDo([chip.to_holding_area, game.current_player.take_component])
+                #     ).embody()
+
+                draw_circle(
+                    chip_location,
+                    config.chip_size * config.player_chip_stack_scaling,
+                    chip_type,
+                    player_order=player.player_order,
+                )
+                draw_text(
+                    location=chip_location - Vector(4, 6),
+                    text=str(self.colour_count[chip_type]),
+                    text_colour=chip_type,
+                    reverse_colour=True,
+                    player_order=player.player_order,
+
+                )

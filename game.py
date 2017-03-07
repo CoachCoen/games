@@ -61,13 +61,13 @@ class App:
 
         init_game(
             player_details=[
-                ('Caroline', None),
-                ('Nigel', None),
-                ('Issie', None),
-                ('Coen', None)
-                # ('Caroline', RandomAI()),
-                # ('Nigel', RandomAI()),
-                # ('Issie', RandomAI()),
+                # ('Caroline', None),
+                # ('Nigel', None),
+                # ('Issie', None),
+                # ('Coen', None),
+                ('Caroline', RandomAI()),
+                ('Nigel', RandomAI()),
+                ('Issie', RandomAI()),
                 # ('Coen', None)
             ],
         )

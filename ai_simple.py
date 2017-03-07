@@ -25,7 +25,7 @@ from random import choice
 # from game_objects import Chip, Card
 # from game_actions import MoveComponentToHoldingArea
 from game_state import game
-
+from moves_and_rules import MoveType
 
 class AbstractAI(object):
     def __init__(self):
@@ -35,11 +35,27 @@ class AbstractAI(object):
 class RandomAI(AbstractAI):
     @staticmethod
     def _choose_move():
-        valid_action_sets = game.valid_action_sets
+        valid_moves = game.components.valid_moves(game.current_player)
+        valid_moves_idx = {move_type: [
+            move for move in valid_moves if move.move_type == move_type
+            ] for move_type in MoveType}
 
-        for action_type in ['card', '3 chips', '2 chips', 'reserve card', 'buy reserved']:
-            if len(valid_action_sets[action_type]):
-                return choice(valid_action_sets[action_type])
+        for move_type in [
+            MoveType.buy_card,
+            MoveType.take_different_chips,
+            MoveType.take_same_chips,
+            MoveType.reserve_card
+        ]:
+            if len(valid_moves_idx[move_type]):
+                return choice(valid_moves_idx[move_type])
+
+
+
+        # valid_action_sets = game.valid_action_sets
+        #
+        # for action_type in ['card', '3 chips', '2 chips', 'reserve card', 'buy reserved']:
+        #     if len(valid_action_sets[action_type]):
+        #         return choice(valid_action_sets[action_type])
 
         return None
 
@@ -58,8 +74,9 @@ class RandomAI(AbstractAI):
         if not my_move:
             return
 
-        for item in my_move:
-            item.move_to_holding_area()
+        for item in my_move.pieces:
+            # item.move_to_holding_area()
+            item.to_holding_area()
 
         # actions = [self._action_for_item(item) for item in my_move
         #            if self._action_for_item(item)]

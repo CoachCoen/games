@@ -104,45 +104,47 @@ class Game(object):
 
     @property
     def earned_tiles(self):
-        # TODO: Remove 'result'
-    # def _get_earned_tiles(self):
-        result = [tile for tile in game.table.tiles.tiles if game.current_player.can_afford(tile.chip_cost)]
-        print("Earned %s tiles" % len(result))
-        return result
+        return []
+    #     # TODO: Remove 'result'
+    # # def _get_earned_tiles(self):
+    #     result = [tile for tile in game.table.tiles.tiles if game.current_player.can_afford(tile.chip_cost)]
+    #     print("Earned %s tiles" % len(result))
+    #     return result
 
     @property
     def is_turn_complete(self):
-        holding_area = self.holding_area
-        # 2 of same chip selected
-        if len(holding_area.chips) == 2 \
-                and holding_area.chips.different_types == 1:
-            return True
-
-        # 3 different chips selected
-        if len(holding_area.chips) == 3 and holding_area.chips.different_types == 3:
-            return True
-
-        # 1 card selected
-        if holding_area.card:
-            return True
-
-        table_chips = game.table.chips
-
-        # One non-yellow chip taken, no other colours available,
-        # and two or less of this colour available
-        if holding_area.chips.any_non_yellow_chips \
-                and len(holding_area.chips) == 1:
-            held_chip = holding_area.chips.chips[0]
-            if not table_chips.has_other_colours([held_chip]) \
-                    and table_chips.count(held_chip.chip_type) <= 2:
-                return True
-
-        # Two chips taken, no other colours available
-        if len(holding_area.chips) == 2 and \
-                not table_chips.has_other_colours(holding_area.chips.chips):
-            return True
-
-        return False
+        return self.components.turn_complete(self.current_player)
+        # holding_area = self.holding_area
+        # # 2 of same chip selected
+        # if len(holding_area.chips) == 2 \
+        #         and holding_area.chips.different_types == 1:
+        #     return True
+        #
+        # # 3 different chips selected
+        # if len(holding_area.chips) == 3 and holding_area.chips.different_types == 3:
+        #     return True
+        #
+        # # 1 card selected
+        # if holding_area.card:
+        #     return True
+        #
+        # table_chips = game.table.chips
+        #
+        # # One non-yellow chip taken, no other colours available,
+        # # and two or less of this colour available
+        # if holding_area.chips.any_non_yellow_chips \
+        #         and len(holding_area.chips) == 1:
+        #     held_chip = holding_area.chips.chips[0]
+        #     if not table_chips.has_other_colours([held_chip]) \
+        #             and table_chips.count(held_chip.chip_type) <= 2:
+        #         return True
+        #
+        # # Two chips taken, no other colours available
+        # if len(holding_area.chips) == 2 and \
+        #         not table_chips.has_other_colours(holding_area.chips.chips):
+        #     return True
+        #
+        # return False
 
     # @property
     # def valid_actions(self):

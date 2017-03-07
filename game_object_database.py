@@ -3,7 +3,8 @@ from random import shuffle
 
 from data import raw_tile_data, raw_card_data
 from chip_types import ChipType
-from colour_count import ColourCount, ChipStacks, PlayerChipStack
+from colour_count import ColourCount, ChipStacks, PlayerChipStack, \
+    PlayerCardStack
 from game_objects import Chip, Card, Tile
 
 from embody import EmbodyCardGridMixin, EmbodyCardDeckCountMixin, \
@@ -171,7 +172,10 @@ class ComponentDatabase(EmbodyComponentDatabaseMixin):
         return [self.chip_from_supply(chip_type) for chip_type in self.table_chips]
 
     def chip_from_supply(self, chip_type):
-        return self.chips_from_supply(chip_type)[0]
+        try:
+            return self.chips_from_supply(chip_type)[0]
+        except IndexError:
+            return None
         # return self.filter(state=ComponentStates.in_supply, component_class=Chip, chip_type=chip_type).components[0]
 
     def chips_from_supply(self, chip_type):
@@ -183,6 +187,13 @@ class ComponentDatabase(EmbodyComponentDatabaseMixin):
             component_class=Chip,
             player=player
         ).count_by_colour(PlayerChipStack)
+
+    def card_reward_for_player(self, player):
+        return self.filter(
+            state=ComponentStates.in_player_area,
+            component_class=Card,
+            player=player
+        ).count_by_colour(PlayerCardStack)
 
     @property
     def table_card_stacks(self):
@@ -310,16 +321,22 @@ class ComponentDatabase(EmbodyComponentDatabaseMixin):
         card_rewards = self.filter(state=ComponentStates.in_holding_area, component_class=Card, player=player).\
             count_by_colour()
 
+        yellow_needed = 0
+        for chip_type in chip_cost:
+            chips_needed = chip_cost.colour_count[chip_type]
+            if chip_type in card_rewards:
+                chips_needed -= card_rewards.colour_count[chip_type]
 
-        # yellow_needed = 0
-        # for chip_type in chip_cost:
-        #     chips_needed = chip_cost[chip_type]
-        #     if chip_type in card_rewards:
-        #         chips_needed -= card_rewards[chip_type]
-        #
-        #     for _ in chips_needed:
-        #         chip =
+            chips = player_chips.filter(chip_type=chip_type)
+            for i in range(chips_needed):
+                if i < len(chips):
+                    chips.components[i].to_supply()
+                else:
+                    yellow_needed += 1
 
+        for _ in range(yellow_needed):
+            chip = player_chips.chip_from_supply(ChipType.yellow_gold)
+            chip.to_supply()
 
 
 # TODO: Move to a better place?

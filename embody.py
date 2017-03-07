@@ -349,6 +349,7 @@ class EmbodyPlayerMixin(AbstractEmbodyMixin):
     def embody(self):
         self._draw()
         game.components.chip_count_for_player(self).embody(self)
+        game.components.card_reward_for_player(self).embody(self)
         # chip_counts = self.chips.counts_for_type
         # card_counts = self.cards.counts_for_type
         # draw_circles_row(
@@ -425,13 +426,6 @@ class EmbodyPlayerChipStack(AbstractEmbodyMixin):
                 chip_location = config.player_chip_stack_location \
                                 + Vector(i * 2.5 * config.player_chip_stack_scaling * config.chip_size, 0)
 
-                # chip = game.components.chip_from_supply(chip_type)
-                # if chip in game.valid_actions:
-                #     buttons.add(
-                #         circle_location_to_rectangle(chip_location, config.chip_size),
-                #         ToDo([chip.to_holding_area, game.current_player.take_component])
-                #     ).embody()
-
                 draw_circle(
                     chip_location,
                     config.chip_size * config.player_chip_stack_scaling,
@@ -440,6 +434,31 @@ class EmbodyPlayerChipStack(AbstractEmbodyMixin):
                 )
                 draw_text(
                     location=chip_location - Vector(4, 6),
+                    text=str(self.colour_count[chip_type]),
+                    text_colour=chip_type,
+                    reverse_colour=True,
+                    player_order=player.player_order,
+
+                )
+
+
+class EmbodyPlayerCardStack(AbstractEmbodyMixin):
+    # TODO: Lots of overlap with other chip count/stack embody methods
+    def embody(self, player):
+        for i, chip_type in enumerate(
+                [c for c in ChipType if c in self.colour_count]
+        ):
+            if self.colour_count[chip_type]:
+                location = config.player_card_deck_location \
+                                + Vector(i * 2.5 * config.player_chip_stack_scaling * config.chip_size, 0)
+
+                draw_rectangle(
+                    location.to_rectangle(Vector(2 * config.chip_size * config.player_chip_stack_scaling, config.chip_size * config.player_chip_stack_scaling * 2)),
+                    chip_type,
+                    player_order=player.player_order,
+                )
+                draw_text(
+                    location=location - Vector(4, 6),
                     text=str(self.colour_count[chip_type]),
                     text_colour=chip_type,
                     reverse_colour=True,

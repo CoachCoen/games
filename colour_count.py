@@ -1,6 +1,8 @@
 from utils import chip_type_for_colour_name
-from embody import EmbodyChipStackMixin, EmbodyChipCostMixin, EmbodyPlayerChipStack
+from embody import EmbodyChipStackMixin, EmbodyChipCostMixin, \
+    EmbodyPlayerChipStack, EmbodyPlayerCardStack
 from chip_types import ChipType
+
 
 class ColourCount():
     def __init__(self, colour_count=None, raw_colour_count=None):
@@ -52,4 +54,8 @@ class ChipCost(ColourCount, EmbodyChipCostMixin):
 
 
 class PlayerChipStack(ColourCount, EmbodyPlayerChipStack):
+    pass
+
+
+class PlayerCardStack(ColourCount, EmbodyPlayerCardStack):
     pass

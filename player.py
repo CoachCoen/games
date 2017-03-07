@@ -7,6 +7,7 @@ from chip_types import ChipType
 from game_state import game
 from states import PlayerStates
 from embody import EmbodyPlayerMixin
+from game_objects import Card
 
 
 class Player(EmbodyPlayerMixin):
@@ -199,8 +200,11 @@ class Player(EmbodyPlayerMixin):
 
     def _confirm_component_selection(self):
         for c in game.components.holding_area_components:
-            c.player = game.current_player
+            if isinstance(c, Card):
+                game.components.pay_chip_cost(c.chip_cost, self)
             c.to_player_area()
+            c.player = game.current_player
+        game.components.draw_cards()
 
         # for chip in game.components.holding_area_chips:
         #     chip.player = game.current_player

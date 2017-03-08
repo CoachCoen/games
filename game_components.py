@@ -5,10 +5,8 @@
 """
 from transitions import Machine
 
-from embody import EmbodyTileMixin, EmbodyChipMixin
-from states import PlayerStates, ComponentStates
-
-from embody import EmbodyCardMixin
+from embody import EmbodyTileMixin, EmbodyChipMixin, EmbodyCardMixin
+from states import ComponentStates
 
 
 class AbstractGameComponent(object):
@@ -26,7 +24,8 @@ class AbstractGameComponent(object):
         # Move component to holding area
         dict(
             trigger='to_holding_area',
-            source=[ComponentStates.in_supply, ComponentStates.in_reserved_area],
+            source=[ComponentStates.in_supply,
+                    ComponentStates.in_reserved_area],
             dest=ComponentStates.in_holding_area,
             before='stash_state',
         ),
@@ -50,7 +49,8 @@ class AbstractGameComponent(object):
         # From player's hand back to the supply (e.g. when paying for a card)
         dict(
             trigger='to_supply',
-            source=[ComponentStates.in_player_area, ComponentStates.in_holding_area],
+            source=[ComponentStates.in_player_area,
+                    ComponentStates.in_holding_area],
             dest=ComponentStates.in_supply,
             before='stash_state',
         )

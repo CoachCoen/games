@@ -1,121 +1,70 @@
-"""
-Main module - game initialisation and flow
-"""
-
+from settings import config
 import pygame
 
-from drawing_surface import easel
-from game_object_database import ComponentDatabase
-from game_object_factories import ComponentCollectionFactory
-from player import Player
-from settings import config
-from buttons import buttons
-from ai_simple import RandomAI
-from game_state import game
-
-import logging
-from transitions import logger
-logger.setLevel(logging.INFO)
+from graphics import draw_table
 
 
-def init_game(player_details):
+class Game:
     """
-    Create players, table and holding area
-    :param player_details: list of (player name, player's AI)
+    Container for game elements - components, players - and mechanics
     """
-    players = [
-        Player(
-            name=name,
-            AI=AI,
-            player_order=i
-        )
-        for (i, (name, AI)) in enumerate(player_details)]
-
-    components = ComponentDatabase()
-    components.init_components(len(players), component_collection_factory=ComponentCollectionFactory()
-)
-
-    game.init_game(
-        players=players,
-        buttons=buttons,
-        components=components
-    )
-
-
-class App:
     def __init__(self):
-        self._running = True
-        self._display_surf = None
+        self.components = None
+        self.current_player = None
+        self.buttons = None
+        self.players = None
+        self.mechanics = None
 
-    def on_init(self):
-        """
-        Initialisation, called before the main game loop
-        """
-        pygame.init()
-        self._display_surf = pygame.display.set_mode(
-            list(config.tabletop_size * config.scaling_factor),
-            pygame.HWSURFACE | pygame.DOUBLEBUF
-        ) # | pygame.FULLSCREEN
-        # config.scaling_factor = pygame.display.Info().current_w / 1366.0
-        easel.init_easel(self._display_surf)
+    def init_game(self, players, buttons, components, mechanics):
+        self.players = players
+        self.components = components
+        self.buttons = buttons
+        self.mechanics = mechanics
 
-        init_game(
-            player_details=[
-                # ('Caroline', None),
-                # ('Nigel', None),
-                # ('Issie', None),
-                # ('Coen', None),
-                ('Caroline', RandomAI()),
-                ('Nigel', RandomAI()),
-                ('Issie', RandomAI()),
-                # ('Coen', None)
-            ],
+    def embody(self):
+        game.buttons.reset()
+        draw_table()
+
+        self.components.table_chips.embody()
+
+        self.components.table_card_stacks.embody(
+            location=config.central_area_location + config.card_decks_location
         )
 
-        # player[0] is the start player
-        game.current_player = game.players[0]
-        game.current_player.start()
+        self.components.table_card_grid.embody()
 
-        game.embody()
-        # game.refresh_display()
+        for tile in self.components.table_tiles.components:
+            tile.embody()
 
-        # Notify main game loop that the initialisation is done
-        self._running = True
+        self.components.holding_area.embody()
 
-    def on_event(self, event):
-        """
-        Process a pygame event
-        :param event: the event
-        """
-        if event.type == pygame.QUIT:
-            self._running = False
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
-            self._running = False
-        if event.type == pygame.MOUSEBUTTONUP:
-            game.buttons.process_mouse_click(pygame.mouse.get_pos())
+        # There can only be one card in the holding area -
+        # no need to specify a column
+        for card in self.components.holding_area_cards:
+            card.embody()
 
-    @staticmethod
-    def on_cleanup():
-        """
-        Called after main game loop,
-        any clean up actions
-        """
-        pygame.quit()
+        for player in self.players:
+            player.embody()
 
-    def on_execute(self):
-        """
-        Main code - initialise, main game loop, clean up
-        """
-        if self.on_init() is False:
-            self._running = False
-
-        while self._running:
-            for event in pygame.event.get():
-                self.on_event(event)
-
-        self.on_cleanup()
+        pygame.display.flip()
 
 
-if __name__ == "__main__":
-    theApp = App()
-    theApp.on_execute()
+    # def embody(self):
+    #     """
+    #     Embody the game
+    #     - Create all available buttons
+    #     - Draw the table, holding and player areas
+    #     """
+    #
+    #     # Remove previously created buttons
+    #     game.buttons.reset()
+    #
+    #     draw_table()
+    #
+    #     game.components.embody()
+    #     for player in game.players:
+    #         player.embody()
+    #     pygame.display.flip()
+
+
+game = Game()

@@ -1,13 +1,10 @@
 from transitions import Machine
 
-from drawing_surface import draw_rectangle
-from drawing_surface import ColourPalette
-from settings import config
 from chip_types import ChipType
-from game_state import game
+from game import game
 from states import PlayerStates
 from embody import EmbodyPlayerMixin
-from game_objects import Card
+from game_components import Card
 
 
 class Player(EmbodyPlayerMixin):
@@ -87,10 +84,10 @@ class Player(EmbodyPlayerMixin):
         self.AI.take_turn()
 
     def on_enter_turn_started(self):
-        game.refresh_display()
+        game.embody()
 
     def on_enter_turn_finished(self):
-        game.next_player()
+        game.mechanics.next_player()
 
     def cancel_move_in_progress(self):
         for component in game.components.holding_area_components:
@@ -102,7 +99,7 @@ class Player(EmbodyPlayerMixin):
         #     game.holding_area.card = None
 
     def show_state(self):
-        game.show_state()
+        game.mechanics.show_state()
         # pass
         # TODO: Remove game.show_state() method
 
@@ -170,7 +167,7 @@ class Player(EmbodyPlayerMixin):
         - 1 card
         :return:
         """
-        return game.is_turn_complete
+        return game.mechanics.is_turn_complete
 
     def empty_selection(self):
         """
@@ -185,14 +182,16 @@ class Player(EmbodyPlayerMixin):
         Are there multiple noble tiles available for this player?
         :return:
         """
-        return game.earned_multiple_tiles
+        return False
+        # return game.earned_multiple_tiles
 
     def earned_single_tile(self):
         """
         Is there a single noble tile available for this player?
         :return:
         """
-        return game.earned_single_tile
+        # return game.earned_single_tile
+        return False
 
     @property
     def points(self):
@@ -201,10 +200,10 @@ class Player(EmbodyPlayerMixin):
     def _confirm_component_selection(self):
         for c in game.components.holding_area_components:
             if isinstance(c, Card):
-                game.components.pay_chip_cost(c.chip_cost, self)
+                game.mechanics.pay_chip_cost(c.chip_cost, self)
             c.to_player_area()
             c.player = game.current_player
-        game.components.draw_cards()
+        game.mechanics.draw_cards()
 
         # for chip in game.components.holding_area_chips:
         #     chip.player = game.current_player

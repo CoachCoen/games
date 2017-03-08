@@ -4,7 +4,7 @@ from embody import EmbodyChipStackMixin, EmbodyChipCostMixin, \
 from chip_types import ChipType
 
 
-class ColourCount():
+class ColourCount:
     def __init__(self, colour_count=None, raw_colour_count=None):
         if colour_count is not None:
             self.colour_count = colour_count
@@ -19,7 +19,9 @@ class ColourCount():
         result = self
 
         if remove_blanks:
-            result = self.__class__({k: v for k, v in self.colour_count.items() if v != 0})
+            result = self.__class__(
+                {k: v for k, v in self.colour_count.items() if v != 0}
+            )
 
         return result
 
@@ -38,7 +40,8 @@ class ColourCount():
     def covers_cost(self, chip_cost):
         # Cover any missing chips/cards with yellow chips
         yellow_needed = sum(
-            max(chip_cost.colour_count[chip_type] - self.colour_count[chip_type], 0)
+            max(chip_cost.colour_count[chip_type]
+                - self.colour_count[chip_type], 0)
             for chip_type in chip_cost.colour_count
             if chip_type is not ChipType.yellow_gold
         )

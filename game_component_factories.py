@@ -1,13 +1,6 @@
-# from transitions import Machine
-
 from utils import chip_type_for_colour_name
-from colour_count import ColourCount, ChipCost
-from game_objects import Chip, Tile, Card
-
-# from embody import EmbodyTileMixin
-
-# from states import IN_SUPPLY, IN_HOLDING_AREA, IN_RESERVED_AREA, IN_PLAYER_AREA
-from states import ComponentStates
+from colour_count import ChipCost
+from game_components import Chip, Tile, Card
 
 
 class AbstractFactory(object):

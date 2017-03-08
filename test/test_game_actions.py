@@ -1,10 +1,10 @@
 import unittest
 from unittest import mock
 
-from game import game, init_game
+from app import game, init_game
 from game_actions import MoveComponentToHoldingArea, ReturnCard, ReturnChip
-from game_state import Game
-from game_objects import ComponentFactory
+from game_mechanics import Game
+from game_components import ComponentFactory
 from ai_simple import RandomAI
 
 

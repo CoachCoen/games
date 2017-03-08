@@ -191,6 +191,7 @@ def draw_table():
 
 
 class Easel(object):
+    # TODO: Move this into settings module
     colour_palette = {
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),
         ColourPalette.corners: pygame.Color(70, 180, 70, 255),

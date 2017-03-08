@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, PropertyMock
 
 import ai_simple
-from game_state import Game
+from game_mechanics import Game
 
 
 def mock_choice(my_list):

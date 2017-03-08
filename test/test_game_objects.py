@@ -1,6 +1,6 @@
 import unittest
 
-from game_objects import ComponentCollectionFactory
+from game_components import ComponentCollectionFactory
 from chip_types import ChipType
 
 

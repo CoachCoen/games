@@ -1,8 +1,8 @@
 import unittest
 
-from game_state import game
-from game import init_game
-from game_objects import ComponentCollectionFactory, ComponentFactory
+from game_mechanics import game
+from app import init_game
+from game_components import ComponentCollectionFactory, ComponentFactory
 
 # class TestInitialGameState(unittest.TestCase):
 #

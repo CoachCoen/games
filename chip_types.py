@@ -1,7 +1,5 @@
 from enum import Enum
 
-# TODO: Rename this module?
-
 
 class ChipType(Enum):
     """

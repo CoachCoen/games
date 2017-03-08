@@ -1,7 +1,7 @@
 import unittest
 
 from vector import Vector
-from drawing_surface import translate_to_player, scale_vertices, grow_rectangle
+from graphics import translate_to_player, scale_vertices, grow_rectangle
 from settings import config
 
 

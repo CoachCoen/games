@@ -1,4 +1,4 @@
-from game_state import game
+from game import game
 
 
 class AbstractAction(object):
@@ -6,11 +6,11 @@ class AbstractAction(object):
 
 
 class ToDo(AbstractAction):
+    """
+    A list of things to do (when a button gets pressed)
+    """
     def __init__(self, actions):
-        # self.component = component
-        # self.new_state = new_state
         self.actions = actions
-        print("Move created")
 
     def activate(self):
         for action in self.actions:
@@ -18,27 +18,11 @@ class ToDo(AbstractAction):
         return True
 
 
-class MoveComponentToHoldingArea(AbstractAction):
-    def __init__(self, component):
-        self.component = component
-
-    def activate(self):
-        self.component.move_to_holding_area()
-        game.current_player.take_component()
-        return True
-
-
-class ReturnComponent(AbstractAction):
-    def __init__(self, component):
-        self.component = component
-
-    def activate(self):
-        self.component.return_to_previous_position()
-        game.current_player.return_component()
-        return True
-
-
 class Confirm(AbstractAction):
+    """
+    Confirm the user's action
+    """
+    # TODO: Move this into the ToDo class?
     @staticmethod
     def activate():
         game.current_player.confirm()
@@ -46,6 +30,10 @@ class Confirm(AbstractAction):
 
 
 class Cancel(AbstractAction):
+    """
+    Cancel the user's action - return the pieces to their original location
+    """
+    # TODO: Move this into the ToDo class?
     @staticmethod
     def activate():
         game.current_player.cancel()

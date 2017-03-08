@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from buttons import ButtonCollection
 from game_actions import AbstractAction
-from game import game
+from app import game
 from settings import config
 
 

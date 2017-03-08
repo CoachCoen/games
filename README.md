@@ -23,6 +23,13 @@ after a large refactoring exercise, and more are to be done
 * An estimated 15% of functions, methods, etc, have doc strings, so need to 
 catch up and then keep up
 
+## The AI
+The current AI is extremely simple, yet still plays a decent game 
+(this may change when the final rules have been implemented)
+* If it can buy a card, it will
+* Otherwise it will take a random set of chips
+* Failing that, it will take a yellow chip and reserve a card
+
 ## Future plans
 * Complete the first game
     * All rules
@@ -35,4 +42,6 @@ some Javascript instead of pygame
     pygame and online version, and used for other games
 * Other game(s)
     * Possibly a card game such as Dominion, or the grid-based Acquire
-* Improve the AI
+* Improved AI
+    * With the option for different AIs to compete, to compare their performance
+    

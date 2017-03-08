@@ -1,10 +1,9 @@
 from vector import Vector
-from settings_local import local_config
-
 
 class Config(object):
-    tabletop_size = Vector(0, 0)
-    scaling_factor = 2
+    # TODO: Work this out dynamically
+    tabletop_size = Vector(1368, 768)
+    scaling_factor = 1
 
     card_size = Vector(100, 120)
     card_spacing = 10
@@ -67,4 +66,8 @@ class Config(object):
     confirm_button_location = Vector(100, 160)
 
 config = Config()
-config.__dict__.update(local_config)
+try:
+    from settings_local import local_config
+    config.__dict__.update(local_config)
+except ImportError:
+    pass

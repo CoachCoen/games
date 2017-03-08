@@ -1,7 +1,3 @@
-import pygame
-
-from graphics import draw_table
-
 from itertools import combinations
 from random import shuffle
 
@@ -60,11 +56,7 @@ class GameMechanics:
     @property
     def earned_tiles(self):
         return []
-    #     # TODO: In progress - to reinstate
-    # # def _get_earned_tiles(self):
-    #     result = [tile for tile in game.table.tiles.tiles if game.current_player.can_afford(tile.chip_cost)]
-    #     print("Earned %s tiles" % len(result))
-    #     return result
+
 
     @property
     def is_turn_complete(self):
@@ -98,7 +90,8 @@ class GameMechanics:
         game.components.components = components
         self.draw_cards()
 
-    def draw_card_for_row(self, row, column):
+    @staticmethod
+    def draw_card_for_row(row, column):
         card_deck = game.components.filter(
             state=ComponentStates.in_supply,
             component_class=Card,
@@ -116,7 +109,8 @@ class GameMechanics:
                 if card_grid.card_grid[row][j] is None:
                     self.draw_card_for_row(row, j)
 
-    def valid_moves(self, current_player):
+    @staticmethod
+    def valid_moves(current_player):
         """
         list of Move objects, each containing the pieces which the current
         player could take/buy/reserve
@@ -136,7 +130,8 @@ class GameMechanics:
             result.append(Move(pieces=top_table_chips,
                                move_type=MoveType.take_different_chips))
 
-        # 1 single chip, if chips of only 1 type available and less than 4 of that type
+        # 1 single chip,
+        # if chips of only 1 type available and less than 4 of that type
         elif len(top_table_chips) == 1 and len(
                 game.components.chips_from_supply(top_table_chips[0])) < 4:
             result.append(Move(pieces=top_table_chips,
@@ -168,7 +163,8 @@ class GameMechanics:
             return sum([m.pieces for m in valid_moves], [])
 
         # TODO Any more Pythonic way of doing the following?
-        # Some pieces taken, only allow moves which include the ones which have been taken
+        # Some pieces taken, only allow moves
+        # which include the ones which have been taken
         result = set()
         for valid_move in valid_moves:
             pieces_remaining = list(valid_move.pieces)
@@ -195,7 +191,8 @@ class GameMechanics:
         if not isinstance(component, Chip):
             return False
 
-        # When taking the second chip of the same colour, the piece in valid_pieces
+        # When taking the second chip of the same colour,
+        # the piece in valid_pieces
         # is actually the one which is now in the holding area
         # So just check whether it is the same type
         return any(c.chip_type == component.chip_type for c in
@@ -204,8 +201,8 @@ class GameMechanics:
     def turn_complete(self, current_player):
         return len(self.valid_pieces(current_player)) == 0
 
-    # TODO: Better place for this? Maybe not in the main 'database' - too specific
-    def pay_chip_cost(self, chip_cost, player):
+    @staticmethod
+    def pay_chip_cost(chip_cost, player):
         player_chips = game.components.filter(
             state=ComponentStates.in_player_area,
             component_class=Chip, player=player)
@@ -234,12 +231,8 @@ class GameMechanics:
             chip.to_supply()
 
 
-# TODO: Move to a better place?
 def pieces_match(a, b):
     if a == b:
         return True
     return isinstance(a, Chip) and isinstance(b, Chip) \
            and a.chip_type == b.chip_type
-
-# class ComponentDatabase(AbstractComponentDatabase,
-#                         EmbodyComponentDatabaseMixin):

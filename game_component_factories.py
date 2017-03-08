@@ -50,8 +50,6 @@ class ComponentFactory(AbstractFactory):
     @staticmethod
     def tile_factory(details):
         raw_cost, raw_points = details.split(':')
-        # component_collection_factory = ComponentCollectionFactory()
-        # chip_cost = component_collection_factory('chip', raw_cost.strip())
         return Tile(chip_cost=ChipCost(raw_colour_count=raw_cost.strip()),
                     points=int(raw_points))
 

@@ -15,9 +15,6 @@ from states import ComponentStates
 from game import game
 from game_actions import ToDo
 
-VERTICAL = 0
-HORIZONTAL = 1
-
 
 class AbstractEmbodyMixin:
     pass
@@ -36,25 +33,41 @@ class EmbodyChipStackMixin(AbstractEmbodyMixin):
             # TODO: Tidy up passing in current player here?
             if game.mechanics.is_valid_action(game.current_player, chip):
                 game.buttons.add(
-                    circle_location_to_rectangle(chip_location, config.chip_size),
-                    ToDo([chip.to_holding_area, game.current_player.take_component])
+                    circle_location_to_rectangle(chip_location,
+                                                 config.chip_size),
+                    ToDo([chip.to_holding_area,
+                          game.current_player.take_component])
                 ).embody()
 
             draw_circle(chip_location, config.chip_size, chip_type)
-            draw_text(location=chip_location - Vector(4, 6), text=str(self.colour_count[chip_type]),
-                      text_colour=chip_type, reverse_colour=True)
+            draw_text(
+                location=chip_location - Vector(4, 6),
+                text=str(self.colour_count[chip_type]),
+                text_colour=chip_type,
+                reverse_colour=True
+            )
 
 
 class EmbodyChipCostMixin(AbstractEmbodyMixin):
     def embody(self, location):
-            for i, chip_type in enumerate(
-                    [c for c in ChipType if c in self.colour_count]
-            ):
-                chip_location = location + Vector(0, i * 2.5 * config.chip_size * config.chip_cost_scaling)
-
-                draw_circle(chip_location, config.chip_size * config.chip_cost_scaling, chip_type)
-                draw_text(location=chip_location - Vector(4, 6), text=str(self.colour_count[chip_type]),
-                          text_colour=chip_type, reverse_colour=True)
+        for i, chip_type in enumerate(
+                [c for c in ChipType if c in self.colour_count]
+        ):
+            chip_location = location + Vector(
+                0,
+                i * 2.5 * config.chip_size * config.chip_cost_scaling
+            )
+            draw_circle(
+                chip_location,
+                config.chip_size * config.chip_cost_scaling,
+                chip_type
+            )
+            draw_text(
+                location=chip_location - Vector(4, 6),
+                text=str(self.colour_count[chip_type]),
+                text_colour=chip_type,
+                reverse_colour=True
+            )
 
 
 class EmbodyTileMixin(AbstractEmbodyMixin):
@@ -146,12 +159,14 @@ class EmbodyCardMixin(AbstractEmbodyMixin):
                 config.card_decks_location + \
                 config.central_area_location + \
                 Vector(
-                    (self.column + 1)* (config.card_size.x + config.card_spacing),
+                    (self.column + 1) *
+                    (config.card_size.x + config.card_spacing),
                     self.row * (config.card_size.y + config.card_spacing)
                 )
 
         elif self.state == ComponentStates.in_holding_area:
-            return config.holding_area_location + config.holding_area_card_location
+            return config.holding_area_location + \
+                   config.holding_area_card_location
 
     def buttonify(self):
         """
@@ -162,7 +177,9 @@ class EmbodyCardMixin(AbstractEmbodyMixin):
                 and self in game.mechanics.valid_actions:
             game.buttons.add(
                 self.location.to_rectangle(config.card_size),
-                ToDo([self.to_holding_area, game.current_player.take_component])
+                ToDo(
+                    [self.to_holding_area, game.current_player.take_component]
+                )
             ).embody()
         elif self.state == ComponentStates.in_holding_area:
             game.buttons.add(
@@ -202,8 +219,11 @@ class EmbodyCardDeckCountMixin(AbstractEmbodyMixin):
     def embody(self, location):
         for row in range(3):
             if self.card_deck_count[row]:
-                deck_location = location + \
-                                Vector(0, row * (config.card_size.y + config.card_spacing))
+                deck_location = location + Vector(
+                    0,
+                    row * (config.card_size.y + config.card_spacing)
+                )
+
                 draw_rectangle(deck_location.to_rectangle(config.card_size),
                                ColourPalette.card_deck_background)
                 draw_text(
@@ -217,10 +237,6 @@ class EmbodyPlayerMixin(AbstractEmbodyMixin):
         self._draw()
         game.components.chip_count_for_player(self).embody(self)
         game.components.card_reward_for_player(self).embody(self)
-
-        # TODO: Reinstate
-        # self.reserved.embody(config.player_reserved_location,
-        #                      player_order=self.player_order)
 
     def _draw(self):
         draw_rectangle(
@@ -245,7 +261,9 @@ class EmbodyPlayerChipStack(AbstractEmbodyMixin):
         ):
             if self.colour_count[chip_type]:
                 chip_location = config.player_chip_stack_location \
-                                + Vector(i * 2.5 * config.player_chip_stack_scaling * config.chip_size, 0)
+                                + Vector(i * 2.5 *
+                                         config.player_chip_stack_scaling *
+                                         config.chip_size, 0)
 
                 draw_circle(
                     chip_location,
@@ -271,10 +289,17 @@ class EmbodyPlayerCardStack(AbstractEmbodyMixin):
         ):
             if self.colour_count[chip_type]:
                 location = config.player_card_deck_location \
-                                + Vector(i * 2.5 * config.player_chip_stack_scaling * config.chip_size, 0)
+                                + Vector(i * 2.5 *
+                                         config.player_chip_stack_scaling *
+                                         config.chip_size, 0)
 
                 draw_rectangle(
-                    location.to_rectangle(Vector(2 * config.chip_size * config.player_chip_stack_scaling, config.chip_size * config.player_chip_stack_scaling * 2)),
+                    location.to_rectangle(
+                        Vector(2 * config.chip_size *
+                               config.player_chip_stack_scaling,
+                               config.chip_size *
+                               config.player_chip_stack_scaling * 2)
+                    ),
                     chip_type,
                     player_order=player.player_order,
                 )
@@ -321,7 +346,8 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
         if game.mechanics.turn_complete(game.current_player):
             game.buttons.add(
                 (
-                    config.holding_area_location + config.confirm_button_location
+                    config.holding_area_location +
+                    config.confirm_button_location
                 ).to_rectangle(config.button_size),
                 Confirm(),
                 text='Confirm'

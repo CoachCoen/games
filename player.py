@@ -92,11 +92,6 @@ class Player(EmbodyPlayerMixin):
     def cancel_move_in_progress(self):
         for component in game.components.holding_area_components:
             component.move_back()
-        # game.holding_area.chips.return_chips()
-        #
-        # if game.holding_area.card:
-        #     game.table.card_grid.return_card(game.holding_area.card)
-        #     game.holding_area.card = None
 
     def show_state(self):
         game.mechanics.show_state()
@@ -204,24 +199,3 @@ class Player(EmbodyPlayerMixin):
             c.to_player_area()
             c.player = game.current_player
         game.mechanics.draw_cards()
-
-        # for chip in game.components.holding_area_chips:
-        #     chip.player = game.current_player
-        #     chip.to_player_area()
-        # held_card = game.holding_area.card
-        #
-        # if game.holding_area.chips.any_chip_of_type(ChipType.yellow_gold):
-        #     # Yellow chip taken, so reserved card
-        #     self.reserve_card(held_card)
-        #     game.table.card_grid.fill_empty_spaces()
-        #
-        # elif held_card:
-        #     # Take card
-        #     self.pay_cost(held_card.chip_cost)
-        #
-        #     # Draw a new card and assign it to the original card's slot
-        #     self.add_card(held_card)
-        #     game.table.card_grid.fill_empty_spaces()
-        #
-        # game.holding_area.card = None
-        # game.holding_area.chips.transfer_chips(self.chips)

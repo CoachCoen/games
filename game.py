@@ -49,22 +49,4 @@ class Game:
         pygame.display.flip()
 
 
-    # def embody(self):
-    #     """
-    #     Embody the game
-    #     - Create all available buttons
-    #     - Draw the table, holding and player areas
-    #     """
-    #
-    #     # Remove previously created buttons
-    #     game.buttons.reset()
-    #
-    #     draw_table()
-    #
-    #     game.components.embody()
-    #     for player in game.players:
-    #         player.embody()
-    #     pygame.display.flip()
-
-
 game = Game()

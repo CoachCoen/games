@@ -313,7 +313,7 @@ class EmbodyPlayerCardStack(AbstractEmbodyMixin):
                 )
 
 
-class EmbodyButtonMixin(object):
+class EmbodyButtonMixin:
     def embody(self):
         self._draw()
 

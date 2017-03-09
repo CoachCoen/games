@@ -8,7 +8,7 @@ class MoveType(Enum):
     reserve_card = 4
 
 
-class Move(object):
+class Move:
     def __init__(self, pieces, move_type):
         self.pieces = pieces
         self.move_type = move_type

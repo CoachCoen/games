@@ -1,6 +1,7 @@
 from vector import Vector
 
-class Config(object):
+
+class Config:
     # TODO: Work this out dynamically
     tabletop_size = Vector(1368, 768)
     scaling_factor = 1

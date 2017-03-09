@@ -9,7 +9,7 @@ from embody import EmbodyTileMixin, EmbodyChipMixin, EmbodyCardMixin
 from states import ComponentStates
 
 
-class AbstractGameComponent(object):
+class AbstractGameComponent:
     """
     Abstract game component
     """

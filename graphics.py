@@ -190,7 +190,7 @@ def draw_table():
     _draw_player_corners()
 
 
-class Easel(object):
+class Easel:
     # TODO: Move this into settings module
     colour_palette = {
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),

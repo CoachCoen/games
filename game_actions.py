@@ -1,7 +1,7 @@
 from game import game
 
 
-class AbstractAction(object):
+class AbstractAction:
     pass
 
 

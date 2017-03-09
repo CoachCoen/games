@@ -3,7 +3,7 @@ from colour_count import ChipCost
 from game_components import Chip, Tile, Card
 
 
-class AbstractFactory(object):
+class AbstractFactory:
     """
     Simple grouping of factory classes
     """

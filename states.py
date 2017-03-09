@@ -1,4 +1,4 @@
-class PlayerStates(object):
+class PlayerStates:
     player_waiting = 'waiting_for_turn'
     turn_started = 'turn_started'
     turn_in_progress = 'turn_in_progress'
@@ -8,7 +8,7 @@ class PlayerStates(object):
     turn_finished = 'turn_finished'
 
 
-class ComponentStates(object):
+class ComponentStates:
     in_supply = 'in_supply'
     in_holding_area = 'in_holding_area'
     in_reserved_area = 'reserved_by_player'

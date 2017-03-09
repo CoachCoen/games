@@ -207,7 +207,7 @@ class GameMechanics:
             state=ComponentStates.in_player_area,
             component_class=Chip, player=player)
         card_rewards = game.components.filter(
-            state=ComponentStates.in_holding_area,
+            state=ComponentStates.in_player_area,
             component_class=Card, player=player). \
             count_by_colour()
 

@@ -138,6 +138,13 @@ class ComponentDatabase(AbstractComponentDatabase):
     ############################################################
     # Methods representing specific game 'elements'
     ############################################################
+    def reserved_for_player(self, player):
+        return self.filter(
+            state=ComponentStates.in_reserved_area,
+            component_class=Card,
+            player=player
+        )
+
     @property
     def table_card_grid(self):
         return self.filter(

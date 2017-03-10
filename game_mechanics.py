@@ -147,6 +147,7 @@ class GameMechanics:
                     move_type=MoveType.take_same_chips
                 ))
 
+        # Buy a card from the supply
         result += [Move(pieces=[card], move_type=MoveType.buy_card)
                    for card in game.components.table_open_cards
                    if game.components.filter(
@@ -154,8 +155,18 @@ class GameMechanics:
                 player=current_player
             ).count_by_colour().covers_cost(card.chip_cost)]
 
+        # Buy a reserved card
+        result += [Move(pieces=[card], move_type=MoveType.buy_card)
+                   for card in
+                   game.components.reserved_for_player(game.current_player)
+                   if game.components.filter(
+                state=ComponentStates.in_player_area,
+                player=current_player
+            ).count_by_colour().covers_cost(card.chip_cost)]
+
         # Reserve a card
-        # If less than 3 cards reserved, and at least one yellow chip available, can reserve any of the open cards
+        # If less than 3 cards reserved, and at least one yellow chip
+        # available, can reserve any of the open cards
         if len(game.current_player.components.filter(
                 component_class=Card, state=ComponentStates.in_reserved_area
         )) < 3 and ChipType.yellow_gold in game.components.table_chips:
@@ -253,9 +264,27 @@ class GameMechanics:
         for i in range(yellow_needed):
             yellow_chips.components[i].to_supply()
 
+    @property
+    def tiles_earned(self):
+        return [
+            tile for tile in game.components.table_tiles
+            if game.components.card_reward_for_player(
+                game.current_player
+            ).covers_cost(tile.chip_cost)
+            ]
+
+    @property
+    def earned_multiple_tiles(self):
+        return len(self.tiles_earned) > 2
+
+    @property
+    def earned_single_tile(self):
+        return len(self.tiles_earned) == 1
+
 
 def pieces_match(a, b):
     if a == b:
         return True
     return isinstance(a, Chip) and isinstance(b, Chip) \
            and a.chip_type == b.chip_type
+

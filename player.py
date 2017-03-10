@@ -94,7 +94,7 @@ class Player(EmbodyPlayerMixin):
             component.move_back()
 
     def show_state(self):
-        pass
+        game.mechanics.show_state()
 
     def human_player(self):
         return game.current_player.is_human
@@ -126,23 +126,20 @@ class Player(EmbodyPlayerMixin):
         :return:
         """
         return game.components.holding_area_components.is_empty
-        # return game.holding_area.is_empty
 
     def earned_multiple_tiles(self):
         """
         Are there multiple noble tiles available for this player?
         :return:
         """
-        return False
-        # return game.earned_multiple_tiles
+        return game.mechanics.earned_multiple_tiles
 
     def earned_single_tile(self):
         """
         Is there a single noble tile available for this player?
         :return:
         """
-        # return game.earned_single_tile
-        return False
+        return game.mechanics.earned_single_tile
 
     @property
     def components(self):

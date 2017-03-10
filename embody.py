@@ -175,7 +175,6 @@ class EmbodyCardMixin(AbstractEmbodyMixin):
                 config.player_reserved_location +
                 Vector(self.column * (config.card_size.x + config.card_spacing), 0))
 
-
     def buttonify(self):
         """
         Turn the card into a 'button' so the user can click on it
@@ -183,7 +182,8 @@ class EmbodyCardMixin(AbstractEmbodyMixin):
         valid_actions = game.mechanics.valid_actions
 
         # If currently in supply - move it to the holding area
-        if self.state == ComponentStates.in_supply \
+        if self.state in [ComponentStates.in_supply,
+                          ComponentStates.in_reserved_area] \
                 and self in valid_actions:
             game.buttons.add(
                 self.location.to_rectangle(config.card_size),

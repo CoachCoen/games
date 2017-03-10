@@ -80,7 +80,7 @@ class ComponentDatabase(AbstractComponentDatabase):
     def _filter_by_player(self, player):
         return ComponentDatabase(
             [c for c in self.components
-             if c.state == ComponentStates.in_player_area and
+             if c.state in [ComponentStates.in_player_area, ComponentStates.in_reserved_area] and
              c.player == player]
         )
 
@@ -130,6 +130,10 @@ class ComponentDatabase(AbstractComponentDatabase):
             result[c.row][c.column] = c
 
         return CardGrid(result)
+
+    @property
+    def player_points(self):
+        return sum(c.points for c in self.components)
 
     ############################################################
     # Methods representing specific game 'elements'
@@ -181,6 +185,19 @@ class ComponentDatabase(AbstractComponentDatabase):
             component_class=Card,
             player=player
         ).count_by_colour(PlayerCardStack)
+
+    def reserved_cards_for_player(self, player):
+        return self.filter(
+            state=ComponentStates.in_reserved_area,
+            component_class=Card,
+            player=player
+        )
+
+    def played_components_for_player(self, player):
+        return self.filter(
+            state=ComponentStates.in_player_area,
+            player=player
+        )
 
     @property
     def table_card_stacks(self):

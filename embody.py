@@ -6,7 +6,7 @@ from states import PlayerStates
 from graphics import draw_rectangle, draw_text, \
     draw_circle, draw_card
 from graphics import ColourPalette, circle_location_to_rectangle, \
-    grow_rectangle
+    grow_rectangle, translate_to_player
 
 from game_actions import Cancel, Confirm
 
@@ -125,11 +125,12 @@ class EmbodyChipMixin(AbstractEmbodyMixin):
         If this chip can be moved, turn it into a button
         """
         # Only embodied (as a single chip) if it is in the holding area
-        # so always make it a button
-        game.buttons.add(
-            circle_location_to_rectangle(self.location, config.chip_size),
-            ToDo([self.to_supply, game.current_player.return_component])
-        ).embody()
+        # so always make it a button - unless there is also a card in the holding area
+        if game.components.holding_area_cards.is_empty:
+            game.buttons.add(
+                circle_location_to_rectangle(self.location, config.chip_size),
+                ToDo([self.to_supply, game.current_player.return_component])
+            ).embody()
 
     def _draw(self):
         """
@@ -168,13 +169,22 @@ class EmbodyCardMixin(AbstractEmbodyMixin):
             return config.holding_area_location + \
                    config.holding_area_card_location
 
+        elif self.state == ComponentStates.in_reserved_area:
+            return translate_to_player(
+                self.player.player_order,
+                config.player_reserved_location +
+                Vector(self.column * (config.card_size.x + config.card_spacing), 0))
+
+
     def buttonify(self):
         """
         Turn the card into a 'button' so the user can click on it
         """
+        valid_actions = game.mechanics.valid_actions
+
         # If currently in supply - move it to the holding area
         if self.state == ComponentStates.in_supply \
-                and self in game.mechanics.valid_actions:
+                and self in valid_actions:
             game.buttons.add(
                 self.location.to_rectangle(config.card_size),
                 ToDo(
@@ -237,6 +247,9 @@ class EmbodyPlayerMixin(AbstractEmbodyMixin):
         self._draw()
         game.components.chip_count_for_player(self).embody(self)
         game.components.card_reward_for_player(self).embody(self)
+        for i, card in enumerate(game.components.reserved_cards_for_player(self)):
+            card.column = i
+            card.embody()
 
     def _draw(self):
         draw_rectangle(
@@ -251,6 +264,13 @@ class EmbodyPlayerMixin(AbstractEmbodyMixin):
             self.name,
             player_order=self.player_order
         )
+        points = game.mechanics.points_for_player(self)
+        if points:
+            draw_text(
+                list(config.player_points_location),
+                str(points),
+                player_order=self.player_order
+            )
 
 
 class EmbodyPlayerChipStack(AbstractEmbodyMixin):

@@ -60,6 +60,7 @@ class AbstractGameComponent:
         self.previous_state = None
         self.player = None
         self.name = None
+        self.points = 0
 
         self.machine = Machine(
             model=self,

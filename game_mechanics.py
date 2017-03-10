@@ -40,6 +40,9 @@ class GameMechanics:
 
         game.current_player.start()
 
+    def points_for_player(self, player):
+        return game.components.played_components_for_player(player).player_points
+
     def show_state(self):
         # TODO: Remove this - for development only
         print(", ".join(["%s: %s" % (player.name, player.state)
@@ -151,22 +154,37 @@ class GameMechanics:
                 player=current_player
             ).count_by_colour().covers_cost(card.chip_cost)]
 
+        # Reserve a card
+        # If less than 3 cards reserved, and at least one yellow chip available, can reserve any of the open cards
+        if len(game.current_player.components.filter(
+                component_class=Card, state=ComponentStates.in_reserved_area
+        )) < 3 and ChipType.yellow_gold in game.components.table_chips:
+
+            chip = game.components.chip_from_supply(ChipType.yellow_gold)
+            result += [Move(
+                pieces=[card, chip],
+                move_type=MoveType.reserve_card,
+                required=[chip]
+            ) for card in game.components.table_open_cards]
+
         return result
+
+    @staticmethod
+    def piece_in(piece, pieces):
+        return any(pieces_match(p, piece) for p in pieces)
 
     def valid_pieces(self, current_player):
         valid_moves = self.valid_moves(current_player)
         pieces_taken = game.components.filter(
             state=ComponentStates.in_holding_area)
 
-        # Nothing taken yet, all moves are still possible
-        if not pieces_taken:
-            return sum([m.pieces for m in valid_moves], [])
+        # TODO: Refactor to make more Pythonic
 
-        # TODO Any more Pythonic way of doing the following?
         # Some pieces taken, only allow moves
         # which include the ones which have been taken
         result = set()
         for valid_move in valid_moves:
+
             pieces_remaining = list(valid_move.pieces)
             for taken in pieces_taken:
                 found = False
@@ -179,8 +197,15 @@ class GameMechanics:
                     # Can't find this piece, so no longer a valid move
                     pieces_remaining = []
                     continue
-            for piece in pieces_remaining:
-                result.add(piece)
+
+            if all(self.piece_in(required, pieces_taken) for required in valid_move.required):
+                for piece in pieces_remaining:
+                    result.add(piece)
+            else:
+                for piece in pieces_remaining:
+                    if self.piece_in(piece, valid_move.required):
+                        result.add(piece)
+
         return result
 
     def is_valid_action(self, current_player, component):
@@ -188,13 +213,12 @@ class GameMechanics:
         if component in valid_pieces:
             return True
 
-        if not isinstance(component, Chip):
-            return False
-
         # When taking the second chip of the same colour,
         # the piece in valid_pieces
         # is actually the one which is now in the holding area
         # So just check whether it is the same type
+        if not isinstance(component, Chip):
+            return False
         return any(c.chip_type == component.chip_type for c in
                    valid_pieces)
 
@@ -225,10 +249,9 @@ class GameMechanics:
                 else:
                     yellow_needed += 1
 
-        for _ in range(yellow_needed):
-            chip = player_chips.chip_from_supply(
-                ChipType.yellow_gold)
-            chip.to_supply()
+        yellow_chips = player_chips.filter(chip_type=ChipType.yellow_gold)
+        for i in range(yellow_needed):
+            yellow_chips.components[i].to_supply()
 
 
 def pieces_match(a, b):

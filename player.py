@@ -94,9 +94,7 @@ class Player(EmbodyPlayerMixin):
             component.move_back()
 
     def show_state(self):
-        game.mechanics.show_state()
-        # pass
-        # TODO: Remove game.show_state() method
+        pass
 
     def human_player(self):
         return game.current_player.is_human
@@ -108,51 +106,9 @@ class Player(EmbodyPlayerMixin):
     def is_human(self):
         return self.AI is None
 
-    def has_chips_of_type(self, chip_type):
-        # TODO: Refactor: better way to find the right chip stack
-        for chip_stack in self.chip_stacks.chip_stacks:
-            if chip_stack.chip.chip_type == chip_type:
-                return chip_stack.chip_count
-        return 0
-
-    def pay_cost(self, chip_cost):
-        """
-        Pay the chip_cost, after deduction any discounts through cards this players owns
-        """
-        # Assumption: Can afford it
-        cost_by_type = chip_cost.counts_for_type
-
-        for chip_type in ChipType:
-            to_pay = cost_by_type[chip_type] - self.cards.produces_for_chip_type(chip_type)
-
-            if to_pay:
-                for _ in range(to_pay):
-                    # pay the chip - or pay a gold one if normal chip not available
-                    if not self.chips.pay_chip_of_type(chip_type):
-                        self.chips.pay_chip_of_type(ChipType.yellow_gold)
-
     @property
     def is_current_player(self):
         return self.state != PlayerStates.player_waiting
-
-    def can_afford(self, chip_cost):
-        chips_shortage = 0
-        for chip_type in [chip_type for chip_type in ChipType if chip_type is not ChipType.yellow_gold]:
-            count = chip_cost.count(chip_type)
-
-            available = self.chips.count(chip_type) + self.cards.produces_for_chip_type(chip_type)
-            if available < count:
-                chips_shortage += \
-                    count - available
-
-        # Missing chips can be replaced by yellow chips
-        return chips_shortage <= self.chips.count(ChipType.yellow_gold)
-
-    def add_card(self, card):
-        self.cards.add(card)
-
-    def reserve_card(self, card):
-        self.reserved.add(card)
 
     def complete_turn_taken(self):
         """
@@ -189,13 +145,23 @@ class Player(EmbodyPlayerMixin):
         return False
 
     @property
+    def components(self):
+        return game.components.filter(player=self)
+
+    @property
     def points(self):
         return self.cards.points + self.tiles.points
 
     def _confirm_component_selection(self):
-        for c in game.components.holding_area_components:
+        holding_area_components = game.components.holding_area_components
+        reserved = (holding_area_components.count_for_colour(ChipType.yellow_gold) > 0)
+
+        for c in holding_area_components:
+            c.player = game.current_player
             if isinstance(c, Card):
+                if reserved:
+                    c.to_reserved_area()
+                    continue
                 game.mechanics.pay_chip_cost(c.chip_cost, self)
             c.to_player_area()
-            c.player = game.current_player
         game.mechanics.draw_cards()

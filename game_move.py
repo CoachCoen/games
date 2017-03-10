@@ -9,7 +9,7 @@ class MoveType(Enum):
 
 
 class Move:
-    def __init__(self, pieces, move_type):
+    def __init__(self, pieces, move_type, required=None):
         self.pieces = pieces
         self.move_type = move_type
-
+        self.required = required if required is not None else []

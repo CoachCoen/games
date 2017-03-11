@@ -5,7 +5,7 @@ from component_setup_data import raw_tile_data, raw_card_data
 from chip_types import ChipType
 from game_components import Chip, Card, Tile
 
-from states import ComponentStates
+from states import ComponentStates, PlayerStates
 from game_move import Move, MoveType
 from game import game
 
@@ -48,18 +48,18 @@ class GameMechanics:
         print(", ".join(["%s: %s" % (player.name, player.state)
                          for player in game.players]))
 
-    @property
-    def earned_multiple_tiles(self):
-        return len(self.earned_tiles) > 1
-
-    @property
-    def earned_single_tile(self):
-        return len(self.earned_tiles) == 1
-
-    @property
-    def earned_tiles(self):
-        return []
-
+    # @property
+    # def earned_multiple_tiles(self):
+    #     return len(self.earned_tiles) > 1
+    #
+    # @property
+    # def earned_single_tile(self):
+    #     return len(self.earned_tiles) == 1
+    #
+    # @property
+    # def earned_tiles(self):
+    #     return []
+    #
 
     @property
     def is_turn_complete(self):
@@ -185,6 +185,15 @@ class GameMechanics:
         return any(pieces_match(p, piece) for p in pieces)
 
     def valid_pieces(self, current_player):
+        # Tile in holding area
+        if game.current_player.state == PlayerStates.tile_selected:
+            return game.components.holding_area_tiles
+
+        # Available tiles
+        if game.current_player.start == PlayerStates.tiles_offered:
+            return self.tiles_earned
+
+        # Main body of turn - pick any valid game piece
         valid_moves = self.valid_moves(current_player)
         pieces_taken = game.components.filter(
             state=ComponentStates.in_holding_area)
@@ -228,10 +237,13 @@ class GameMechanics:
         # the piece in valid_pieces
         # is actually the one which is now in the holding area
         # So just check whether it is the same type
-        if not isinstance(component, Chip):
-            return False
-        return any(c.chip_type == component.chip_type for c in
-                   valid_pieces)
+
+        if isinstance(component, Chip) \
+                and any(c.chip_type == component.chip_type
+                        for c in valid_pieces if isinstance(c, Chip)):
+            return True
+
+        return False
 
     def turn_complete(self, current_player):
         return len(self.valid_pieces(current_player)) == 0
@@ -281,6 +293,9 @@ class GameMechanics:
     def earned_single_tile(self):
         return len(self.tiles_earned) == 1
 
+    def player_selects_single_tile(self):
+        tile = self.tiles_earned[0]
+        tile.to_holding_area()
 
 def pieces_match(a, b):
     if a == b:

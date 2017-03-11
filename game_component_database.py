@@ -235,9 +235,21 @@ class ComponentDatabase(AbstractComponentDatabase):
         )
 
     @property
+    def holding_area_tiles(self):
+        return self.filter(
+            state=ComponentStates.in_holding_area, component_class=Tile
+        )
+
+    @property
     def holding_area_cards(self):
         return self.filter(
             state=ComponentStates.in_holding_area, component_class=Card
+        )
+
+    @property
+    def holding_area_tiles(self):
+        return self.filter(
+            state=ComponentStates.in_holding_area, component_class=Tile
         )
 
     @property

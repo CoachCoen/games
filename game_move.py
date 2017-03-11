@@ -6,6 +6,7 @@ class MoveType(Enum):
     take_same_chips = 2
     buy_card = 3
     reserve_card = 4
+    take_tile = 5
 
 
 class Move:

@@ -44,10 +44,23 @@ class Player(EmbodyPlayerMixin):
              unless='empty_selection', after='show_state'),
 
         # Valid (set of components) selected - confirm/reject?
-        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tiles_offered,
-             conditions='earned_multiple_tiles', after='show_state'),
+
+        # For AI players, if multiple tiles offered, AI should select on and then wait for confirmation
         dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tile_selected,
-             conditions='earned_single_tile', after='show_state'),
+             conditions=['ai_player', 'earned_multiple_tiles'],
+             before='_confirm_component_selection', after=['ai_selects_tile', 'show_state']),
+
+        # For human players, give player a chance to select a tile
+        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tiles_offered,
+             conditions=['human_player', 'earned_multiple_tiles'],
+             before='_confirm_component_selection', after='show_state'),
+
+        # For AI and human players, if one tile available, show and and wait for confirmation
+        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tile_selected,
+             conditions='earned_single_tile',
+             before='_confirm_component_selection', after=['player_selects_single_tile', 'show_state']),
+
+        # If no tile available, go straight to the end of the turn
         dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.turn_finished,
              unless=['earned_multiple_tiles', 'earned_single_tile'],
              before='_confirm_component_selection', after='show_state'),
@@ -82,6 +95,12 @@ class Player(EmbodyPlayerMixin):
 
     def ai_makes_move(self):
         self.AI.take_turn()
+
+    def ai_selects_tile(self):
+        self.AI.select_tile()
+
+    def player_selects_single_tile(self):
+        game.mechanics.player_selects_single_tile()
 
     def on_enter_turn_started(self):
         game.embody()

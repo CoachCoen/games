@@ -88,6 +88,10 @@ class EmbodyTileMixin(AbstractEmbodyMixin):
                    Vector(self.column *
                           (config.tile_size.x + config.tile_spacing), 0)
 
+        if self.state == ComponentStates.in_holding_area:
+            return config.holding_area_location + \
+                   config.holding_area_tile_location
+
     def draw(self):
         draw_rectangle(
             self.location.to_rectangle(config.tile_size),
@@ -99,7 +103,12 @@ class EmbodyTileMixin(AbstractEmbodyMixin):
         self.chip_cost.embody(self.location + config.cost_location)
 
     def buttonify(self):
-        pass
+        if game.mechanics.is_valid_action(game.current_player, self):
+            game.buttons.add(
+                self.location.to_rectangle(config.tile_size),
+                ToDo([self.to_holding_area,
+                      game.current_player.take_component])
+            ).embody()
 
 
 class EmbodyChipMixin(AbstractEmbodyMixin):
@@ -355,6 +364,9 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
         for i, chip in enumerate(self.holding_area_chips):
             chip.embody(column=i)
 
+        for tile in game.components.holding_area_tiles:
+            tile.embody()
+
         game.buttons.add(
             (
                 config.holding_area_location + config.cancel_button_location
@@ -363,7 +375,8 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
             text='Cancel'
         ).embody()
 
-        if game.mechanics.turn_complete(game.current_player):
+        if game.mechanics.turn_complete(game.current_player) \
+                or game.current_player.state == PlayerStates.tile_selected:
             game.buttons.add(
                 (
                     config.holding_area_location +

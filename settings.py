@@ -55,6 +55,7 @@ class Config:
     holding_area_size = Vector(350, 200)
     holding_area_location = Vector(1000, 300)
 
+    holding_area_tile_location = Vector(30, 30)
     holding_area_card_location = Vector(30, 30)
     holding_area_chips_location = Vector(150, 30)
     holding_area_name_location = Vector(5, 5)

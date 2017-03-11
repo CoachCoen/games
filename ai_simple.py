@@ -60,3 +60,8 @@ class RandomAI(AbstractAI):
 
         for item in my_move.pieces:
             item.to_holding_area()
+
+    def select_tile(self):
+        tiles = game.mechanics.tiles_earned
+        tile = choice(tiles)
+        tile.to_holding_area()

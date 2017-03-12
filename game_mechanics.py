@@ -280,7 +280,7 @@ class GameMechanics:
     def tiles_earned(self):
         return [
             tile for tile in game.components.table_tiles
-            if game.components.card_reward_for_player(
+            if game.components.card_reward_for_player_including_pending(
                 game.current_player
             ).covers_cost(tile.chip_cost)
             ]

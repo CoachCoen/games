@@ -193,6 +193,17 @@ class ComponentDatabase(AbstractComponentDatabase):
             player=player
         ).count_by_colour(PlayerCardStack)
 
+    def card_reward_for_player_including_pending(self, player):
+        cards = self.filter(
+            state=ComponentStates.in_player_area,
+            component_class=Card,
+            player=player
+        ).components + self.filter(
+            state=ComponentStates.in_holding_area,
+            component_class=Card
+        ).components
+        return ComponentDatabase(components=cards).count_by_colour()
+
     def reserved_cards_for_player(self, player):
         return self.filter(
             state=ComponentStates.in_reserved_area,

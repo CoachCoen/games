@@ -72,8 +72,15 @@ class Player(EmbodyPlayerMixin):
         dict(trigger='select_tile', source=[PlayerStates.tiles_offered, PlayerStates.tile_selected],
              dest=PlayerStates.tile_selected, after='show_state'),
 
-        # Confirm selection, end of turn
-        dict(trigger='take_tile', source=PlayerStates.tile_selected, dest=PlayerStates.turn_finished, after='show_state'),
+        # Confirm selected tile, end of turn
+        dict(trigger='take_tile', source=PlayerStates.tile_selected, dest=PlayerStates.turn_finished,
+             before='_confirm_tile_selection',
+             after='show_state'),
+
+        # Cancel selected tile
+        dict(trigger='cancel_tile', source=PlayerStates.tile_selected, dest=PlayerStates.tiles_offered,
+             before='_cancel_tile_selection',
+             after='show_state'),
 
         # Back to waiting
         dict(trigger='wait', source=PlayerStates.turn_finished, dest=PlayerStates.player_waiting, after='show_state'),
@@ -181,3 +188,12 @@ class Player(EmbodyPlayerMixin):
                 game.mechanics.pay_chip_cost(c.chip_cost, self)
             c.to_player_area()
         game.mechanics.draw_cards()
+
+    def _confirm_tile_selection(self):
+        for tile in list(game.components.holding_area_components)[:]:
+            tile.to_player_area()
+            tile.player = game.current_player
+
+    def _cancel_tile_selection(self):
+        for tile in list(game.components.holding_area_components)[:]:
+            tile.to_supply()

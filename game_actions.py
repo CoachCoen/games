@@ -18,11 +18,11 @@ class ToDo(AbstractAction):
         return True
 
 
-class ConfirmTile(AbstractAction):
-    @staticmethod
-    def activate():
-        game.current_player.take_tile()
-
+# class ConfirmTile(AbstractAction):
+#     @staticmethod
+#     def activate():
+#         game.current_player.take_tile()
+#
 
 class Confirm(AbstractAction):
     """
@@ -35,11 +35,11 @@ class Confirm(AbstractAction):
         return True
 
 
-class CancelTile(AbstractAction):
-    @staticmethod
-    def activate():
-        game.current_player.cancel_tile()
-
+# class CancelTile(AbstractAction):
+#     @staticmethod
+#     def activate():
+#         game.current_player.cancel_tile()
+#
 
 class Cancel(AbstractAction):
     """

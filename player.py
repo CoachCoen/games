@@ -62,27 +62,28 @@ class Player(EmbodyPlayerMixin):
 
         # If no tile available, go straight to the end of the turn
         dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.turn_finished,
-             unless=['earned_multiple_tiles', 'earned_single_tile'],
+             conditions='earned_no_tiles',
              before='_confirm_component_selection', after='show_state'),
 
         dict(trigger='cancel', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_started,
              after=['cancel_move_in_progress', 'show_state']),
 
         # Multiple nobles tiles offered, take one
-        dict(trigger='select_tile', source=[PlayerStates.tiles_offered, PlayerStates.tile_selected],
+        dict(trigger='take_component', source=[PlayerStates.tiles_offered, PlayerStates.tile_selected],
              dest=PlayerStates.tile_selected, after='show_state'),
 
         # Confirm selected tile, end of turn
-        dict(trigger='take_tile', source=PlayerStates.tile_selected, dest=PlayerStates.turn_finished,
-             before='_confirm_tile_selection',
-             after='show_state'),
+        dict(trigger='confirm', source=PlayerStates.tile_selected, dest=PlayerStates.turn_finished,
+             before='_confirm_component_selection',
+             after='show_state'),   # TODO: Should this go straight back to .player_waiting ?
 
         # Cancel selected tile
-        dict(trigger='cancel_tile', source=PlayerStates.tile_selected, dest=PlayerStates.tiles_offered,
-             before='_cancel_tile_selection',
+        dict(trigger='cancel', source=PlayerStates.tile_selected, dest=PlayerStates.tiles_offered,
+             before='cancel_move_in_progress',
              after='show_state'),
 
         # Back to waiting
+        # TODO: Can we cut this out and go straight back to .player_waiting instead ?
         dict(trigger='wait', source=PlayerStates.turn_finished, dest=PlayerStates.player_waiting, after='show_state'),
     ]
 
@@ -167,6 +168,9 @@ class Player(EmbodyPlayerMixin):
         """
         return game.mechanics.earned_single_tile
 
+    def earned_no_tiles(self):
+        return not game.mechanics.earned_multiple_tiles and not game.mechanics.earned_single_tile
+
     @property
     def components(self):
         return game.components.filter(player=self)
@@ -177,7 +181,7 @@ class Player(EmbodyPlayerMixin):
 
     def _confirm_component_selection(self):
         holding_area_components = game.components.holding_area_components
-        reserved = (holding_area_components.count_for_colour(ChipType.yellow_gold) > 0)
+        reserved = (game.components.holding_area_chips.count_for_colour(ChipType.yellow_gold) > 0)
 
         for c in holding_area_components:
             c.player = game.current_player
@@ -189,11 +193,11 @@ class Player(EmbodyPlayerMixin):
             c.to_player_area()
         game.mechanics.draw_cards()
 
-    def _confirm_tile_selection(self):
-        for tile in list(game.components.holding_area_components)[:]:
-            tile.to_player_area()
-            tile.player = game.current_player
-
+    # def _confirm_tile_selection(self):
+    #     for tile in list(game.components.holding_area_components)[:]:
+    #         tile.to_player_area()
+    #         tile.player = game.current_player
+    #
     def _cancel_tile_selection(self):
         for tile in list(game.components.holding_area_components)[:]:
             tile.to_supply()

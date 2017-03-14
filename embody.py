@@ -8,7 +8,8 @@ from graphics import draw_rectangle, draw_text, \
 from graphics import ColourPalette, circle_location_to_rectangle, \
     grow_rectangle, translate_to_player
 
-from game_actions import Cancel, Confirm, CancelTile, ConfirmTile
+from game_actions import Cancel, Confirm
+    # , CancelTile, ConfirmTile
 
 from states import ComponentStates
 
@@ -372,9 +373,7 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
             (
                 config.holding_area_location + config.cancel_button_location
             ).to_rectangle(config.button_size),
-            CancelTile()
-            if game.current_player.state == PlayerStates.tile_selected
-            else Cancel(),
+            Cancel(),
             text='Cancel'
         ).embody()
 
@@ -385,9 +384,7 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
                     config.holding_area_location +
                     config.confirm_button_location
                 ).to_rectangle(config.button_size),
-                ConfirmTile()
-                if game.current_player.state == PlayerStates.tile_selected
-                else Confirm(),
+                Confirm(),
                 text='Confirm'
             ).embody()
 

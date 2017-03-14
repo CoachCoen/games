@@ -106,7 +106,7 @@ class ComponentDatabase(AbstractComponentDatabase):
     ############################################################
     def count_for_colour(self, chip_type):
         return sum(1 for c in self.components
-                   if c.chip_type == chip_type)
+                   if isinstance(c, (Chip, Card)) and c.chip_type == chip_type)
 
     def count_by_colour(self, result_class=ColourCount):
         return result_class({

@@ -40,6 +40,22 @@ class AbstractComponentDatabase:
     def is_empty(self):
         return len(self) == 0
 
+    def __contains__(self, item):
+        """
+        Is item a subset of self?
+        Two chips are assume to be the same if they have the same colour
+        If there are multiple pieces of the same type in 'item',
+          make sure there is at least the required number available
+        :return: True if item is a subset of self
+        """
+
+    def __copy__(self):
+        return self.__class__(self.components.copy())
+
+    def remove_component(self, component):
+        for i, c in enumerate(self.components):
+
+
 
 class ComponentDatabase(AbstractComponentDatabase):
 
@@ -179,10 +195,15 @@ class ComponentDatabase(AbstractComponentDatabase):
             chip_type=chip_type
         ).components
 
-    def chip_count_for_player(self, player):
+    def chips_for_player(self, player):
         return self.filter(
             state=ComponentStates.in_player_area,
             component_class=Chip,
+            player=player
+        )
+
+    def chip_count_for_player(self, player):
+        return self.chips_for_player(
             player=player
         ).count_by_colour(PlayerChipStack)
 

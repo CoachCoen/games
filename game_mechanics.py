@@ -11,6 +11,9 @@ from game import game
 
 
 class GameMechanics:
+    def __init__(self):
+        self._valid_moves = None
+
     @property
     def valid_actions(self):
         return self.valid_pieces(game.current_player)
@@ -37,6 +40,8 @@ class GameMechanics:
             game.current_player = game.players[i + 1]
         except IndexError:
             game.current_player = game.players[0]
+
+        self._valid_moves = None
 
         game.current_player.start()
 
@@ -112,8 +117,13 @@ class GameMechanics:
                 if card_grid.card_grid[row][j] is None:
                     self.draw_card_for_row(row, j)
 
+    def valid_moves(self, current_player):
+        if not self._valid_moves:
+            self._valid_moves = self.get_valid_moves(current_player)
+        return self._valid_moves
+
     @staticmethod
-    def valid_moves(current_player):
+    def get_valid_moves(current_player):
         """
         list of Move objects, each containing the pieces which the current
         player could take/buy/reserve
@@ -184,14 +194,16 @@ class GameMechanics:
     def piece_in(piece, pieces):
         return any(pieces_match(p, piece) for p in pieces)
 
+    def remove_pieces(self):
+
     def valid_pieces(self, current_player):
         # Tile in holding area
         if game.current_player.state == PlayerStates.tile_selected:
-            return game.components.holding_area_tiles
+            return set(game.components.holding_area_tiles)
 
         # Available tiles
-        if game.current_player.start == PlayerStates.tiles_offered:
-            return self.tiles_earned
+        if game.current_player.state == PlayerStates.tiles_offered:
+            return set(self.tiles_earned)
 
         # Main body of turn - pick any valid game piece
         valid_moves = self.valid_moves(current_player)
@@ -202,6 +214,17 @@ class GameMechanics:
 
         # Some pieces taken, only allow moves
         # which include the ones which have been taken
+
+        # Each potential move has 3 possible options
+        # 0. If any piece has been taken which is not part of this move:
+        #   return None
+        # 1. No required pieces
+        #    return all pieces which haven't been taken yet
+        # 2. Multiple required pieces
+        #   If all required pieces have been taken:
+        #       return all non-required pieces which haven't been taken yet
+        #   else (not all required pieces taken yet):
+        #       return all required pieces which haven't been taken yet
         result = set()
         for valid_move in valid_moves:
 
@@ -218,13 +241,23 @@ class GameMechanics:
                     pieces_remaining = []
                     continue
 
-            if all(self.piece_in(required, pieces_taken) for required in valid_move.required):
-                for piece in pieces_remaining:
-                    result.add(piece)
-            else:
+            if not valid_move.required or all_required_pieces_taken(required, pieces_taken):
                 for piece in pieces_remaining:
                     if self.piece_in(piece, valid_move.required):
                         result.add(piece)
+
+            else:
+                # At least one piece required, and not all required pieces taken
+                # Return the not-yet-taken required pieces
+                if all_required_pieces_taken(required, pieces_taken):
+
+
+            if valid_move.required and pieces_taken:
+                if all(self.piece_in(required, pieces_taken) for required in valid_move.required):
+                    for piece in pieces_remaining:
+                        result.add(piece)
+            else:
+
 
         return result
 

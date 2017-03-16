@@ -187,6 +187,12 @@ class Player(EmbodyPlayerMixin):
     def points(self):
         return game.mechanics.points_for_player(self)
 
+    def chip_count(self):
+        return len(game.components.chips_for_player(self))
+
+    def too_many_chips(self):
+        return self.chip_count() > 10
+
     def _confirm_component_selection(self):
         holding_area_components = game.components.holding_area_components
         reserved = (game.components.holding_area_chips.count_for_colour(ChipType.yellow_gold) > 0)

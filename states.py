@@ -3,7 +3,7 @@ class PlayerStates:
     turn_started = 'turn_started'
     turn_in_progress = 'turn_in_progress'
     turn_valid = 'valid_turn'
-    tiles_offered = 'tiles_on_offer'
+    tiles_offered = 'tiles_offered'
     tile_selected = 'tile_selected'
     turn_finished = 'turn_finished'
 

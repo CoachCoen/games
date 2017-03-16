@@ -21,9 +21,13 @@ class Game:
         self.buttons = buttons
         self.mechanics = mechanics
 
+    @property
+    def last_player(self):
+        return self.current_player == self.players[-1]
+
     def embody(self):
         game.buttons.reset()
-        draw_table()
+        draw_table(self.mechanics.final_round)
 
         self.components.table_chips.embody()
 

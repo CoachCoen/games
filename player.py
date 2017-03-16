@@ -82,6 +82,11 @@ class Player(EmbodyPlayerMixin):
              before='cancel_move_in_progress',
              after='show_state'),
 
+        # Return selected tile
+        dict(trigger='return_component', source=PlayerStates.tile_selected,
+             dest=PlayerStates.tiles_offered,
+             after='show_state'),
+
         # Back to waiting
         # TODO: Can we cut this out and go straight back to .player_waiting instead ?
         dict(trigger='wait', source=PlayerStates.turn_finished, dest=PlayerStates.player_waiting, after='show_state'),
@@ -171,13 +176,16 @@ class Player(EmbodyPlayerMixin):
     def earned_no_tiles(self):
         return not game.mechanics.earned_multiple_tiles and not game.mechanics.earned_single_tile
 
+    def end_of_game(self):
+        return game.last_player and game.mechanics.final_round
+
     @property
     def components(self):
         return game.components.filter(player=self)
 
     @property
     def points(self):
-        return self.cards.points + self.tiles.points
+        return game.mechanics.points_for_player(self)
 
     def _confirm_component_selection(self):
         holding_area_components = game.components.holding_area_components

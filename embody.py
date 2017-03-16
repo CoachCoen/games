@@ -109,6 +109,9 @@ class EmbodyTileMixin(AbstractEmbodyMixin):
                 self.location.to_rectangle(config.tile_size),
                 ToDo([self.to_holding_area,
                       game.current_player.take_component])
+                if self.state == ComponentStates.in_supply
+                else ToDo([self.to_supply,
+                           game.current_player.return_component])
             ).embody()
 
 
@@ -274,11 +277,11 @@ class EmbodyPlayerMixin(AbstractEmbodyMixin):
             self.name,
             player_order=self.player_order
         )
-        points = game.mechanics.points_for_player(self)
-        if points:
+        # points = game.mechanics.points_for_player(self)
+        if self.points:
             draw_text(
                 list(config.player_points_location),
-                str(points),
+                str(self.points),
                 player_order=self.player_order
             )
 

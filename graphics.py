@@ -8,6 +8,7 @@ from vector import Vector
 
 class ColourPalette(Enum):
     table_cloth = 11
+    table_cloth_final_round = 25
     corners = 12
     card_background = 13
     card_deck_background = 14
@@ -165,9 +166,13 @@ def draw_circles_row(location, counts, player_order=None):
             )
 
 
-def _draw_tablecloth():
+def _draw_tablecloth(is_final_round):
+    colour = ColourPalette.table_cloth_final_round \
+        if is_final_round \
+        else ColourPalette.table_cloth
+
     draw_rectangle((0, 0) + tuple(config.tabletop_size),
-                   ColourPalette.table_cloth)
+                   colour)
 
 
 def _draw_player_corners():
@@ -185,8 +190,8 @@ def _draw_player_corners():
         )
 
 
-def draw_table():
-    _draw_tablecloth()
+def draw_table(is_final_round):
+    _draw_tablecloth(is_final_round)
     _draw_player_corners()
 
 
@@ -194,6 +199,7 @@ class Easel:
     # TODO: Move this into settings module
     colour_palette = {
         ColourPalette.table_cloth: pygame.Color(20, 50, 20, 255),
+        ColourPalette.table_cloth_final_round: pygame.Color(10, 70, 100, 255),
         ColourPalette.corners: pygame.Color(70, 180, 70, 255),
         ColourPalette.card_background: pygame.Color(60, 60, 100, 255),
         ColourPalette.card_deck_background: pygame.Color(10, 70, 10, 255),

@@ -297,9 +297,13 @@ class GameMechanics:
         tile = self.tiles_earned[0]
         tile.to_holding_area()
 
+    @property
+    def final_round(self):
+        return any(player.points >= 15 for player in game.players)
+
+
 def pieces_match(a, b):
     if a == b:
         return True
     return isinstance(a, Chip) and isinstance(b, Chip) \
            and a.chip_type == b.chip_type
-

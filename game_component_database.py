@@ -2,6 +2,7 @@ from chip_types import ChipType
 from colour_count import ColourCount, ChipStacks, PlayerChipStack, \
     PlayerCardStack
 from game_components import Chip, Card, Tile
+from utils import pieces_match
 
 from embody import EmbodyCardGridMixin, EmbodyCardDeckCountMixin, \
     EmbodyHoldingAreaMixin
@@ -53,8 +54,14 @@ class AbstractComponentDatabase:
         return self.__class__(self.components.copy())
 
     def remove_component(self, component):
+        # Returns a new instance of the same (sub)class, with <component> removed
+        # Raises IndexError if not found
+        components = self.components[:]
         for i, c in enumerate(self.components):
-
+            if pieces_match(c, component):
+                del(components[i])
+                return self.__class__(components)
+        raise IndexError
 
 
 class ComponentDatabase(AbstractComponentDatabase):

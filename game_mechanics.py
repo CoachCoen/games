@@ -8,6 +8,7 @@ from game_components import Chip, Card, Tile
 from states import ComponentStates, PlayerStates
 from game_move import Move, MoveType
 from game import game
+from utils import pieces_match, SplitIntoIncludedAndExcluded
 
 
 class GameMechanics:
@@ -190,12 +191,6 @@ class GameMechanics:
 
         return result
 
-    @staticmethod
-    def piece_in(piece, pieces):
-        return any(pieces_match(p, piece) for p in pieces)
-
-    def remove_pieces(self):
-
     def valid_pieces(self, current_player):
         # Tile in holding area
         if game.current_player.state == PlayerStates.tile_selected:
@@ -210,54 +205,27 @@ class GameMechanics:
         pieces_taken = game.components.filter(
             state=ComponentStates.in_holding_area)
 
-        # TODO: Refactor to make more Pythonic
-
-        # Some pieces taken, only allow moves
-        # which include the ones which have been taken
-
-        # Each potential move has 3 possible options
-        # 0. If any piece has been taken which is not part of this move:
-        #   return None
-        # 1. No required pieces
-        #    return all pieces which haven't been taken yet
-        # 2. Multiple required pieces
-        #   If all required pieces have been taken:
-        #       return all non-required pieces which haven't been taken yet
-        #   else (not all required pieces taken yet):
-        #       return all required pieces which haven't been taken yet
         result = set()
         for valid_move in valid_moves:
+            main_split = SplitIntoIncludedAndExcluded(valid_move.pieces, pieces_taken)
 
-            pieces_remaining = list(valid_move.pieces)
-            for taken in pieces_taken:
-                found = False
-                for i, remaining in enumerate(pieces_remaining):
-                    if pieces_match(taken, remaining):
-                        del (pieces_remaining[i])
-                        found = True
+            if main_split.excluded:
+                # Some/all of the pieces taken are not in this move, so can't make this move
+                continue
+
+            if valid_move.required:
+                required_split = SplitIntoIncludedAndExcluded(valid_move.required, pieces_taken)
+
+                # No non-required pieces have been taken and not all required pieces have been taken
+                if not required_split.excluded and required_split.remaining:
+                    for piece in required_split.remaining:
+                        result.add(piece)
                         continue
-                if not found:
-                    # Can't find this piece, so no longer a valid move
-                    pieces_remaining = []
-                    continue
 
-            if not valid_move.required or all_required_pieces_taken(required, pieces_taken):
-                for piece in pieces_remaining:
-                    if self.piece_in(piece, valid_move.required):
-                        result.add(piece)
-
-            else:
-                # At least one piece required, and not all required pieces taken
-                # Return the not-yet-taken required pieces
-                if all_required_pieces_taken(required, pieces_taken):
-
-
-            if valid_move.required and pieces_taken:
-                if all(self.piece_in(required, pieces_taken) for required in valid_move.required):
-                    for piece in pieces_remaining:
-                        result.add(piece)
-            else:
-
+            # Either no required pieces or all required pieces already taken. So can take the remaining pieces
+            # from this move
+            for piece in main_split.remaining:
+                result.add(piece)
 
         return result
 
@@ -333,10 +301,3 @@ class GameMechanics:
     @property
     def final_round(self):
         return any(player.points >= 15 for player in game.players)
-
-
-def pieces_match(a, b):
-    if a == b:
-        return True
-    return isinstance(a, Chip) and isinstance(b, Chip) \
-           and a.chip_type == b.chip_type

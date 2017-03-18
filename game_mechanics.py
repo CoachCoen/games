@@ -220,7 +220,11 @@ class GameMechanics:
                 if not required_split.excluded and required_split.remaining:
                     for piece in required_split.remaining:
                         result.add(piece)
-                        continue
+                    continue
+
+                # One or more non-required pieces taken and not all required pieces taken
+                if required_split.excluded and required_split.remaining:
+                   continue
 
             # Either no required pieces or all required pieces already taken. So can take the remaining pieces
             # from this move

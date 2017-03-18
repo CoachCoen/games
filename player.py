@@ -15,6 +15,7 @@ class Player(EmbodyPlayerMixin):
         PlayerStates.turn_valid,
         PlayerStates.tiles_offered,
         PlayerStates.tile_selected,
+        PlayerStates.too_many_chips,
         PlayerStates.turn_finished,
     ]
 
@@ -27,23 +28,6 @@ class Player(EmbodyPlayerMixin):
         dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_started,
              after=['ai_makes_move', 'show_state'],
              conditions='ai_player'),
-
-        # Take a component, if complete turn taken go to VALID, otherwise
-        # go to/stay in IN PROGRESS
-
-        # dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
-        #      dest=PlayerStates.turn_in_progress, unless='complete_turn_taken', after='show_state'),
-        # dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
-        #      dest=PlayerStates.turn_valid, conditions='complete_turn_taken', after='show_state'),
-
-        # Return a component, if empty selection go to STARTED, otherwise
-        # stay in IN PROGRESS
-        # dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_started,
-        #      conditions='empty_selection', after='show_state'),
-        # dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_in_progress,
-        #      unless='empty_selection', after='show_state'),
-
-        # Valid (set of components) selected - confirm/reject?
 
         # For AI players, if multiple tiles offered, AI should select on and then wait for confirmation
         dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tile_selected,
@@ -60,35 +44,36 @@ class Player(EmbodyPlayerMixin):
              conditions='earned_single_tile',
              before='_confirm_component_selection', after=['player_selects_single_tile', 'show_state']),
 
-        # If no tile available, go straight to the end of the turn
-        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.turn_finished,
-             conditions='earned_no_tiles',
+        # If no tile available, but taken too many chips, put some back first
+        # TODO: Automate this for the AI
+        dict(trigger='confirm', source=PlayerStates.turn_started,
+             dest=PlayerStates.turn_finished,
+             conditions=['earned_no_tiles', 'too_many_chips'],
              before='_confirm_component_selection', after='show_state'),
 
-        # dict(trigger='cancel', source=[PlayerStates.turn_started], dest=PlayerStates.turn_started,
-        #      after=['cancel_move_in_progress', 'show_state']),
+        # If no tile available, and not too many chips taken, go straight to the end of the turn
+        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.turn_finished,
+             conditions=['earned_no_tiles', 'not_too_many_chips'],
+             before='_confirm_component_selection', after='show_state'),
 
-        # Multiple nobles tiles offered, take one
-        dict(trigger='take_component', source=[PlayerStates.tiles_offered, PlayerStates.tile_selected],
-             dest=PlayerStates.tile_selected, after='show_state'),
-
-        # Confirm selected tile, end of turn
-        dict(trigger='confirm', source=PlayerStates.tile_selected, dest=PlayerStates.turn_finished,
+        # Confirm selected tile, if too many chips taken, put some back first
+        dict(trigger='confirm', source=PlayerStates.tiles_offered, dest=PlayerStates.turn_finished,
+             conditions=['too_many_chips'],
              before='_confirm_component_selection',
-             after='show_state'),   # TODO: Should this go straight back to .player_waiting ?
-
-        # Cancel selected tile
-        dict(trigger='cancel', source=PlayerStates.tile_selected, dest=PlayerStates.tiles_offered,
-             before='cancel_move_in_progress',
              after='show_state'),
 
-        # Return selected tile
-        dict(trigger='return_component', source=PlayerStates.tile_selected,
-             dest=PlayerStates.tiles_offered,
+        # Confirm selected tile, if not too many chips taken, end of turn
+        dict(trigger='confirm', source=PlayerStates.tiles_offered, dest=PlayerStates.turn_finished,
+             unless=['too_many_chips'],
+             before='_confirm_component_selection',
+             after='show_state'),
+
+        # Confirm selected chips to return, end of turn
+        dict(trigger='confirm', source=PlayerStates.too_many_chips, dest=PlayerStates.turn_finished,
+             before='_confirm_component_selection',
              after='show_state'),
 
         # Back to waiting
-        # TODO: Can we cut this out and go straight back to .player_waiting instead ?
         dict(trigger='wait', source=PlayerStates.turn_finished, dest=PlayerStates.player_waiting, after='show_state'),
     ]
 
@@ -192,6 +177,9 @@ class Player(EmbodyPlayerMixin):
 
     def too_many_chips(self):
         return self.chip_count() > 10
+
+    def not_too_many_chips(self):
+        return not self.too_many_chips()
 
     def _confirm_component_selection(self):
         holding_area_components = game.components.holding_area_components

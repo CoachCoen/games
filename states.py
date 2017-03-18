@@ -6,7 +6,7 @@ class PlayerStates:
     tiles_offered = 'tiles_offered'
     tile_selected = 'tile_selected'
     turn_finished = 'turn_finished'
-
+    too_many_chips = 'too_many_chips'
 
 class ComponentStates:
     in_supply = 'in_supply'

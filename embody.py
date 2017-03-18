@@ -36,8 +36,7 @@ class EmbodyChipStackMixin(AbstractEmbodyMixin):
                 game.buttons.add(
                     circle_location_to_rectangle(chip_location,
                                                  config.chip_size),
-                    ToDo([chip.to_holding_area,
-                          game.current_player.take_component])
+                    ToDo([chip.to_holding_area])
                 ).embody()
 
             draw_circle(chip_location, config.chip_size, chip_type)
@@ -107,11 +106,9 @@ class EmbodyTileMixin(AbstractEmbodyMixin):
         if game.mechanics.is_valid_action(game.current_player, self):
             game.buttons.add(
                 self.location.to_rectangle(config.tile_size),
-                ToDo([self.to_holding_area,
-                      game.current_player.take_component])
+                ToDo([self.to_holding_area])
                 if self.state == ComponentStates.in_supply
-                else ToDo([self.to_supply,
-                           game.current_player.return_component])
+                else ToDo([self.to_supply])
             ).embody()
 
 
@@ -142,7 +139,7 @@ class EmbodyChipMixin(AbstractEmbodyMixin):
         if game.components.holding_area_cards.is_empty:
             game.buttons.add(
                 circle_location_to_rectangle(self.location, config.chip_size),
-                ToDo([self.to_supply, game.current_player.return_component])
+                ToDo([self.to_supply])
             ).embody()
 
     def _draw(self):
@@ -201,13 +198,13 @@ class EmbodyCardMixin(AbstractEmbodyMixin):
             game.buttons.add(
                 self.location.to_rectangle(config.card_size),
                 ToDo(
-                    [self.to_holding_area, game.current_player.take_component]
+                    [self.to_holding_area]
                 )
             ).embody()
         elif self.state == ComponentStates.in_holding_area:
             game.buttons.add(
                 self.location.to_rectangle(config.card_size),
-                ToDo([self.move_back, game.current_player.return_component])
+                ToDo([self.move_back])
             ).embody()
 
     def draw(self):

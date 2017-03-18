@@ -24,49 +24,49 @@ class Player(EmbodyPlayerMixin):
              conditions='human_player'),
 
         # For AI players, select the move and take the (first) component
-        dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_valid,
+        dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_started,
              after=['ai_makes_move', 'show_state'],
              conditions='ai_player'),
 
         # Take a component, if complete turn taken go to VALID, otherwise
         # go to/stay in IN PROGRESS
 
-        dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
-             dest=PlayerStates.turn_in_progress, unless='complete_turn_taken', after='show_state'),
-        dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
-             dest=PlayerStates.turn_valid, conditions='complete_turn_taken', after='show_state'),
+        # dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
+        #      dest=PlayerStates.turn_in_progress, unless='complete_turn_taken', after='show_state'),
+        # dict(trigger='take_component', source=[PlayerStates.turn_started, PlayerStates.turn_in_progress],
+        #      dest=PlayerStates.turn_valid, conditions='complete_turn_taken', after='show_state'),
 
         # Return a component, if empty selection go to STARTED, otherwise
         # stay in IN PROGRESS
-        dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_started,
-             conditions='empty_selection', after='show_state'),
-        dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_in_progress,
-             unless='empty_selection', after='show_state'),
+        # dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_started,
+        #      conditions='empty_selection', after='show_state'),
+        # dict(trigger='return_component', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_in_progress,
+        #      unless='empty_selection', after='show_state'),
 
         # Valid (set of components) selected - confirm/reject?
 
         # For AI players, if multiple tiles offered, AI should select on and then wait for confirmation
-        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tile_selected,
+        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tile_selected,
              conditions=['ai_player', 'earned_multiple_tiles'],
              before='_confirm_component_selection', after=['ai_selects_tile', 'show_state']),
 
         # For human players, give player a chance to select a tile
-        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tiles_offered,
+        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tiles_offered,
              conditions=['human_player', 'earned_multiple_tiles'],
              before='_confirm_component_selection', after='show_state'),
 
         # For AI and human players, if one tile available, show and and wait for confirmation
-        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.tile_selected,
+        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tile_selected,
              conditions='earned_single_tile',
              before='_confirm_component_selection', after=['player_selects_single_tile', 'show_state']),
 
         # If no tile available, go straight to the end of the turn
-        dict(trigger='confirm', source=PlayerStates.turn_valid, dest=PlayerStates.turn_finished,
+        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.turn_finished,
              conditions='earned_no_tiles',
              before='_confirm_component_selection', after='show_state'),
 
-        dict(trigger='cancel', source=[PlayerStates.turn_in_progress, PlayerStates.turn_valid], dest=PlayerStates.turn_started,
-             after=['cancel_move_in_progress', 'show_state']),
+        # dict(trigger='cancel', source=[PlayerStates.turn_started], dest=PlayerStates.turn_started,
+        #      after=['cancel_move_in_progress', 'show_state']),
 
         # Multiple nobles tiles offered, take one
         dict(trigger='take_component', source=[PlayerStates.tiles_offered, PlayerStates.tile_selected],

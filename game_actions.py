@@ -48,5 +48,5 @@ class Cancel(AbstractAction):
     # TODO: Move this into the ToDo class?
     @staticmethod
     def activate():
-        game.current_player.cancel()
+        game.current_player.cancel_move_in_progress()
         return True

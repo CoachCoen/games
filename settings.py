@@ -52,6 +52,10 @@ class Config:
 
     player_points_location = Vector(player_area_size.x - 30, 5)
 
+    player_winner_message_location = Vector(player_area_size.x / 2 - 50,
+                                            player_area_size.y - 50)
+    player_winner_font_size = 36
+
     holding_area_size = Vector(350, 200)
     holding_area_location = Vector(1000, 300)
 

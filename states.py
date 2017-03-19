@@ -4,9 +4,10 @@ class PlayerStates:
     turn_in_progress = 'turn_in_progress'
     turn_valid = 'valid_turn'
     tiles_offered = 'tiles_offered'
-    tile_selected = 'tile_selected'
+    # tile_selected = 'tile_selected'
     turn_finished = 'turn_finished'
     too_many_chips = 'too_many_chips'
+
 
 class ComponentStates:
     in_supply = 'in_supply'

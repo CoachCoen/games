@@ -27,10 +27,27 @@ class GameMechanics:
         """
         return len(game.players)
 
+    @property
+    def winners(self):
+        # Most points
+        #   Tie breaker: least development cards
+        #       second 'tie breaker': these all win
+        high_score = max(player.points for player in game.players)
+        least_cards = min(player.card_count for player in game.players
+                          if player.points == high_score)
+        return [player for player in game.players
+                if player.points == high_score
+                and player.card_count == least_cards]
+
     def next_player(self):
         """
         Move to the next player
         """
+        if game.current_player.end_of_game():
+            game.current_player.wait()
+            game.finished = True
+            return
+
         i = game.players.index(game.current_player)
 
         # Current player now waiting for their next turn
@@ -192,13 +209,20 @@ class GameMechanics:
         return result
 
     def valid_pieces(self, current_player):
-        # Tile in holding area
-        if game.current_player.state == PlayerStates.tile_selected:
-            return set(game.components.holding_area_tiles)
+        # # Tile in holding area
+        # if game.current_player.state == PlayerStates.tile_selected:
+        #     return set(game.components.holding_area_tiles)
+
+        # End of game
+        if game.finished:
+            return []
 
         # Available tiles
         if game.current_player.state == PlayerStates.tiles_offered:
-            return set(self.tiles_earned)
+            if game.components.holding_area_tiles:
+                return set(game.components.holding_area_tiles)
+            else:
+                return set(self.tiles_earned)
 
         # Main body of turn - pick any valid game piece
         valid_moves = self.valid_moves(current_player)

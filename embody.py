@@ -282,6 +282,14 @@ class EmbodyPlayerMixin(AbstractEmbodyMixin):
                 player_order=self.player_order
             )
 
+        if game.finished and self in game.mechanics.winners:
+            draw_text(
+                list(config.player_winner_message_location),
+                font_size=config.player_winner_font_size,
+                text='Winner',
+                player_order = self.player_order
+            )
+
 
 class EmbodyPlayerChipStack(AbstractEmbodyMixin):
     # TODO: Lots of overlap with other chip count/stack embody methods
@@ -378,7 +386,8 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
         ).embody()
 
         if game.mechanics.turn_complete(game.current_player) \
-                or game.current_player.state == PlayerStates.tile_selected:
+                or (game.current_player.state == PlayerStates.tiles_offered
+                    and game.components.holding_area_tiles):
             game.buttons.add(
                 (
                     config.holding_area_location +

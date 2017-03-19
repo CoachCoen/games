@@ -239,6 +239,13 @@ class ComponentDatabase(AbstractComponentDatabase):
             player=player
         )
 
+    def cards_for_player(self, player):
+        return self.filter(
+            state=ComponentStates.in_player_area,
+            component_class=Card,
+            player=player
+        )
+
     def played_components_for_player(self, player):
         return self.filter(
             state=ComponentStates.in_player_area,

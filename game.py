@@ -14,6 +14,7 @@ class Game:
         self.buttons = None
         self.players = None
         self.mechanics = None
+        self.finished = False
 
     def init_game(self, players, buttons, components, mechanics):
         self.players = players

@@ -14,7 +14,7 @@ class Player(EmbodyPlayerMixin):
         PlayerStates.turn_in_progress,
         PlayerStates.turn_valid,
         PlayerStates.tiles_offered,
-        PlayerStates.tile_selected,
+        # PlayerStates.tile_selected,
         PlayerStates.too_many_chips,
         PlayerStates.turn_finished,
     ]
@@ -30,7 +30,7 @@ class Player(EmbodyPlayerMixin):
              conditions='ai_player'),
 
         # For AI players, if multiple tiles offered, AI should select on and then wait for confirmation
-        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tile_selected,
+        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tiles_offered,
              conditions=['ai_player', 'earned_multiple_tiles'],
              before='_confirm_component_selection', after=['ai_selects_tile', 'show_state']),
 
@@ -40,7 +40,7 @@ class Player(EmbodyPlayerMixin):
              before='_confirm_component_selection', after='show_state'),
 
         # For AI and human players, if one tile available, show and and wait for confirmation
-        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tile_selected,
+        dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tiles_offered,
              conditions='earned_single_tile',
              before='_confirm_component_selection', after=['player_selects_single_tile', 'show_state']),
 
@@ -180,6 +180,10 @@ class Player(EmbodyPlayerMixin):
 
     def not_too_many_chips(self):
         return not self.too_many_chips()
+
+    @property
+    def card_count(self):
+        return len(game.components.cards_for_player(self))
 
     def _confirm_component_selection(self):
         holding_area_components = game.components.holding_area_components

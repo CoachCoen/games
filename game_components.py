@@ -25,7 +25,8 @@ class AbstractGameComponent:
         dict(
             trigger='to_holding_area',
             source=[ComponentStates.in_supply,
-                    ComponentStates.in_reserved_area],
+                    ComponentStates.in_reserved_area,
+                    ComponentStates.in_player_area],
             dest=ComponentStates.in_holding_area,
             before='stash_state',
         ),

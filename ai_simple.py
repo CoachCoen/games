@@ -19,7 +19,7 @@ Flow
             * I then confirm the move, so I can see what happened
             * Or I could manually change the move
 """
-from random import choice
+from random import choice, shuffle
 from game import game
 from game_move import MoveType
 
@@ -65,3 +65,13 @@ class RandomAI(AbstractAI):
         tiles = game.mechanics.tiles_earned
         tile = choice(tiles)
         tile.to_holding_area()
+
+    def select_chips_to_return(self):
+        # Take one from each pile, chosen at random
+        number_to_return = game.current_player.chip_count() - 10
+        chips = game.components.chips_for_player(
+            game.current_player
+        ).components[:]
+        shuffle(chips)
+        for chip in chips[:number_to_return]:
+            chip.to_holding_area()

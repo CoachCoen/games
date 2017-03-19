@@ -45,10 +45,14 @@ class Player(EmbodyPlayerMixin):
              before='_confirm_component_selection', after=['player_selects_single_tile', 'show_state']),
 
         # If no tile available, but taken too many chips, put some back first
-        # TODO: Automate this for the AI
         dict(trigger='confirm', source=PlayerStates.turn_started,
-             dest=PlayerStates.turn_finished,
-             conditions=['earned_no_tiles', 'too_many_chips'],
+             dest=PlayerStates.too_many_chips,
+             conditions=['earned_no_tiles', 'too_many_chips', 'ai_player'],
+             before=['_confirm_component_selection', 'ai_selects_chips_to_return'], after='show_state'),
+
+        dict(trigger='confirm', source=PlayerStates.turn_started,
+             dest=PlayerStates.too_many_chips,
+             conditions=['earned_no_tiles', 'too_many_chips', 'human_player'],
              before='_confirm_component_selection', after='show_state'),
 
         # If no tile available, and not too many chips taken, go straight to the end of the turn
@@ -57,7 +61,7 @@ class Player(EmbodyPlayerMixin):
              before='_confirm_component_selection', after='show_state'),
 
         # Confirm selected tile, if too many chips taken, put some back first
-        dict(trigger='confirm', source=PlayerStates.tiles_offered, dest=PlayerStates.turn_finished,
+        dict(trigger='confirm', source=PlayerStates.tiles_offered, dest=PlayerStates.too_many_chips,
              conditions=['too_many_chips'],
              before='_confirm_component_selection',
              after='show_state'),
@@ -96,6 +100,9 @@ class Player(EmbodyPlayerMixin):
 
     def ai_selects_tile(self):
         self.AI.select_tile()
+
+    def ai_selects_chips_to_return(self):
+        self.AI.select_chips_to_return()
 
     def player_selects_single_tile(self):
         game.mechanics.player_selects_single_tile()
@@ -173,9 +180,11 @@ class Player(EmbodyPlayerMixin):
         return game.mechanics.points_for_player(self)
 
     def chip_count(self):
-        return len(game.components.chips_for_player(self))
+        return len(game.components.chips_for_player(self)) + \
+               len(game.components.holding_area_chips)
 
     def too_many_chips(self):
+        print("%s chips for %s" % (self.chip_count(), self.name))
         return self.chip_count() > 10
 
     def not_too_many_chips(self):

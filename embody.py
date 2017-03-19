@@ -293,6 +293,7 @@ class EmbodyPlayerMixin(AbstractEmbodyMixin):
 
 class EmbodyPlayerChipStack(AbstractEmbodyMixin):
     # TODO: Lots of overlap with other chip count/stack embody methods
+    # TODO: Split out into embody() and draw()?
     def embody(self, player):
         for i, chip_type in enumerate(
                 [c for c in ChipType if c in self.colour_count]
@@ -317,6 +318,14 @@ class EmbodyPlayerChipStack(AbstractEmbodyMixin):
                     player_order=player.player_order,
 
                 )
+
+                if player.state == PlayerStates.too_many_chips:
+                    chips = game.components.chips_for_player(player).filter(chip_type==chip_type).components
+                    if chips:
+                        game.buttons.add(
+                            chip_location.to_rectangle(config.chip_size * config.player_chip_stack_scaling),
+                            ToDo([chips[0].to_holding_area])
+                        ).embody()
 
 
 class EmbodyPlayerCardStack(AbstractEmbodyMixin):
@@ -349,6 +358,7 @@ class EmbodyPlayerCardStack(AbstractEmbodyMixin):
                     player_order=player.player_order,
 
                 )
+
 
 
 class EmbodyButtonMixin:
@@ -396,6 +406,13 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
                 Confirm(),
                 text='Confirm'
             ).embody()
+
+        if game.current_player.state == PlayerStates.too_many_chips:
+            draw_text(
+                config.holding_area_location +
+                config.holding_area_too_many_chips_location,
+                text="Too many chips - return some"
+            )
 
     @staticmethod
     def _draw_holding_area():

@@ -64,6 +64,7 @@ class Config:
     holding_area_chips_location = Vector(150, 30)
     holding_area_name_location = Vector(5, 5)
     holding_area_chip_scaling = 1
+    holding_area_too_many_chips_location = Vector(30, 120)
 
     button_text_location = Vector(5, 5)
     # TODO: Dynamically determine button size

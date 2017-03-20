@@ -11,74 +11,68 @@ class Player(EmbodyPlayerMixin):
     states = [
         PlayerStates.player_waiting,
         PlayerStates.turn_started,
-        PlayerStates.turn_in_progress,
-        PlayerStates.turn_valid,
         PlayerStates.tiles_offered,
-        # PlayerStates.tile_selected,
         PlayerStates.too_many_chips,
         PlayerStates.turn_finished,
     ]
 
     transitions = [
         # Start a player's turn
-        dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_started, after=['show_state'],
+        dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_started,
              conditions='human_player'),
 
         # For AI players, select the move and take the (first) component
         dict(trigger='start', source=PlayerStates.player_waiting, dest=PlayerStates.turn_started,
-             after=['ai_makes_move', 'show_state'],
+             after=['ai_makes_move'],
              conditions='ai_player'),
 
         # For AI players, if multiple tiles offered, AI should select on and then wait for confirmation
         dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tiles_offered,
              conditions=['ai_player', 'earned_multiple_tiles'],
-             before='_confirm_component_selection', after=['ai_selects_tile', 'show_state']),
+             before='_confirm_component_selection', after=['ai_selects_tile']),
 
         # For human players, give player a chance to select a tile
         dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tiles_offered,
              conditions=['human_player', 'earned_multiple_tiles'],
-             before='_confirm_component_selection', after='show_state'),
+             before='_confirm_component_selection'),
 
         # For AI and human players, if one tile available, show and and wait for confirmation
         dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.tiles_offered,
              conditions='earned_single_tile',
-             before='_confirm_component_selection', after=['player_selects_single_tile', 'show_state']),
+             before='_confirm_component_selection', after=['player_selects_single_tile']),
 
         # If no tile available, but taken too many chips, put some back first
         dict(trigger='confirm', source=PlayerStates.turn_started,
              dest=PlayerStates.too_many_chips,
              conditions=['earned_no_tiles', 'too_many_chips', 'ai_player'],
-             before=['_confirm_component_selection', 'ai_selects_chips_to_return'], after='show_state'),
+             before=['_confirm_component_selection', 'ai_selects_chips_to_return']),
 
         dict(trigger='confirm', source=PlayerStates.turn_started,
              dest=PlayerStates.too_many_chips,
              conditions=['earned_no_tiles', 'too_many_chips', 'human_player'],
-             before='_confirm_component_selection', after='show_state'),
+             before='_confirm_component_selection'),
 
         # If no tile available, and not too many chips taken, go straight to the end of the turn
         dict(trigger='confirm', source=PlayerStates.turn_started, dest=PlayerStates.turn_finished,
              conditions=['earned_no_tiles', 'not_too_many_chips'],
-             before='_confirm_component_selection', after='show_state'),
+             before='_confirm_component_selection'),
 
         # Confirm selected tile, if too many chips taken, put some back first
         dict(trigger='confirm', source=PlayerStates.tiles_offered, dest=PlayerStates.too_many_chips,
              conditions=['too_many_chips'],
-             before='_confirm_component_selection',
-             after='show_state'),
+             before='_confirm_component_selection'),
 
         # Confirm selected tile, if not too many chips taken, end of turn
         dict(trigger='confirm', source=PlayerStates.tiles_offered, dest=PlayerStates.turn_finished,
              unless=['too_many_chips'],
-             before='_confirm_component_selection',
-             after='show_state'),
+             before='_confirm_component_selection'),
 
         # Confirm selected chips to return, end of turn
         dict(trigger='confirm', source=PlayerStates.too_many_chips, dest=PlayerStates.turn_finished,
-             before='_confirm_component_selection',
-             after='show_state'),
+             before='_confirm_component_selection'),
 
         # Back to waiting
-        dict(trigger='wait', source=PlayerStates.turn_finished, dest=PlayerStates.player_waiting, after='show_state'),
+        dict(trigger='wait', source=PlayerStates.turn_finished, dest=PlayerStates.player_waiting),
     ]
 
     def __init__(self, name, AI, player_order):
@@ -115,10 +109,10 @@ class Player(EmbodyPlayerMixin):
 
     def cancel_move_in_progress(self):
         for component in game.components.holding_area_components:
-            component.move_back()
-
-    def show_state(self):
-        game.mechanics.show_state()
+            if game.current_player.state == PlayerStates.too_many_chips:
+                component.to_player_area()
+            else:
+                component.move_back()
 
     def human_player(self):
         return game.current_player.is_human
@@ -179,6 +173,14 @@ class Player(EmbodyPlayerMixin):
     def points(self):
         return game.mechanics.points_for_player(self)
 
+    @property
+    def chip_count_in_hand(self):
+        return len(game.components.chips_for_player(self))
+
+    @property
+    def too_many_chips_in_hand(self):
+        return self.chip_count_in_hand > 10
+
     def chip_count(self):
         return len(game.components.chips_for_player(self)) + \
                len(game.components.holding_area_chips)
@@ -199,6 +201,11 @@ class Player(EmbodyPlayerMixin):
         reserved = (game.components.holding_area_chips.count_for_colour(ChipType.yellow_gold) > 0)
 
         for c in holding_area_components:
+            if game.current_player.state == PlayerStates.too_many_chips:
+                c.player = None
+                c.to_supply()
+                continue
+
             c.player = game.current_player
             if isinstance(c, Card):
                 if reserved:

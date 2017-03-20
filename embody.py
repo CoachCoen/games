@@ -139,7 +139,8 @@ class EmbodyChipMixin(AbstractEmbodyMixin):
         if game.components.holding_area_cards.is_empty:
             game.buttons.add(
                 circle_location_to_rectangle(self.location, config.chip_size),
-                ToDo([self.to_supply])
+                ToDo([self.to_supply if game.current_player.state == PlayerStates.turn_started
+                      else self.to_player_area])
             ).embody()
 
     def _draw(self):
@@ -304,12 +305,23 @@ class EmbodyPlayerChipStack(AbstractEmbodyMixin):
                                          config.player_chip_stack_scaling *
                                          config.chip_size, 0)
 
+                if player.state == PlayerStates.too_many_chips and player.too_many_chips_in_hand:
+                    chips = game.components.chips_for_player(player).filter(chip_type=chip_type).components
+                    if chips:
+                        chip_size = config.chip_size * config.player_chip_stack_scaling
+                        # TODO: Tidy this up?
+                        game.buttons.add(
+                            (chip_location - Vector(chip_size, chip_size)).to_rectangle(Vector(chip_size * 2, chip_size * 2)),
+                            ToDo([chips[0].to_holding_area])
+                        ).embody()
+
                 draw_circle(
                     chip_location,
                     config.chip_size * config.player_chip_stack_scaling,
                     chip_type,
                     player_order=player.player_order,
                 )
+
                 draw_text(
                     location=chip_location - Vector(4, 6),
                     text=str(self.colour_count[chip_type]),
@@ -318,14 +330,6 @@ class EmbodyPlayerChipStack(AbstractEmbodyMixin):
                     player_order=player.player_order,
 
                 )
-
-                if player.state == PlayerStates.too_many_chips:
-                    chips = game.components.chips_for_player(player).filter(chip_type==chip_type).components
-                    if chips:
-                        game.buttons.add(
-                            chip_location.to_rectangle(config.chip_size * config.player_chip_stack_scaling),
-                            ToDo([chips[0].to_holding_area])
-                        ).embody()
 
 
 class EmbodyPlayerCardStack(AbstractEmbodyMixin):
@@ -375,7 +379,7 @@ class EmbodyButtonMixin:
 class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
 
     def embody(self):
-        if self.is_empty:
+        if self.is_empty and game.current_player.state is not PlayerStates.too_many_chips:
             return
 
         self._draw_holding_area()
@@ -387,17 +391,21 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
             tile.embody()
 
         # if game.current_player.state in [PlayerStates.turn_in_progress, PlayerStates.turn_valid]:
-        game.buttons.add(
-            (
-                config.holding_area_location + config.cancel_button_location
-            ).to_rectangle(config.button_size),
-            Cancel(),
-            text='Cancel'
-        ).embody()
+        if not self.is_empty:
+            game.buttons.add(
+                (
+                    config.holding_area_location + config.cancel_button_location
+                ).to_rectangle(config.button_size),
+                Cancel(),
+                text='Cancel'
+            ).embody()
 
-        if game.mechanics.turn_complete(game.current_player) \
+        if (game.current_player.state == PlayerStates.turn_started
+            and game.mechanics.turn_complete(game.current_player)) \
                 or (game.current_player.state == PlayerStates.tiles_offered
-                    and game.components.holding_area_tiles):
+                    and game.components.holding_area_tiles) \
+                or (game.current_player.state == PlayerStates.too_many_chips
+                    and not game.current_player.too_many_chips_in_hand):
             game.buttons.add(
                 (
                     config.holding_area_location +

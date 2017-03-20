@@ -66,24 +66,6 @@ class GameMechanics:
     def points_for_player(self, player):
         return game.components.played_components_for_player(player).player_points
 
-    def show_state(self):
-        # TODO: Remove this - for development only
-        print(", ".join(["%s: %s" % (player.name, player.state)
-                         for player in game.players]))
-
-    # @property
-    # def earned_multiple_tiles(self):
-    #     return len(self.earned_tiles) > 1
-    #
-    # @property
-    # def earned_single_tile(self):
-    #     return len(self.earned_tiles) == 1
-    #
-    # @property
-    # def earned_tiles(self):
-    #     return []
-    #
-
     @property
     def is_turn_complete(self):
         return game.mechanics.turn_complete(game.current_player)
@@ -215,6 +197,9 @@ class GameMechanics:
 
         # End of game
         if game.finished:
+            return []
+
+        if game.current_player.state == PlayerStates.too_many_chips:
             return []
 
         # Available tiles

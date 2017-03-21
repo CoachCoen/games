@@ -339,10 +339,14 @@ class EmbodyPlayerCardStack(AbstractEmbodyMixin):
                 [c for c in ChipType if c in self.colour_count]
         ):
             if self.colour_count[chip_type]:
-                location = config.player_card_deck_location \
-                                + Vector(i * 2.5 *
+                location = config.player_chip_stack_location \
+                                + Vector((i - 0.4) * 2.5 *
                                          config.player_chip_stack_scaling *
-                                         config.chip_size, 0)
+                                         config.chip_size,
+                                         1.5 *
+                                         config.player_chip_stack_scaling *
+                                         config.chip_size
+                                         )
 
                 draw_rectangle(
                     location.to_rectangle(
@@ -355,7 +359,7 @@ class EmbodyPlayerCardStack(AbstractEmbodyMixin):
                     player_order=player.player_order,
                 )
                 draw_text(
-                    location=location - Vector(4, 6),
+                    location=location + Vector(6, 3),
                     text=str(self.colour_count[chip_type]),
                     text_colour=chip_type,
                     reverse_colour=True,

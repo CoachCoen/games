@@ -186,7 +186,6 @@ class Player(EmbodyPlayerMixin):
                len(game.components.holding_area_chips)
 
     def too_many_chips(self):
-        print("%s chips for %s" % (self.chip_count(), self.name))
         return self.chip_count() > 10
 
     def not_too_many_chips(self):

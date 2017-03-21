@@ -21,6 +21,7 @@ class Game:
         self.components = components
         self.buttons = buttons
         self.mechanics = mechanics
+        self.mechanics.init_components()
 
     @property
     def last_player(self):

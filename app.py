@@ -6,7 +6,6 @@ import pygame
 
 from graphics import easel
 from game_component_database import ComponentDatabase
-from game_component_factories import ComponentCollectionFactory
 from player import Player
 from settings import config
 from buttons import ButtonCollection
@@ -18,7 +17,7 @@ from game_mechanics import GameMechanics
 def init_game(player_details):
     """
     Create players, table and holding area
-    :param player_details: list of (player name, player's AI)
+    :param player_details: list of (name, AI/None)
     """
     players = [
         Player(
@@ -35,13 +34,7 @@ def init_game(player_details):
         mechanics=GameMechanics()
     )
 
-    # TODO: Move this initialisation into game.init_game
-    # TODO: Remove dependency injection?
-    game.mechanics.init_components(
-        component_collection_factory=ComponentCollectionFactory()
-    )
-
-    # player[0] is the start player
+    # Make player[0] the start player
     game.current_player = game.players[0]
     game.current_player.start()
 

@@ -4,6 +4,7 @@ from random import shuffle
 from component_setup_data import raw_tile_data, raw_card_data
 from chip_types import ChipType
 from game_components import Chip, Card, Tile
+from game_component_factories import ComponentCollectionFactory
 
 from states import ComponentStates, PlayerStates
 from game_move import Move, MoveType
@@ -70,7 +71,8 @@ class GameMechanics:
     def is_turn_complete(self):
         return game.mechanics.turn_complete(game.current_player)
 
-    def init_components(self, component_collection_factory):
+    def init_components(self):
+        component_collection_factory = ComponentCollectionFactory()
         player_count = len(game.players)
 
         components = component_collection_factory('card', raw_card_data)

@@ -44,6 +44,8 @@ class GameMechanics:
         """
         Move to the next player
         """
+        self._valid_moves = None
+
         if game.current_player.end_of_game():
             game.current_player.wait()
             game.finished = True
@@ -60,9 +62,8 @@ class GameMechanics:
         except IndexError:
             game.current_player = game.players[0]
 
-        self._valid_moves = None
 
-        game.current_player.start()
+        # game.current_player.start()
 
     def points_for_player(self, player):
         return game.components.played_components_for_player(player).player_points

@@ -10,7 +10,7 @@ class Game:
     """
     def __init__(self):
         self.components = None
-        self.current_player = None
+        self._current_player = None
         self.buttons = None
         self.players = None
         self.mechanics = None
@@ -22,6 +22,15 @@ class Game:
         self.buttons = buttons
         self.mechanics = mechanics
         self.mechanics.init_components()
+
+    @property
+    def current_player(self):
+        return self._current_player
+
+    @current_player.setter
+    def current_player(self, player):
+        self._current_player = player
+        player.start()
 
     @property
     def last_player(self):

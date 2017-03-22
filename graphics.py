@@ -219,8 +219,11 @@ class Easel:
         self.surface = None
         self._card_image = None
 
-    def init_easel(self, surface):
-        self.surface = surface
+    def init_easel(self):
+        self.surface = pygame.display.set_mode(
+            list(config.tabletop_size * config.scaling_factor),
+            pygame.HWSURFACE | pygame.DOUBLEBUF
+        )
 
     def colour(self, name):
         return self.colour_palette[name]

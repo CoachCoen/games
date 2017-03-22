@@ -7,7 +7,6 @@ import pygame
 from graphics import easel
 from game_component_database import ComponentDatabase
 from player import Player
-from settings import config
 from buttons import ButtonCollection
 from ai_simple import RandomAI
 from game import game
@@ -34,33 +33,26 @@ def init_game(player_details):
         mechanics=GameMechanics()
     )
 
-    # Make player[0] the start player
     game.current_player = game.players[0]
-    game.current_player.start()
 
 
 class App:
+    """
+    pygame app
+    """
     def __init__(self):
         self._running = True
-        self._display_surf = None
 
     def on_init(self):
         """
         Initialisation, called before the main game loop
         """
         pygame.init()
-        self._display_surf = pygame.display.set_mode(
-            list(config.tabletop_size * config.scaling_factor),
-            pygame.HWSURFACE | pygame.DOUBLEBUF
-        )
-        easel.init_easel(self._display_surf)
+
+        easel.init_easel()
 
         init_game(
             player_details=[
-                # ('Caroline', None),
-                # ('Nigel', None),
-                # ('Issie', None),
-                # ('Coen', None),
                 ('Caroline', RandomAI()),
                 ('Nigel', RandomAI()),
                 ('Issie', RandomAI()),
@@ -85,6 +77,7 @@ class App:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
             self._running = False
 
+        # Respond to mouse clicks
         if event.type == pygame.MOUSEBUTTONUP:
             game.buttons.process_mouse_click(pygame.mouse.get_pos())
 

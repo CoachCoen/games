@@ -1,5 +1,5 @@
 """
-Main module - game initialisation and flow
+Main module - game initialisation and (pygame) flow
 """
 
 import pygame
@@ -16,7 +16,9 @@ from game_mechanics import GameMechanics
 def init_game(player_details):
     """
     Create players, table and holding area
-    :param player_details: list of (name, AI/None)
+
+    :param player_details player_list: the players
+    :type player_list: list(tuple(player name, AI/None))
     """
     players = [
         Player(
@@ -67,8 +69,10 @@ class App:
 
     def on_event(self, event):
         """
-        Process a pygame event
-        :param event: the event
+            Process a pygame event
+
+            :param `pygame.event.EventType` event: the event to process
+            :param str sender: The person sending the message
         """
         if event.type == pygame.QUIT:
             self._running = False

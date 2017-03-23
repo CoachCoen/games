@@ -7,6 +7,9 @@ class Vector:
         yield self.x
         yield self.y
 
+    def __getitem__(self, item):
+        return (self.x, self.y)[item]
+
     def to_rectangle(self, size):
         return list(self) + list(size)
 

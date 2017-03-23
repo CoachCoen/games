@@ -1,0 +1,293 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to Python games’s documentation! &#8212; Python games 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-python-games-s-documentation">
+<h1>Welcome to Python games&#8217;s documentation!<a class="headerlink" href="#welcome-to-python-games-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+<div class="section" id="modules">
+<h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-app">
+<span id="app-main-module"></span><h2>app (main module)<a class="headerlink" href="#module-app" title="Permalink to this headline">¶</a></h2>
+<p>Main module - game initialisation and (pygame) flow</p>
+<dl class="class">
+<dt id="app.App">
+<em class="property">class </em><code class="descclassname">app.</code><code class="descname">App</code><a class="headerlink" href="#app.App" title="Permalink to this definition">¶</a></dt>
+<dd><p>pygame app</p>
+<dl class="staticmethod">
+<dt id="app.App.on_cleanup">
+<em class="property">static </em><code class="descname">on_cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#app.App.on_cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after main game loop,
+any clean up actions</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="app.App.on_event">
+<code class="descname">on_event</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="headerlink" href="#app.App.on_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process a pygame event</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event</strong> (<em>pygame.event.EventType</em>) &#8211; the event to process</li>
+<li><strong>sender</strong> (<em>str</em>) &#8211; The person sending the message</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="app.App.on_execute">
+<code class="descname">on_execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#app.App.on_execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main code - initialise, main game loop, clean up</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="app.App.on_init">
+<code class="descname">on_init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#app.App.on_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialisation, called before the main game loop</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="app.init_game">
+<code class="descclassname">app.</code><code class="descname">init_game</code><span class="sig-paren">(</span><em>player_details</em><span class="sig-paren">)</span><a class="headerlink" href="#app.init_game" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create players, table and holding area</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>player_list</strong> (<em>list</em><em>(</em><em>tuple</em><em>(</em><em>player name</em><em>, </em><em>AI/None</em><em>)</em><em></em><em>)</em><em></em>) &#8211; the players</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-buttons">
+<span id="buttons-clickable-screen-areas"></span><h2>buttons (clickable screen areas)<a class="headerlink" href="#module-buttons" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="buttons.Button">
+<em class="property">class </em><code class="descclassname">buttons.</code><code class="descname">Button</code><span class="sig-paren">(</span><em>rectangle</em>, <em>action</em>, <em>player_order=None</em><span class="sig-paren">)</span><a class="headerlink" href="#buttons.Button" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines an action to be executed when a mouse click
+happens inside a specific rectangle (relative to a player&#8217;s
+area, if specified)</p>
+<dl class="method">
+<dt id="buttons.Button.clicked">
+<code class="descname">clicked</code><span class="sig-paren">(</span><em>mouse_position</em><span class="sig-paren">)</span><a class="headerlink" href="#buttons.Button.clicked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Was the mouse clicked within this button&#8217;s rectangle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mouse_position</strong> (<cite>int x, int y</cite>) &#8211; The position of the mouse click</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if this button was clicked on</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="buttons.Button.embody">
+<code class="descname">embody</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#buttons.Button.embody" title="Permalink to this definition">¶</a></dt>
+<dd><p>Embody (draw) the button</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="buttons.Button.scaled_rectangle">
+<code class="descname">scaled_rectangle</code><a class="headerlink" href="#buttons.Button.scaled_rectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Slightly larger version of the button area.
+Used to draw a line around the game piece, to show it is a button</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">slightly larger version of self.rectangle</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">vector.Vector</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="buttons.ButtonCollection">
+<em class="property">class </em><code class="descclassname">buttons.</code><code class="descname">ButtonCollection</code><a class="headerlink" href="#buttons.ButtonCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of buttons - which can respond to a mouse click by
+executing the action which corresponds with the mouse&#8217;s location</p>
+<dl class="method">
+<dt id="buttons.ButtonCollection.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>rectangle</em>, <em>action</em>, <em>text=None</em>, <em>player_order=None</em><span class="sig-paren">)</span><a class="headerlink" href="#buttons.ButtonCollection.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a button, as specified, to this collection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>rectangle</strong> &#8211; The area which will respond to a mouse click</li>
+<li><strong>action</strong> &#8211; (subclass of AbstractAction) action to take
+when mouse is clicked</li>
+<li><strong>text</strong> &#8211; If specified, show this as an actual button,
+including the text</li>
+<li><strong>player_order</strong> (<em>int</em>) &#8211; If specified, show in the specified
+player corner</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the button (class Button) that this created</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Button/VisibleButton</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="buttons.ButtonCollection.process_mouse_click">
+<code class="descname">process_mouse_click</code><span class="sig-paren">(</span><em>mouse_position</em><span class="sig-paren">)</span><a class="headerlink" href="#buttons.ButtonCollection.process_mouse_click" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Process the action for any button in self.buttons with the mouse click</dt>
+<dd>position inside the button&#8217;s rectangle</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mouse_position</strong> &#8211; The (x, y) coordinates of the mouse</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="buttons.VisibleButton">
+<em class="property">class </em><code class="descclassname">buttons.</code><code class="descname">VisibleButton</code><span class="sig-paren">(</span><em>rectangle</em>, <em>action</em>, <em>text</em>, <em>player_order</em><span class="sig-paren">)</span><a class="headerlink" href="#buttons.VisibleButton" title="Permalink to this definition">¶</a></dt>
+<dd><p>A conventional button: rectangle with text</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to Python games&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+<li><a class="reference internal" href="#modules">Modules</a><ul>
+<li><a class="reference internal" href="#module-app">app (main module)</a></li>
+<li><a class="reference internal" href="#module-buttons">buttons (clickable screen areas)</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Coen de Groot.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

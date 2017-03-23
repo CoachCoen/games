@@ -46,3 +46,9 @@ game (the game state)
 ---------------------
 .. automodule:: game
    :members:
+
+
+game_actions (what happens when you press a button)
+---------------------------------------------------
+.. automodule:: game_actions
+   :members:

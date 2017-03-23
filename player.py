@@ -103,12 +103,12 @@ class Player(EmbodyPlayerMixin):
     def on_enter_turn_finished(self):
         game.mechanics.next_player()
 
-    def cancel_move_in_progress(self):
-        for component in game.components.holding_area_components:
-            if game.current_player.state == PlayerStates.too_many_chips:
-                component.to_player_area()
-            else:
-                component.move_back()
+    # def cancel_move_in_progress(self):
+    #     for component in game.components.holding_area_components:
+    #         if game.current_player.state == PlayerStates.too_many_chips:
+    #             component.to_player_area()
+    #         else:
+    #             component.move_back()
 
     def human_player(self):
         return game.current_player.is_human

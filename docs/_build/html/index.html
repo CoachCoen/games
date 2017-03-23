@@ -385,6 +385,69 @@ other game mechanics</li>
 </dd></dl>
 
 </div>
+<div class="section" id="module-game_actions">
+<span id="game-actions-what-happens-when-you-press-a-button"></span><h2>game_actions (what happens when you press a button)<a class="headerlink" href="#module-game_actions" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="game_actions.Cancel">
+<em class="property">class </em><code class="descclassname">game_actions.</code><code class="descname">Cancel</code><a class="headerlink" href="#game_actions.Cancel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancel the user&#8217;s action - return the pieces to their original location</p>
+<dl class="staticmethod">
+<dt id="game_actions.Cancel.activate">
+<em class="property">static </em><code class="descname">activate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#game_actions.Cancel.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the pieces to where they came from</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True, to trigger a screen redraw</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="game_actions.Confirm">
+<em class="property">class </em><code class="descclassname">game_actions.</code><code class="descname">Confirm</code><a class="headerlink" href="#game_actions.Confirm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirm the user&#8217;s action</p>
+<dl class="staticmethod">
+<dt id="game_actions.Confirm.activate">
+<em class="property">static </em><code class="descname">activate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#game_actions.Confirm.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirm the user&#8217;s action (selected pieces)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True, to trigger a screen redraw</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="game_actions.ToDo">
+<em class="property">class </em><code class="descclassname">game_actions.</code><code class="descname">ToDo</code><span class="sig-paren">(</span><em>actions</em><span class="sig-paren">)</span><a class="headerlink" href="#game_actions.ToDo" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of things to do when a button gets pressed</p>
+<dl class="method">
+<dt id="game_actions.ToDo.activate">
+<code class="descname">activate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#game_actions.ToDo.activate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute all the callables</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True, to trigger a screen redraw</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -402,6 +465,7 @@ other game mechanics</li>
 <li><a class="reference internal" href="#module-buttons">buttons (clickable screen areas)</a></li>
 <li><a class="reference internal" href="#module-colour_count">colour_count (how many chips of each type do we have)</a></li>
 <li><a class="reference internal" href="#module-game">game (the game state)</a></li>
+<li><a class="reference internal" href="#module-game_actions">game_actions (what happens when you press a button)</a></li>
 </ul>
 </li>
 </ul>

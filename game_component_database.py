@@ -1,4 +1,4 @@
-from chip_types import ChipType
+from util_classes import ChipType
 from colour_count import ColourCount, ChipStacks, PlayerChipStack, \
     PlayerCardStack
 from game_components import Chip, Card, Tile
@@ -7,7 +7,7 @@ from utils import pieces_match
 from embody import EmbodyCardGridMixin, EmbodyCardDeckCountMixin, \
     EmbodyHoldingAreaMixin
 
-from states import ComponentStates
+from util_classes import ComponentStates
 
 
 class CardGrid(EmbodyCardGridMixin):

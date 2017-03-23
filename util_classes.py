@@ -1,10 +1,22 @@
+from enum import Enum
+
+
+class ChipType(Enum):
+    """
+    The different types of chips/jewels
+    """
+    green_emerald = 1
+    blue_sapphire = 2
+    red_ruby = 3
+    white_diamond = 4
+    black_onyx = 5
+    yellow_gold = 6
+
+
 class PlayerStates:
     player_waiting = 'waiting_for_turn'
     turn_started = 'turn_started'
-    # turn_in_progress = 'turn_in_progress'
-    # turn_valid = 'valid_turn'
     tiles_offered = 'tiles_offered'
-    # tile_selected = 'tile_selected'
     turn_finished = 'turn_finished'
     too_many_chips = 'too_many_chips'
 

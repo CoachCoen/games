@@ -6,7 +6,7 @@
 from transitions import Machine
 
 from embody import EmbodyTileMixin, EmbodyChipMixin, EmbodyCardMixin
-from states import ComponentStates
+from util_classes import ComponentStates
 
 
 class AbstractGameComponent:

@@ -2,14 +2,14 @@ from itertools import combinations
 from random import shuffle
 
 from component_setup_data import raw_tile_data, raw_card_data
-from chip_types import ChipType
-from game_components import Chip, Card, Tile
+from util_classes import ChipType
+from game_components import Chip, Card
 from game_component_factories import ComponentCollectionFactory
 
-from states import ComponentStates, PlayerStates
+from util_classes import ComponentStates, PlayerStates
 from game_move import Move, MoveType
 from game import game
-from utils import pieces_match, SplitIntoIncludedAndExcluded
+from utils import SplitIntoIncludedAndExcluded
 
 
 class GameMechanics:
@@ -61,9 +61,6 @@ class GameMechanics:
             game.current_player = game.players[i + 1]
         except IndexError:
             game.current_player = game.players[0]
-
-
-        # game.current_player.start()
 
     def points_for_player(self, player):
         return game.components.played_components_for_player(player).player_points

@@ -1,7 +1,7 @@
 import unittest
 
 from game_components import ComponentCollectionFactory
-from chip_types import ChipType
+from util_classes import ChipType
 
 
 class TestGameObjects(unittest.TestCase):

@@ -6,7 +6,7 @@ from game import game
 from game_component_database import ComponentDatabase
 from game_move import MoveType, Move
 from game_components import Chip
-from chip_types import ChipType
+from util_classes import ChipType
 from states import ComponentStates
 
 

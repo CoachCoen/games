@@ -1,7 +1,6 @@
 from settings import config
 from vector import Vector
-from chip_types import ChipType
-from states import PlayerStates
+from util_classes import ChipType, PlayerStates, ComponentStates
 
 from graphics import draw_rectangle, draw_text, \
     draw_circle, draw_card
@@ -9,10 +8,6 @@ from graphics import ColourPalette, circle_location_to_rectangle, \
     grow_rectangle, translate_to_player
 
 from game_actions import Cancel, Confirm
-    # , CancelTile, ConfirmTile
-
-from states import ComponentStates
-
 from game import game
 from game_actions import ToDo
 

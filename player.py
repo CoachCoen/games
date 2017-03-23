@@ -1,8 +1,7 @@
 from transitions import Machine
 
-from chip_types import ChipType
+from util_classes import ChipType, PlayerStates
 from game import game
-from states import PlayerStates
 from embody import EmbodyPlayerMixin
 from game_components import Card
 

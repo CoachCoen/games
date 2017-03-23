@@ -1,7 +1,7 @@
 from utils import chip_type_for_colour_name
 from embody import EmbodyChipStackMixin, EmbodyChipCostMixin, \
     EmbodyPlayerChipStack, EmbodyPlayerCardStack
-from chip_types import ChipType
+from util_classes import ChipType
 
 
 class ColourCount:

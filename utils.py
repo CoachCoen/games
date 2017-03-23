@@ -1,4 +1,4 @@
-from chip_types import ChipType
+from util_classes import ChipType
 from game_components import Chip
 
 

@@ -2,7 +2,7 @@ import pygame
 from enum import Enum
 
 from settings import config
-from chip_types import ChipType
+from util_classes import ChipType
 from vector import Vector
 
 

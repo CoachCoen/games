@@ -228,6 +228,95 @@ player corner</li>
 </dd></dl>
 
 </div>
+<div class="section" id="module-colour_count">
+<span id="colour-count-how-many-chips-of-each-type-do-we-have"></span><h2>colour_count (how many chips of each type do we have)<a class="headerlink" href="#module-colour_count" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="colour_count.ChipCost">
+<em class="property">class </em><code class="descclassname">colour_count.</code><code class="descname">ChipCost</code><span class="sig-paren">(</span><em>colour_count=None</em>, <em>raw_colour_count=None</em><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.ChipCost" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ColourCount subclass which can be shown on a card as its cost</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="colour_count.ChipStacks">
+<em class="property">class </em><code class="descclassname">colour_count.</code><code class="descname">ChipStacks</code><span class="sig-paren">(</span><em>colour_count=None</em>, <em>raw_colour_count=None</em><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.ChipStacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ColourCount subclass which can be shown as a stack of chips
+in the supply</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="colour_count.ColourCount">
+<em class="property">class </em><code class="descclassname">colour_count.</code><code class="descname">ColourCount</code><span class="sig-paren">(</span><em>colour_count=None</em>, <em>raw_colour_count=None</em><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.ColourCount" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Maintain a count of chips by type (colour), or of cards by chip type</dt>
+<dd>they &#8216;produce&#8217;</dd>
+</dl>
+<dl class="method">
+<dt id="colour_count.ColourCount.covers_cost">
+<code class="descname">covers_cost</code><span class="sig-paren">(</span><em>chip_cost</em><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.ColourCount.covers_cost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the chips we&#8217;ve counted cover the cost specified.
+Yellow chips are used as wild cards</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>chip_cost</strong> (<a class="reference internal" href="#colour_count.ColourCount" title="colour_count.ColourCount"><em>ColourCount</em></a>) &#8211; The cost to cover</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True, if this covers the cost</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="colour_count.ColourCount.filter">
+<code class="descname">filter</code><span class="sig-paren">(</span><em>remove_blanks=False</em><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.ColourCount.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Different way(s) to filter down the colour count</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>remove_blanks</strong> (<em>bool</em>) &#8211; If True, remove any dict keys with 0 value</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">if remove_blanks, colour count for non-zero values, else original colour count</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#colour_count.ColourCount" title="colour_count.ColourCount">ColourCount</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="colour_count.ColourCount.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.ColourCount.items" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list(key:value) of the colour count</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="colour_count.PlayerCardStack">
+<em class="property">class </em><code class="descclassname">colour_count.</code><code class="descname">PlayerCardStack</code><span class="sig-paren">(</span><em>colour_count=None</em>, <em>raw_colour_count=None</em><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.PlayerCardStack" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ColourCount subclass representing the &#8216;reward&#8217; (in chip count)
+given by a player&#8217;s cards</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="colour_count.PlayerChipStack">
+<em class="property">class </em><code class="descclassname">colour_count.</code><code class="descname">PlayerChipStack</code><span class="sig-paren">(</span><em>colour_count=None</em>, <em>raw_colour_count=None</em><span class="sig-paren">)</span><a class="headerlink" href="#colour_count.PlayerChipStack" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ColourCount subclass which can be shown as a stack of chips
+for a player</p>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -243,6 +332,7 @@ player corner</li>
 <li><a class="reference internal" href="#modules">Modules</a><ul>
 <li><a class="reference internal" href="#module-app">app (main module)</a></li>
 <li><a class="reference internal" href="#module-buttons">buttons (clickable screen areas)</a></li>
+<li><a class="reference internal" href="#module-colour_count">colour_count (how many chips of each type do we have)</a></li>
 </ul>
 </li>
 </ul>

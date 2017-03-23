@@ -100,9 +100,6 @@ class Player(EmbodyPlayerMixin):
     def player_selects_single_tile(self):
         game.mechanics.player_selects_single_tile()
 
-    def on_enter_turn_started(self):
-        game.embody()
-
     def on_enter_turn_finished(self):
         game.mechanics.next_player()
 

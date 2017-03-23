@@ -40,3 +40,9 @@ colour_count (how many chips of each type do we have)
 -----------------------------------------------------
 .. automodule:: colour_count
    :members:
+
+
+game (the game state)
+---------------------
+.. automodule:: game
+   :members:

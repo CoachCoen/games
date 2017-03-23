@@ -6,18 +6,22 @@ from graphics import draw_table
 
 class Game:
     """
-    Container for game elements - components, players - and mechanics
+    Container for game state: components, buttons, players and mechanics
     """
+
     def __init__(self):
         """
         Initialise an instance
         """
         self.components = None
-        self._current_player = None
-        self.buttons = None
         self.players = None
         self.mechanics = None
+
         self.finished = False
+        self._current_player = None
+
+        # TODO: Move buttons out of here?
+        self.buttons = None
 
     def init_game(self, players, buttons, components, mechanics):
         """
@@ -27,10 +31,10 @@ class Game:
         :param buttons: The active buttons
         :type buttons: button.ButtonCollection
         :param components: All the game pieces in the game, including in the
-        supply, the holding areas and the players' areas
+            supply, the holding areas and the players' areas
         :type components: game_component_database.ComponentDatabase
         :param mechanics: Calculates the valid moves, winner, score and
-        other game mechanics
+            other game mechanics
         :type mechanics: game_mechanics.GameMechanics
         """
         self.players = players
@@ -62,6 +66,7 @@ class Game:
     def last_player(self):
         """
         Is the current player the last player in this round
+
         :return: True if this is the last player
         :rtype: bool
         """

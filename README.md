@@ -14,14 +14,15 @@ can be left out
 python3 app.py
 
 ## Current status
-* About 70% of the rules are implemented
-* One known bug, to do with being able to buy a card when 
-insufficient resources are available, creating an error when payment should be made
+* All but one rule implemented
+    * Can't take a face down card after taking a yellow chip
+* Usually works well, although there is one bug (not replicated yet)
 * Code is reasonably well structured (always room for improvement of course)
-* Unit tests were started but need restructuring 
+* Unit tests were started but need updating 
 after a large refactoring exercise, and more are to be done
-* An estimated 15% of functions, methods, etc, have doc strings, so need to 
+* An estimated 15% of functions, methods, etc, have docstrings, so need to 
 catch up and then keep up
+* Sphinx set up, documentation created
 
 ## The AI
 The current AI is extremely simple, yet still plays a decent game 
@@ -32,11 +33,10 @@ The current AI is extremely simple, yet still plays a decent game
 
 ## Future plans
 * Complete the first game
-    * All rules
     * Somewhat better graphics
     * Better test coverage, doc strings, etc
 * Online version
-    * Create a version which uses a web framework (Flask? Django?) and 
+    * Create a version which uses a Flask and 
 some Javascript instead of pygame
     * Extract 'back-end' code, so can be shared between 
     pygame and online version, and used for other games

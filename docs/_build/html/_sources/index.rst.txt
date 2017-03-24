@@ -52,3 +52,9 @@ game_actions (what happens when you press a button)
 ---------------------------------------------------
 .. automodule:: game_actions
    :members:
+
+
+game_components (cards, chips and tile class definitions)
+---------------------------------------------------------
+.. automodule:: game_components
+   :members:

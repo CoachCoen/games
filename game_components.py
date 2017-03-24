@@ -1,8 +1,8 @@
 """
-    Game objects: cards, chips, tokens
-    Game object containers: card deck, card slot, card grid,
-        chip collection, tile collection, table, holding area
+Classes for the game components: cards, chips and tiles. Components use
+a state machines to track where they are
 """
+
 from transitions import Machine
 
 from embody import EmbodyTileMixin, EmbodyChipMixin, EmbodyCardMixin
@@ -11,7 +11,7 @@ from util_classes import ComponentStates
 
 class AbstractGameComponent:
     """
-    Abstract game component
+    Abstract game component, sets up the state machine
     """
     states = [
         ComponentStates.in_supply,
@@ -58,6 +58,10 @@ class AbstractGameComponent:
     ]
 
     def __init__(self):
+        """
+        Initialises a component instance
+        """
+
         self.previous_state = None
         self.player = None
         self.name = None
@@ -71,9 +75,15 @@ class AbstractGameComponent:
         )
 
     def stash_state(self):
+        """
+        Remember the previous state, in case the current move gets cancelled
+        """
         self.previous_state = self.state
 
     def move_back(self):
+        """
+        Move got cancelled, move the piece back
+        """
         self.state = self.previous_state
 
 
@@ -86,20 +96,39 @@ class Card(AbstractGameComponent, EmbodyCardMixin):
     - points: victory points
     """
     def __init__(self, chip_cost, chip_type, points, row):
+        """
+        Initialise the Card instance
+
+        :param chip_cost: Cost of this card; how many chips and of what type
+        :type chip_cost: colour_count.ChipCost
+        :param chip_type: The 'reward' given by this card
+        :type chip_type: ChipType
+        :param int points: Number of victory points
+        :param int row: If in the supply, the row for this card
+        """
         super().__init__()
         self.chip_cost = chip_cost
         self.points = points
         self.chip_type = chip_type
-        self.row = row - 1  # 0 index the row
+
+        # 0 index the row
+        self.row = row - 1
+
         self.column = None
         self.face_up = False
 
 
 class Chip(AbstractGameComponent, EmbodyChipMixin):
     """
-    Chip class
+    A single chip
     """
     def __init__(self, chip_type):
+        """
+        Initialise the Chip instance
+
+        :param chip_type: The type (colour) of chip
+        :type chip_type: ChipType
+        """
         super().__init__()
         self.chip_type = chip_type
 
@@ -108,7 +137,17 @@ class Chip(AbstractGameComponent, EmbodyChipMixin):
 
 
 class Tile(AbstractGameComponent, EmbodyTileMixin):
+    """
+    A single nobles tile
+    """
     def __init__(self, chip_cost, points):
+        """
+        Initialise the Tile instance
+
+        :param chip_cost: Cost of this card; how many chips and of what type
+        :type chip_cost: colour_count.ChipCost
+        :param int points: Number of victory points
+        """
         super().__init__()
         self.chip_cost = chip_cost
         self.points = points

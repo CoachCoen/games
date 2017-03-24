@@ -448,6 +448,54 @@ other game mechanics</li>
 </dd></dl>
 
 </div>
+<div class="section" id="module-game_components">
+<span id="game-components-cards-chips-and-tile-class-definitions"></span><h2>game_components (cards, chips and tile class definitions)<a class="headerlink" href="#module-game_components" title="Permalink to this headline">¶</a></h2>
+<p>Classes for the game components: cards, chips and tiles. Components use
+a state machines to track where they are</p>
+<dl class="class">
+<dt id="game_components.AbstractGameComponent">
+<em class="property">class </em><code class="descclassname">game_components.</code><code class="descname">AbstractGameComponent</code><a class="headerlink" href="#game_components.AbstractGameComponent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstract game component, sets up the state machine</p>
+<dl class="method">
+<dt id="game_components.AbstractGameComponent.move_back">
+<code class="descname">move_back</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#game_components.AbstractGameComponent.move_back" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move got cancelled, move the piece back</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="game_components.AbstractGameComponent.stash_state">
+<code class="descname">stash_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#game_components.AbstractGameComponent.stash_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remember the previous state, in case the current move gets cancelled</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="game_components.Card">
+<em class="property">class </em><code class="descclassname">game_components.</code><code class="descname">Card</code><span class="sig-paren">(</span><em>chip_cost</em>, <em>chip_type</em>, <em>points</em>, <em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#game_components.Card" title="Permalink to this definition">¶</a></dt>
+<dd><p>A card, which consists of:
+- chip cost: a set of chips to be paid when buying this card
+- reward chip: the discount which this card gives towards</p>
+<blockquote>
+<div>buying another card</div></blockquote>
+<ul class="simple">
+<li>points: victory points</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="game_components.Chip">
+<em class="property">class </em><code class="descclassname">game_components.</code><code class="descname">Chip</code><span class="sig-paren">(</span><em>chip_type</em><span class="sig-paren">)</span><a class="headerlink" href="#game_components.Chip" title="Permalink to this definition">¶</a></dt>
+<dd><p>A single chip</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="game_components.Tile">
+<em class="property">class </em><code class="descclassname">game_components.</code><code class="descname">Tile</code><span class="sig-paren">(</span><em>chip_cost</em>, <em>points</em><span class="sig-paren">)</span><a class="headerlink" href="#game_components.Tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>A single nobles tile</p>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -466,6 +514,7 @@ other game mechanics</li>
 <li><a class="reference internal" href="#module-colour_count">colour_count (how many chips of each type do we have)</a></li>
 <li><a class="reference internal" href="#module-game">game (the game state)</a></li>
 <li><a class="reference internal" href="#module-game_actions">game_actions (what happens when you press a button)</a></li>
+<li><a class="reference internal" href="#module-game_components">game_components (cards, chips and tile class definitions)</a></li>
 </ul>
 </li>
 </ul>

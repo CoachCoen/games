@@ -17,8 +17,8 @@ def init_game(player_details):
     """
     Create players, table and holding area
 
-    :param player_details player_list: the players
-    :type player_list: list(tuple(player name, AI/None))
+    :param player_details: the players
+    :type player_details: list(tuple(player name, AI/None))
     """
     players = [
         Player(
@@ -72,7 +72,6 @@ class App:
             Process a pygame event
 
             :param `pygame.event.EventType` event: the event to process
-            :param str sender: The person sending the message
         """
         if event.type == pygame.QUIT:
             self._running = False

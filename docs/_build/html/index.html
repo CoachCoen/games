@@ -78,11 +78,7 @@ any clean up actions</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>event</strong> (<em>pygame.event.EventType</em>) &#8211; the event to process</li>
-<li><strong>sender</strong> (<em>str</em>) &#8211; The person sending the message</li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event</strong> (<em>pygame.event.EventType</em>) &#8211; the event to process</td>
 </tr>
 </tbody>
 </table>
@@ -110,7 +106,7 @@ any clean up actions</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>player_list</strong> (<em>list</em><em>(</em><em>tuple</em><em>(</em><em>player name</em><em>, </em><em>AI/None</em><em>)</em><em></em><em>)</em><em></em>) &#8211; the players</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>player_details</strong> (<em>list</em><em>(</em><em>tuple</em><em>(</em><em>player name</em><em>, </em><em>AI/None</em><em>)</em><em></em><em>)</em><em></em>) &#8211; the players</td>
 </tr>
 </tbody>
 </table>
@@ -473,12 +469,14 @@ a state machines to track where they are</p>
 <dl class="class">
 <dt id="game_components.Card">
 <em class="property">class </em><code class="descclassname">game_components.</code><code class="descname">Card</code><span class="sig-paren">(</span><em>chip_cost</em>, <em>chip_type</em>, <em>points</em>, <em>row</em><span class="sig-paren">)</span><a class="headerlink" href="#game_components.Card" title="Permalink to this definition">¶</a></dt>
-<dd><p>A card, which consists of:
-- chip cost: a set of chips to be paid when buying this card
-- reward chip: the discount which this card gives towards</p>
-<blockquote>
-<div>buying another card</div></blockquote>
+<dd><p>A card, which consists of:</p>
 <ul class="simple">
+<li>chip cost: a set of chips to be paid when buying this card</li>
+<li><dl class="first docutils">
+<dt>reward chip: the discount which this card gives towards</dt>
+<dd>buying another card</dd>
+</dl>
+</li>
 <li>points: victory points</li>
 </ul>
 </dd></dl>
@@ -493,6 +491,61 @@ a state machines to track where they are</p>
 <dt id="game_components.Tile">
 <em class="property">class </em><code class="descclassname">game_components.</code><code class="descname">Tile</code><span class="sig-paren">(</span><em>chip_cost</em>, <em>points</em><span class="sig-paren">)</span><a class="headerlink" href="#game_components.Tile" title="Permalink to this definition">¶</a></dt>
 <dd><p>A single nobles tile</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-utils">
+<span id="utils-utility-functions"></span><h2>utils (utility functions)<a class="headerlink" href="#module-utils" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="utils.SplitIntoIncludedAndExcluded">
+<em class="property">class </em><code class="descclassname">utils.</code><code class="descname">SplitIntoIncludedAndExcluded</code><span class="sig-paren">(</span><em>source</em>, <em>target</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.SplitIntoIncludedAndExcluded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split up pieces in source and target:</p>
+<ul class="simple">
+<li>self.included: both in source + target</li>
+<li>self.excluded: in target but not in source</li>
+<li>self.remaining: in source but not in target</li>
+</ul>
+<p>Chips of the same colour are treated as the same piece.
+Unlike sets, the lists can contain multiple pieces of the same type.
+This is typically used to work out whether a player can take
+a piece, halfway through a turn, based on the list of available moves</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.chip_type_for_colour_name">
+<code class="descclassname">utils.</code><code class="descname">chip_type_for_colour_name</code><span class="sig-paren">(</span><em>colour_name</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.chip_type_for_colour_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a string (colour) to a ChipType</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>colour_name</strong> (<em>str</em>) &#8211; colour, e.g. &#8216;red&#8217;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the ChipType for this colour</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.pieces_match">
+<code class="descclassname">utils.</code><code class="descname">pieces_match</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="headerlink" href="#utils.pieces_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Are a and b either the same piece or the same colour of chip</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>a</strong> (<a class="reference internal" href="#game_components.AbstractGameComponent" title="game_components.AbstractGameComponent"><em>game_components.AbstractGameComponent</em></a>) &#8211; A game component</li>
+<li><strong>b</strong> (<a class="reference internal" href="#game_components.AbstractGameComponent" title="game_components.AbstractGameComponent"><em>game_components.AbstractGameComponent</em></a>) &#8211; Another game component</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True if A and B match</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -515,6 +568,7 @@ a state machines to track where they are</p>
 <li><a class="reference internal" href="#module-game">game (the game state)</a></li>
 <li><a class="reference internal" href="#module-game_actions">game_actions (what happens when you press a button)</a></li>
 <li><a class="reference internal" href="#module-game_components">game_components (cards, chips and tile class definitions)</a></li>
+<li><a class="reference internal" href="#module-utils">utils (utility functions)</a></li>
 </ul>
 </li>
 </ul>

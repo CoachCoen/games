@@ -3,6 +3,7 @@ Classes for the game components: cards, chips and tiles. Components use
 a state machines to track where they are
 """
 
+
 from transitions import Machine
 
 from embody import EmbodyTileMixin, EmbodyChipMixin, EmbodyCardMixin
@@ -90,11 +91,13 @@ class AbstractGameComponent:
 class Card(AbstractGameComponent, EmbodyCardMixin):
     """
     A card, which consists of:
-    - chip cost: a set of chips to be paid when buying this card
-    - reward chip: the discount which this card gives towards
+
+    * chip cost: a set of chips to be paid when buying this card
+    * reward chip: the discount which this card gives towards
         buying another card
-    - points: victory points
+    * points: victory points
     """
+
     def __init__(self, chip_cost, chip_type, points, row):
         """
         Initialise the Card instance

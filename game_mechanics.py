@@ -18,7 +18,7 @@ class GameMechanics:
 
     @property
     def valid_actions(self):
-        return self.valid_pieces(game.current_player)
+        return self.valid_pieces()
 
     @property
     def player_count(self):
@@ -62,7 +62,8 @@ class GameMechanics:
         except IndexError:
             game.current_player = game.players[0]
 
-    def points_for_player(self, player):
+    @staticmethod
+    def points_for_player(player):
         return game.components.played_components_for_player(player).player_points
 
     @property
@@ -117,13 +118,13 @@ class GameMechanics:
                 if card_grid.card_grid[row][j] is None:
                     self.draw_card_for_row(row, j)
 
-    def valid_moves(self, current_player):
+    def valid_moves(self):
         if not self._valid_moves:
-            self._valid_moves = self.get_valid_moves(current_player)
+            self._valid_moves = self.get_valid_moves()
         return self._valid_moves
 
     @staticmethod
-    def get_valid_moves(current_player):
+    def get_valid_moves():
         """
         list of Move objects, each containing the pieces which the current
         player could take/buy/reserve
@@ -162,7 +163,7 @@ class GameMechanics:
                    for card in game.components.table_open_cards
                    if game.components.filter(
                 state=ComponentStates.in_player_area,
-                player=current_player
+                player=game.current_player
             ).count_by_colour().covers_cost(card.chip_cost)]
 
         # Buy a reserved card
@@ -171,7 +172,7 @@ class GameMechanics:
                    game.components.reserved_for_player(game.current_player)
                    if game.components.filter(
                 state=ComponentStates.in_player_area,
-                player=current_player
+                player=game.current_player
             ).count_by_colour().covers_cost(card.chip_cost)]
 
         # Reserve a card
@@ -190,7 +191,7 @@ class GameMechanics:
 
         return result
 
-    def valid_pieces(self, current_player):
+    def valid_pieces(self):
         # # Tile in holding area
         # if game.current_player.state == PlayerStates.tile_selected:
         #     return set(game.components.holding_area_tiles)
@@ -210,7 +211,7 @@ class GameMechanics:
                 return set(self.tiles_earned)
 
         # Main body of turn - pick any valid game piece
-        valid_moves = self.valid_moves(current_player)
+        valid_moves = self.valid_moves()
         pieces_taken = game.components.filter(
             state=ComponentStates.in_holding_area)
 
@@ -242,8 +243,8 @@ class GameMechanics:
 
         return result
 
-    def is_valid_action(self, current_player, component):
-        valid_pieces = self.valid_pieces(current_player)
+    def is_valid_action(self, component):
+        valid_pieces = self.valid_pieces()
         if component in valid_pieces:
             return True
 
@@ -259,8 +260,8 @@ class GameMechanics:
 
         return False
 
-    def turn_complete(self, current_player):
-        return len(self.valid_pieces(current_player)) == 0
+    def turn_complete(self):
+        return len(self.valid_pieces()) == 0
 
     @staticmethod
     def pay_chip_cost(chip_cost, player):

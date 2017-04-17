@@ -27,7 +27,7 @@ class EmbodyChipStackMixin(AbstractEmbodyMixin):
             chip = game.components.chip_from_supply(chip_type)
 
             # TODO: Tidy up passing in current player here?
-            if game.mechanics.is_valid_action(game.current_player, chip):
+            if game.mechanics.is_valid_action(chip):
                 game.buttons.add(
                     circle_location_to_rectangle(chip_location,
                                                  config.chip_size),
@@ -98,7 +98,7 @@ class EmbodyTileMixin(AbstractEmbodyMixin):
         self.chip_cost.embody(self.location + config.cost_location)
 
     def buttonify(self):
-        if game.mechanics.is_valid_action(game.current_player, self):
+        if game.mechanics.is_valid_action(self):
             game.buttons.add(
                 self.location.to_rectangle(config.tile_size),
                 ToDo([self.to_holding_area])
@@ -401,7 +401,7 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
             ).embody()
 
         if (game.current_player.state == PlayerStates.turn_started
-            and game.mechanics.turn_complete(game.current_player)) \
+            and game.mechanics.turn_complete()) \
                 or (game.current_player.state == PlayerStates.tiles_offered
                     and game.components.holding_area_tiles) \
                 or (game.current_player.state == PlayerStates.too_many_chips

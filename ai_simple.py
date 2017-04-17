@@ -85,7 +85,7 @@ class RandomAI(AbstractAI):
         else, reserve a card
         :return: the selected piece(s)
         """
-        valid_moves = game.mechanics.valid_moves(game.current_player)
+        valid_moves = game.mechanics.valid_moves()
         valid_moves_idx = {move_type: [
             move for move in valid_moves if move.move_type == move_type
             ] for move_type in MoveType}

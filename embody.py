@@ -307,7 +307,8 @@ class EmbodyPlayerChipStack(AbstractEmbodyMixin):
                         # TODO: Tidy this up?
                         game.buttons.add(
                             (chip_location - Vector(chip_size, chip_size)).to_rectangle(Vector(chip_size * 2, chip_size * 2)),
-                            ToDo([chips[0].to_holding_area])
+                            ToDo([chips[0].to_holding_area]),
+                            player_order=player.player_order
                         ).embody()
 
                 draw_circle(

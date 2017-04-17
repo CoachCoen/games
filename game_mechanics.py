@@ -301,7 +301,7 @@ class GameMechanics:
 
     @property
     def earned_multiple_tiles(self):
-        return len(self.tiles_earned) > 2
+        return len(self.tiles_earned) >= 2
 
     @property
     def earned_single_tile(self):

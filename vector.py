@@ -1,4 +1,10 @@
 class Vector:
+    """
+    Simple 2 dimensional vector.
+    
+    Supports +, -, \*, ==
+    """
+
     def __init__(self, x, y):
         self.x = int(x)
         self.y = int(y)
@@ -11,6 +17,12 @@ class Vector:
         return (self.x, self.y)[item]
 
     def to_rectangle(self, size):
+        """
+        Convert this vector into a rectangle
+        
+        :param size: (width, height) 
+        :return: (x, y, width, height)
+        """
         return list(self) + list(size)
 
     def __add__(self, other):

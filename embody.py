@@ -364,7 +364,6 @@ class EmbodyPlayerCardStack(AbstractEmbodyMixin):
                 )
 
 
-
 class EmbodyButtonMixin:
     def embody(self):
         self._draw()
@@ -377,7 +376,6 @@ class EmbodyButtonMixin:
 
 
 class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
-
     def embody(self):
         if self.is_empty and game.current_player.state is not PlayerStates.too_many_chips:
             return
@@ -390,7 +388,6 @@ class EmbodyHoldingAreaMixin(AbstractEmbodyMixin):
         for tile in game.components.holding_area_tiles:
             tile.embody()
 
-        # if game.current_player.state in [PlayerStates.turn_in_progress, PlayerStates.turn_valid]:
         if not self.is_empty:
             game.buttons.add(
                 (

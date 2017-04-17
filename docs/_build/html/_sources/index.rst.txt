@@ -60,8 +60,24 @@ game_components (cards, chips and tile class definitions)
    :members:
 
 
+settings
+--------
+.. automodule:: settings
+   :members:
+
+
 utils (utility functions)
 -------------------------
 .. automodule:: utils
    :members:
 
+util_classes (utility classes)
+------------------------------
+.. automodule:: util_classes
+   :members:
+
+
+vector
+------
+.. automodule:: vector
+   :members:

@@ -1,3 +1,8 @@
+"""
+Utility classes - (real/informal) enumerators
+"""
+
+
 from enum import Enum
 
 

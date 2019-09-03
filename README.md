@@ -1,8 +1,5 @@
-# Games
-Board and card games developed in Python 3
-
-## Introduction
-The current version implements the rules of the popular game "Splendor"
+# Precious Stones
+A Python 3 version of the popular "Splendor" boardgame
 
 ## Requirements
 * Python 3

@@ -6,9 +6,7 @@ The current version implements the rules of the popular game "Splendor"
 
 ## Requirements
 * Python 3
-* Python libraries listed in requirements.txt. Not all libraries in 
-requirements.txt may be required. At some point I'll check which ones
-can be left out
+* Python libraries listed in requirements.txt
 
 ## Running the game
 python3 app.py
@@ -44,4 +42,3 @@ some Javascript instead of pygame
     * Possibly a card game such as Dominion, or the grid-based Acquire
 * Improved AI
     * With the option for different AIs to compete, to compare their performance
-    
